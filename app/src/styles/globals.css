@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+@import "./notebook.css";
+
+/* ============================================================
+   Design tokens — OS / terminal-dashboard UI system
+   The CSS variable names are preserved so existing components
+   (.frame, .canvas, .chip, .chrome, .tab, etc.) keep working.
+   What changed: the palette, fonts, shadows, and background
+   are now terminal/IDE-inspired rather than sketchbook.
+   ============================================================ */
+:root {
+  /* Surface layers — cool neutrals, like a stacked IDE panel */
+  --paper: #ffffff;
+  --paper-2: #f4f5f8;
+  --paper-3: #e8eaf0;
+
+  /* Ink — near-black slate with a cool undertone */
+  --ink: #0b0d12;
+  --ink-2: #4b5563;
+  --ink-3: #8a92a3;
+
+  /* Rule — hairline separator */
+  --rule: #dbdee5;
+
+  /* Highlights — drawn from a terminal ANSI palette, softened for long reads */
+  --hl:   oklch(0.93 0.14 95);   /* yellow  — warning / current */
+  --hl-2: oklch(0.92 0.11 150);  /* green   — done / success */
+  --hl-3: oklch(0.92 0.08 230);  /* cyan    — info / learn */
+  --hl-4: oklch(0.92 0.12 40);   /* orange  — review / retry */
+
+  /* Pop — modern OS accent blue, like a focused window control */
+  --pop: oklch(0.58 0.18 255);
+  --pop-ink: oklch(0.42 0.18 255);
+
+  /* Feedback */
+  --wrong: oklch(0.62 0.20 25);
+  --right: oklch(0.58 0.16 150);
+
+  /* Shadows — low, diffuse, modern (no more marker-stamp shadows) */
+  --shadow-card:   0 1px 2px rgba(11, 13, 18, 0.04), 0 6px 16px rgba(11, 13, 18, 0.06);
+  --shadow-canvas: 0 4px 12px rgba(11, 13, 18, 0.06), 0 20px 40px rgba(11, 13, 18, 0.08);
+  --shadow-btn:    0 1px 2px rgba(11, 13, 18, 0.08), 0 2px 6px rgba(11, 13, 18, 0.06);
+  --shadow-active: 0 1px 1px rgba(11, 13, 18, 0.10);
+
+  /* Background — cool neutral desktop with a dot grid */
+  --bg: #eef0f4;
+  --grid-dot: rgba(11, 13, 18, 0.06);
+
+  /* Font families — OS/IDE-feel with one friendly serif for long notes */
+  --ff-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ff-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ff-serif: "IBM Plex Serif", ui-serif, Georgia, serif;
+  --ff-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+:root.font-apple {
+  /* Apple system stack — SF Pro on Apple devices, falls back on others */
+  --ff-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  --ff-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --ff-serif: "New York", ui-serif, Georgia, serif;
+  --ff-mono: "SF Mono", ui-monospace, Menlo, monospace;
+}
+
+:root.dark {
+  /* Deep IDE dark — think VS Code / modern terminal */
+  --paper: #14161c;
+  --paper-2: #1b1e26;
+  --paper-3: #242832;
+  --ink: #e6e8ef;
+  --ink-2: #aab1c0;
+  --ink-3: #6e7586;
+  --rule: #2b2f3a;
+  --hl:   oklch(0.78 0.17 95);
+  --hl-2: oklch(0.74 0.14 150);
+  --hl-3: oklch(0.74 0.12 230);
+  --hl-4: oklch(0.76 0.15 40);
+  --pop:  oklch(0.70 0.16 255);
+  --pop-ink: oklch(0.86 0.12 255);
+  --wrong: oklch(0.72 0.18 25);
+  --right: oklch(0.72 0.14 150);
+  --shadow-card:   0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-canvas: 0 4px 14px rgba(0, 0, 0, 0.45), 0 24px 48px rgba(0, 0, 0, 0.45);
+  --shadow-btn:    0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-active: 0 1px 1px rgba(0, 0, 0, 0.5);
+  --bg: #0b0d12;
+  --grid-dot: rgba(230, 232, 239, 0.06);
+}
+
+/* Tailwind v4 — @theme inline lets utilities read from CSS variables */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-hl: var(--hl);
+  --color-hl-2: var(--hl-2);
+  --color-hl-3: var(--hl-3);
+  --color-hl-4: var(--hl-4);
+  --color-pop: var(--pop);
+  --color-pop-ink: var(--pop-ink);
+  --color-wrong: var(--wrong);
+  --color-right: var(--right);
+  --color-bg: var(--bg);
+
+  --font-display: var(--ff-display);
+  --font-body: var(--ff-body);
+  --font-mono: var(--ff-mono);
+  --font-serif: var(--ff-serif);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  /* Subtle dot grid — reads as a terminal / Figma canvas / desktop */
+  background-image:
+    radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-position: 0 0;
+  color: var(--ink);
+  font-family: var(--ff-body);
+  font-size: 15.5px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--ff-display);
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+h1 { font-size: 38px; font-weight: 700; letter-spacing: -0.025em; }
+h2 { font-size: 28px; letter-spacing: -0.02em; }
+h3 { font-size: 22px; }
+h4 { font-size: 18px; }
+
+a {
+  color: var(--pop-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--pop);
+}
+
+::selection {
+  background: color-mix(in oklch, var(--pop) 25%, transparent);
+  color: var(--ink);
+}
+
+/* Focus ring — crisp OS-style blue halo */
+:focus-visible {
+  outline: 2px solid var(--pop);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+code, pre, kbd, samp {
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  font-feature-settings: "calt", "liga";
+}

@@ -1,0 +1,1389 @@
+/**
+ * Hand-authored question bank for the COT 4400 final exam.
+ *
+ * Why a .ts file (not JSON):
+ *   - Graph walks embed typed QuestionGraph objects, rubrics include
+ *     substring arrays, and IDE autocomplete against the KbQuizQuestion type
+ *     keeps new entries honest. JSON would hide these errors until runtime.
+ *
+ * Why separate from quizzes.json:
+ *   - `scripts/build-kb.ts` regenerates quizzes.json on every `bun kb`. This
+ *     module is stable — the loader merges both arrays.
+ *
+ * Authoring notes (mirror the real exams, Spring 2025 Exam 1 + Spring 2026 Exam 2):
+ *   - Exam 1 style: 16 MCQ on asymptotic props, recursion props, log laws;
+ *     then long-form recurrence solving, code → T(n), iteration+induction,
+ *     pseudocode writing (factorial).
+ *   - Exam 2 style: 16 MCQ on tree props, DAC, greedy, DP, memoization, Strassen;
+ *     then tree traversals on a given BST, DAC max-subarray on a specific array,
+ *     Fibonacci memoization pseudocode + F(5) trace, greedy job sequencing.
+ *   - Predicted Final: 16 MCQ blend (with graph algos) + long-form graph trace +
+ *     pseudocode writing + complexity/runtime analysis + one integrative problem.
+ */
+
+import type { KbQuizQuestion, QuestionGraph } from "@/lib/kb-loader";
+
+// ─── Shared reference graphs ─────────────────────────────────────────────────
+// Small, hand-picked graphs with unambiguous tie-break behavior (alphabetical
+// adjacency order) so expected visit orders are deterministic.
+
+const GRAPH_8: QuestionGraph = {
+  nodes: [
+    { id: "A", x: 80,  y: 80 },
+    { id: "B", x: 240, y: 60 },
+    { id: "C", x: 420, y: 80 },
+    { id: "D", x: 140, y: 220 },
+    { id: "E", x: 320, y: 200 },
+    { id: "F", x: 500, y: 220 },
+    { id: "G", x: 240, y: 360 },
+    { id: "H", x: 460, y: 360 },
+  ],
+  edges: [
+    { from: "A", to: "B", weight: 4 },
+    { from: "A", to: "D", weight: 2 },
+    { from: "B", to: "C", weight: 3 },
+    { from: "B", to: "E", weight: 5 },
+    { from: "C", to: "F", weight: 2 },
+    { from: "D", to: "E", weight: 1 },
+    { from: "D", to: "G", weight: 4 },
+    { from: "E", to: "F", weight: 2 },
+    { from: "E", to: "H", weight: 6 },
+    { from: "F", to: "H", weight: 3 },
+    { from: "G", to: "H", weight: 5 },
+  ],
+};
+
+const GRAPH_UNWEIGHTED_6: QuestionGraph = {
+  nodes: [
+    { id: "1", x: 100, y: 100 },
+    { id: "2", x: 280, y: 60 },
+    { id: "3", x: 460, y: 100 },
+    { id: "4", x: 100, y: 280 },
+    { id: "5", x: 280, y: 320 },
+    { id: "6", x: 460, y: 280 },
+  ],
+  edges: [
+    { from: "1", to: "2" },
+    { from: "1", to: "4" },
+    { from: "2", to: "3" },
+    { from: "2", to: "5" },
+    { from: "3", to: "6" },
+    { from: "4", to: "5" },
+    { from: "5", to: "6" },
+  ],
+};
+
+const DAG_TOPO: QuestionGraph = {
+  nodes: [
+    { id: "socks",  x: 100, y: 80 },
+    { id: "shoes",  x: 280, y: 80 },
+    { id: "pants",  x: 100, y: 200 },
+    { id: "shirt",  x: 280, y: 200 },
+    { id: "belt",   x: 460, y: 140 },
+    { id: "tie",    x: 460, y: 260 },
+    { id: "jacket", x: 640, y: 200 },
+  ],
+  edges: [
+    { from: "socks",  to: "shoes"  },
+    { from: "pants",  to: "shoes"  },
+    { from: "pants",  to: "belt"   },
+    { from: "shirt",  to: "belt"   },
+    { from: "shirt",  to: "tie"    },
+    { from: "belt",   to: "jacket" },
+    { from: "tie",    to: "jacket" },
+  ],
+  directed: true,
+};
+
+// ─── Question bank ───────────────────────────────────────────────────────────
+
+export const FINAL_EXAM_BANK: KbQuizQuestion[] = [
+  // ══════════════════════════════════════════════════════════════════════════
+  // GRAPH WALK QUESTIONS — graph traversal hands-on
+  // ══════════════════════════════════════════════════════════════════════════
+
+  {
+    id: "fb:graph-walk:bfs-1",
+    topicSlug: "07-graph-algorithms/bfs",
+    kind: "graph-walk",
+    prompt:
+      "Trace BFS starting from A on this undirected graph. Click nodes in the exact order BFS first discovers them (ties broken alphabetically).",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 8,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "bfs",
+      source: "A",
+      orderKind: "nodes",
+      tieBreak: "Break ties alphabetically when adjacency offers multiple neighbors.",
+      // From A: neighbors {B, D} (sorted A-*). Discovery order:
+      //   A → then B,D (A's neighbors alphabetically) → dequeue B, discover C,E
+      //   → dequeue D, discover G (E already seen) → dequeue C, discover F
+      //   → dequeue E, discover H → rest are already in.
+      expectedOrder: ["A", "B", "D", "C", "E", "G", "F", "H"],
+    },
+    explanation:
+      "BFS expands level by level. With alphabetical tie-break: A discovers B,D; B discovers C,E; D discovers G; C discovers F; E discovers H.",
+  },
+
+  {
+    id: "fb:graph-walk:bfs-2",
+    topicSlug: "07-graph-algorithms/bfs",
+    kind: "graph-walk",
+    prompt:
+      "Trace BFS starting from node 1 on this 6-node graph. Click nodes in discovery order (alphabetical / numeric tie-break).",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 5,
+    graphWalk: {
+      graph: GRAPH_UNWEIGHTED_6,
+      algorithm: "bfs",
+      source: "1",
+      orderKind: "nodes",
+      tieBreak: "Break ties numerically.",
+      expectedOrder: ["1", "2", "4", "3", "5", "6"],
+    },
+    explanation:
+      "From 1: neighbors 2,4. From 2: 3,5. From 4: 5 is already seen. From 3: 6. Done.",
+  },
+
+  {
+    id: "fb:graph-walk:dfs-1",
+    topicSlug: "07-graph-algorithms/dfs",
+    kind: "graph-walk",
+    prompt:
+      "Trace iterative / recursive DFS from A on this graph in PRE-ORDER (click nodes in the order they are first visited / pushed). Ties alphabetical.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 8,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "dfs-preorder",
+      source: "A",
+      orderKind: "nodes",
+      tieBreak: "Recurse into the alphabetically-smallest unvisited neighbor first.",
+      // A → B (smallest unvisited) → C → F → E (via F) → D (via E) → G (via D) → H (via G)
+      expectedOrder: ["A", "B", "C", "F", "E", "D", "G", "H"],
+    },
+    explanation:
+      "DFS dives as deep as possible. A→B (smaller than D)→C→F→E→D→G→H.",
+  },
+
+  {
+    id: "fb:graph-walk:dfs-2",
+    topicSlug: "07-graph-algorithms/dfs",
+    kind: "graph-walk",
+    prompt:
+      "Trace DFS from A and record POST-ORDER (finish times). Click nodes in the order they finish.",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 10,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "dfs-postorder",
+      source: "A",
+      orderKind: "nodes",
+      tieBreak: "Recurse alphabetically first.",
+      // Same traversal as above; finishes in deepest-first order.
+      // Pre: A,B,C,F,E,D,G,H. Post pops innermost first:
+      //   H finishes (leaf in recursion) → G → D → E → F → C → B → A
+      expectedOrder: ["H", "G", "D", "E", "F", "C", "B", "A"],
+    },
+    explanation:
+      "Post-order = reverse order of when recursion returns. Deepest node finishes first.",
+  },
+
+  {
+    id: "fb:graph-walk:dijkstra-1",
+    topicSlug: "07-graph-algorithms/shortest-paths",
+    kind: "graph-walk",
+    prompt:
+      "Trace Dijkstra's algorithm from A on this weighted graph. Click nodes in the order they are EXTRACTED from the priority queue (smallest distance first).",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 10,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "dijkstra",
+      source: "A",
+      orderKind: "nodes",
+      tieBreak: "On tied distances, extract alphabetically.",
+      // Hand-trace on GRAPH_8:
+      //   d: A=0, B=∞, C=∞, D=∞, E=∞, F=∞, G=∞, H=∞
+      //   Extract A (0)  → relax B=4, D=2
+      //   Extract D (2)  → relax E=3 (2+1), G=6 (2+4)
+      //   Extract E (3)  → relax B=8? no (B=4 < 3+5), F=5, H=9
+      //   Extract B (4)  → relax C=7 (4+3)
+      //   Extract F (5)  → relax C=7? no (7 tie), H=8 (5+3)
+      //   Extract C (7)  → relax F=9? no
+      //   Extract H (8)  → relax G=13? no
+      //   Extract G (6?) — wait G=6, extract earlier
+      // Re-trace more carefully:
+      //   After A(0): B=4, D=2
+      //   After D(2): E=3, G=6
+      //   After E(3): F=5, H=9
+      //   After B(4): C=7
+      //   After F(5): H=8, C stays 7
+      //   After G(6): H stays 8
+      //   After C(7): ...
+      //   After H(8)
+      // Extract order by distance: A(0), D(2), E(3), B(4), F(5), G(6), C(7), H(8)
+      expectedOrder: ["A", "D", "E", "B", "F", "G", "C", "H"],
+    },
+    explanation:
+      "Dijkstra extracts by smallest tentative distance. The full extract order: A(0), D(2), E(3), B(4), F(5), G(6), C(7), H(8).",
+  },
+
+  {
+    id: "fb:graph-walk:prim-1",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "graph-walk",
+    prompt:
+      "Build the MST of this graph using Prim's algorithm starting from A. Click the NODES in the order they are added to the tree.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 10,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "prim",
+      source: "A",
+      orderKind: "nodes",
+      tieBreak: "On tied edge weights, choose alphabetically-smallest endpoint.",
+      // Prim from A, greedy min-weight cut edge:
+      //   Tree={A}  cut edges: A-B(4), A-D(2)  → add D (via A-D=2)
+      //   Tree={A,D} cut: A-B(4), D-E(1), D-G(4)  → add E (D-E=1)
+      //   Tree={A,D,E} cut: A-B(4), D-G(4), E-B(5), E-F(2), E-H(6)  → add F (E-F=2)
+      //   Tree={..+F} cut: F-C(2), F-H(3), A-B(4), D-G(4), E-B(5), E-H(6)  → add C (F-C=2)
+      //   Tree={..+C} cut: F-H(3), A-B(4), D-G(4), E-B(5), E-H(6), C-B(3)  → tie F-H(3) vs C-B(3)
+      //       endpoints: F-H adds H, C-B adds B → alphabetical → B (C-B=3)
+      //   Tree={..+B} cut: F-H(3), D-G(4), E-H(6)  → add H (F-H=3)
+      //   Tree={..+H} cut: D-G(4), G-H(5)  → add G (D-G=4)
+      expectedOrder: ["A", "D", "E", "F", "C", "B", "H", "G"],
+    },
+    explanation:
+      "Prim grows the tree greedily: always add the lightest edge crossing the cut.",
+  },
+
+  {
+    id: "fb:graph-walk:kruskal-1",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "graph-walk",
+    prompt:
+      "Build the MST of this graph using Kruskal's algorithm. Click the EDGES in the order they are added (format: A-B). There are exactly n-1 = 7 edges to add.",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 12,
+    graphWalk: {
+      graph: GRAPH_8,
+      algorithm: "kruskal",
+      orderKind: "edges",
+      tieBreak: "On tied weights, take alphabetical endpoint order.",
+      // Edges sorted by weight:
+      //   D-E(1), A-D(2), C-F(2), E-F(2), B-C(3), F-H(3), A-B(4), D-G(4), B-E(5), G-H(5), E-H(6)
+      // Union-find: add if endpoints in different components.
+      //   D-E(1)  ✓  {D,E}
+      //   A-D(2)  ✓  {A,D,E}
+      //   C-F(2)  ✓  {C,F}
+      //   E-F(2)  ✓  merge → {A,C,D,E,F}
+      //   B-C(3)  ✓  merge → {A,B,C,D,E,F}
+      //   F-H(3)  ✓  → {A,B,C,D,E,F,H}
+      //   A-B(4)  ✗  cycle (both in set)
+      //   D-G(4)  ✓  → all 8 connected. Done.
+      expectedOrder: ["D-E", "A-D", "C-F", "E-F", "B-C", "F-H", "D-G"],
+    },
+    explanation:
+      "Kruskal sorts all edges, then takes each in order if it doesn't create a cycle. Total weight = 1+2+2+2+3+3+4 = 17.",
+  },
+
+  {
+    id: "fb:graph-walk:topo-1",
+    topicSlug: "07-graph-algorithms/topological-sort",
+    kind: "graph-walk",
+    prompt:
+      "Perform a topological sort of this 'getting dressed' DAG using DFS finish-times (reverse). Click nodes in a VALID topological order.",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 8,
+    graphWalk: {
+      graph: DAG_TOPO,
+      algorithm: "topo-sort",
+      source: "socks",
+      orderKind: "nodes",
+      tieBreak: "Alphabetical when a choice is free.",
+      // Any valid topo order works. Canonical DFS-based: pick alphabetical start,
+      // reverse finish times. One canonical result:
+      //   socks, pants, shirt, belt, tie, shoes, jacket
+      // Valid constraints: socks before shoes, pants before shoes & belt,
+      //   shirt before belt & tie, belt before jacket, tie before jacket.
+      expectedOrder: ["socks", "pants", "shirt", "belt", "tie", "shoes", "jacket"],
+    },
+    explanation:
+      "Any linear order obeying the edges (u→v means u must appear before v) is valid.",
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PSEUDOCODE QUESTIONS — Ollama-graded (offline rubric fallback)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  {
+    id: "fb:pseudo:factorial",
+    topicSlug: "01-recursion/recursion-basics",
+    kind: "pseudocode",
+    prompt:
+      "Write recursive pseudocode for FACTORIAL(n). Return 1 when n is 0 or 1; otherwise return n · FACTORIAL(n-1). (This was Exam 1, Q4 — 20 points.)",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 20,
+    pseudocode: {
+      reference: [
+        "FACTORIAL(n)",
+        "  if n ≤ 1",
+        "    return 1",
+        "  return n · FACTORIAL(n - 1)",
+      ],
+      complexityHint: "T(n) = T(n-1) + Θ(1) ⇒ Θ(n) time, Θ(n) recursion-stack space.",
+      rubric: [
+        {
+          id: "signature",
+          prompt: "Defines a procedure named FACTORIAL that takes n.",
+          keywords: ["factorial"],
+          weight: 1,
+        },
+        {
+          id: "base-case",
+          prompt: "Has a base case for n ≤ 1 (or n == 0 / n == 1) returning 1.",
+          keywords: ["if ", "≤ 1", "<= 1", "== 0", "== 1", "= 0", "= 1", "n is 0", "n is 1"],
+          weight: 2,
+        },
+        {
+          id: "recursive-return",
+          prompt: "Recursive case returns n times FACTORIAL(n-1).",
+          keywords: ["factorial(n - 1)", "factorial(n-1)", "n * factorial", "n · factorial", "n*factorial"],
+          weight: 3,
+        },
+        {
+          id: "termination",
+          prompt: "Argument decreases by 1 so the recursion terminates.",
+          keywords: ["n - 1", "n-1", "- 1"],
+          weight: 1,
+        },
+      ],
+    },
+    explanation:
+      "Exam 1 asked for exactly this. Watch for off-by-one in the base case (n=0 returns 1) and ensure your argument decreases.",
+  },
+
+  {
+    id: "fb:pseudo:fib-memo",
+    topicSlug: "06-dynamic-programming/dp-paradigm",
+    kind: "pseudocode",
+    prompt:
+      "Write pseudocode for FIB(n) using MEMOIZATION (top-down). Use a memo table to avoid recomputing subproblems. (Exam 2, Q19 — 15 points.)",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "MEMO-FIB(n)",
+        "  let memo[0..n] be a new array, initially undefined",
+        "  memo[0] ← 0",
+        "  memo[1] ← 1",
+        "  return FIB-HELPER(n, memo)",
+        "",
+        "FIB-HELPER(n, memo)",
+        "  if memo[n] is defined",
+        "    return memo[n]",
+        "  memo[n] ← FIB-HELPER(n-1, memo) + FIB-HELPER(n-2, memo)",
+        "  return memo[n]",
+      ],
+      complexityHint: "Θ(n) time, Θ(n) space — each subproblem is solved once.",
+      rubric: [
+        {
+          id: "memo-table",
+          prompt: "Introduces a memo array / table / dictionary.",
+          keywords: ["memo", "table", "cache", "dp[", "dp ["],
+          weight: 2,
+        },
+        {
+          id: "cache-hit",
+          prompt: "Checks the memo before recomputing.",
+          keywords: ["if memo", "is defined", "not null", "!= nil", "is not none", "has(", "contains"],
+          weight: 2,
+        },
+        {
+          id: "base-cases",
+          prompt: "Base cases for n=0 and n=1.",
+          keywords: ["memo[0]", "memo[1]", "fib(0)", "fib(1)", "n == 0", "n == 1", "n ≤ 1", "n <= 1"],
+          weight: 2,
+        },
+        {
+          id: "recurrence",
+          prompt: "Recurrence stores fib(n-1) + fib(n-2) into memo[n].",
+          keywords: ["fib(n-1)", "fib(n - 1)", "fib(n-2)", "fib(n - 2)", "n-1, memo", "n-2, memo"],
+          weight: 3,
+        },
+      ],
+    },
+    explanation:
+      "Exam 2 additionally asked for a trace of F(5) — make sure you can dry-run the memo after writing this.",
+  },
+
+  {
+    id: "fb:pseudo:insertion-sort",
+    topicSlug: "03-sorting/insertion-sort",
+    kind: "pseudocode",
+    prompt: "Write pseudocode for INSERTION-SORT(A, n). Sort the array A[1..n] in place, ascending.",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 12,
+    pseudocode: {
+      reference: [
+        "INSERTION-SORT(A, n)",
+        "  for j = 2 to n",
+        "    key = A[j]",
+        "    i = j - 1",
+        "    while i > 0 and A[i] > key",
+        "      A[i+1] = A[i]",
+        "      i = i - 1",
+        "    A[i+1] = key",
+      ],
+      complexityHint: "Best Θ(n) (sorted), worst/avg Θ(n²). In-place, stable.",
+      rubric: [
+        { id: "outer", prompt: "Outer loop over j = 2..n (or equivalent).", keywords: ["for j", "for i in", "for index", "= 2 to", "j = 2", "j=2"], weight: 2 },
+        { id: "key", prompt: "Save A[j] into a key/temp variable.", keywords: ["key = a[j]", "key = arr[j]", "key <- a[j]", "temp = a[j]", "pivot"], weight: 2 },
+        { id: "shift", prompt: "Inner loop shifts larger elements to the right.", keywords: ["a[i+1] = a[i]", "a[i + 1] = a[i]", "shift"], weight: 2 },
+        { id: "compare", prompt: "Compares against key; stops when key is not smaller.", keywords: ["a[i] > key", "a[i]>key", "while i > 0", "while i >= 1", "while i > 0 and"], weight: 2 },
+        { id: "insert", prompt: "Places key at A[i+1] after the shift.", keywords: ["a[i+1] = key", "a[i + 1] = key"], weight: 2 },
+      ],
+    },
+    explanation:
+      "Follow CLRS conventions. Loop invariant: at the start of iteration j, A[1..j-1] is sorted.",
+  },
+
+  {
+    id: "fb:pseudo:merge-sort",
+    topicSlug: "03-sorting/merge-sort",
+    kind: "pseudocode",
+    prompt: "Write pseudocode for MERGE-SORT(A, p, r). You may call a helper MERGE(A, p, q, r) without defining it.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 12,
+    pseudocode: {
+      reference: [
+        "MERGE-SORT(A, p, r)",
+        "  if p < r",
+        "    q = ⌊(p + r) / 2⌋",
+        "    MERGE-SORT(A, p, q)",
+        "    MERGE-SORT(A, q + 1, r)",
+        "    MERGE(A, p, q, r)",
+      ],
+      complexityHint: "T(n) = 2T(n/2) + Θ(n) ⇒ Θ(n log n). Needs Θ(n) auxiliary space.",
+      rubric: [
+        { id: "base", prompt: "Guards recursion with if p < r.", keywords: ["if p < r", "p < r", "p<r"], weight: 2 },
+        { id: "mid", prompt: "Computes mid-point q = (p+r)/2 (floor).", keywords: ["q = (p + r)", "q = (p+r)/2", "q ← (p+r)/2", "floor", "⌊", "//2"], weight: 2 },
+        { id: "recurse-left", prompt: "Recurses on left half A[p..q].", keywords: ["merge-sort(a, p, q)", "merge_sort(a, p, q)", "mergesort(a, p, q)"], weight: 2 },
+        { id: "recurse-right", prompt: "Recurses on right half A[q+1..r].", keywords: ["merge-sort(a, q + 1, r)", "merge-sort(a, q+1, r)", "q + 1, r", "q+1, r"], weight: 2 },
+        { id: "merge", prompt: "Calls MERGE to combine the halves.", keywords: ["merge(a, p, q, r)", "merge(a,p,q,r)"], weight: 2 },
+      ],
+    },
+    explanation:
+      "Classic divide-and-conquer. MERGE does the Θ(n) combine step.",
+  },
+
+  {
+    id: "fb:pseudo:bfs",
+    topicSlug: "07-graph-algorithms/bfs",
+    kind: "pseudocode",
+    prompt:
+      "Write pseudocode for BFS(G, s). Mark each vertex with its discovery distance d and parent π. Use a FIFO queue.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "BFS(G, s)",
+        "  for each vertex u in G.V - {s}",
+        "    u.color = WHITE",
+        "    u.d = ∞",
+        "    u.π = NIL",
+        "  s.color = GRAY",
+        "  s.d = 0",
+        "  s.π = NIL",
+        "  Q = ∅",
+        "  ENQUEUE(Q, s)",
+        "  while Q ≠ ∅",
+        "    u = DEQUEUE(Q)",
+        "    for each v in G.Adj[u]",
+        "      if v.color == WHITE",
+        "        v.color = GRAY",
+        "        v.d = u.d + 1",
+        "        v.π = u",
+        "        ENQUEUE(Q, v)",
+        "    u.color = BLACK",
+      ],
+      complexityHint: "Θ(V + E) using adjacency lists.",
+      rubric: [
+        { id: "init", prompt: "Initializes all vertices with color, distance, parent.", keywords: ["white", "d = ∞", "d = infinity", "π = nil", "p = nil", "parent = null", "color ="], weight: 2 },
+        { id: "source", prompt: "Source has d=0 and is enqueued first.", keywords: ["s.d = 0", "s.d=0", "d[s] = 0", "dist[s] = 0", "enqueue(q, s)", "enqueue(s)"], weight: 2 },
+        { id: "queue", prompt: "Uses a FIFO queue (enqueue/dequeue).", keywords: ["queue", "enqueue", "dequeue", "fifo"], weight: 2 },
+        { id: "discover", prompt: "On discovery, sets distance = parent.d + 1 and records parent.", keywords: ["u.d + 1", "u.d+1", "d + 1", "dist[u] + 1", "π = u", "parent = u", "pred = u"], weight: 3 },
+        { id: "loop", prompt: "Iterates over adjacency list of each dequeued vertex.", keywords: ["for each v", "for v in adj", "adj[u]", "g.adj", "neighbors"], weight: 2 },
+      ],
+    },
+    explanation:
+      "CLRS §22.2. The invariant: all vertices at distance ≤ k are discovered before any at distance > k.",
+  },
+
+  {
+    id: "fb:pseudo:dfs",
+    topicSlug: "07-graph-algorithms/dfs",
+    kind: "pseudocode",
+    prompt:
+      "Write pseudocode for DFS(G) with discovery and finish timestamps (d[u], f[u]). Use a recursive DFS-VISIT helper.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "DFS(G)",
+        "  for each vertex u in G.V",
+        "    u.color = WHITE",
+        "    u.π = NIL",
+        "  time = 0",
+        "  for each vertex u in G.V",
+        "    if u.color == WHITE",
+        "      DFS-VISIT(G, u)",
+        "",
+        "DFS-VISIT(G, u)",
+        "  time = time + 1",
+        "  u.d = time",
+        "  u.color = GRAY",
+        "  for each v in G.Adj[u]",
+        "    if v.color == WHITE",
+        "      v.π = u",
+        "      DFS-VISIT(G, v)",
+        "  u.color = BLACK",
+        "  time = time + 1",
+        "  u.f = time",
+      ],
+      complexityHint: "Θ(V + E).",
+      rubric: [
+        { id: "init", prompt: "Initializes color = WHITE and parent = NIL for all vertices.", keywords: ["white", "π = nil", "parent = null", "color ="], weight: 2 },
+        { id: "time", prompt: "Maintains a time counter incremented on entry and exit.", keywords: ["time = 0", "time=0", "time + 1", "time+1", "time = time"], weight: 2 },
+        { id: "visit", prompt: "Helper recursively visits unvisited neighbors.", keywords: ["dfs-visit", "dfsvisit", "dfs_visit", "recurse", "recursive"], weight: 3 },
+        { id: "stamps", prompt: "Records both discovery (u.d) and finish (u.f) times.", keywords: ["u.d", "u.f", "d[u]", "f[u]", "discover", "finish"], weight: 2 },
+        { id: "color", prompt: "Uses WHITE/GRAY/BLACK (or equivalent) colors.", keywords: ["gray", "grey", "black", "white"], weight: 1 },
+      ],
+    },
+    explanation:
+      "Timestamps enable edge classification (tree/back/forward/cross) and topological sort.",
+  },
+
+  {
+    id: "fb:pseudo:dijkstra",
+    topicSlug: "07-graph-algorithms/shortest-paths",
+    kind: "pseudocode",
+    prompt:
+      "Write pseudocode for DIJKSTRA(G, w, s) assuming non-negative edge weights. Use a priority queue (min-heap).",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 18,
+    pseudocode: {
+      reference: [
+        "DIJKSTRA(G, w, s)",
+        "  INITIALIZE-SINGLE-SOURCE(G, s)    // sets v.d = ∞, v.π = NIL, s.d = 0",
+        "  S = ∅",
+        "  Q = G.V                            // min-priority queue on d",
+        "  while Q ≠ ∅",
+        "    u = EXTRACT-MIN(Q)",
+        "    S = S ∪ {u}",
+        "    for each vertex v in G.Adj[u]",
+        "      RELAX(u, v, w)                 // if v.d > u.d + w(u,v) update v.d, v.π, DECREASE-KEY",
+      ],
+      complexityHint:
+        "O((V + E) log V) with a binary heap; O(V²) with an array (USF's default Θ(n²) formulation).",
+      rubric: [
+        { id: "init", prompt: "Initializes d[v]=∞, π[v]=NIL, d[s]=0.", keywords: ["initialize-single-source", "v.d = ∞", "d[v] = ∞", "infinity", "d[s] = 0", "s.d = 0"], weight: 2 },
+        { id: "pq", prompt: "Uses a priority queue / extract-min.", keywords: ["priority queue", "min-heap", "extract-min", "extract_min", "pq", "heap"], weight: 2 },
+        { id: "relax", prompt: "Relaxes edges: if v.d > u.d + w, update.", keywords: ["relax", "u.d + w", "d[u] + w", "decrease-key", "decrease_key"], weight: 3 },
+        { id: "loop", prompt: "Main loop extracts one vertex per iteration until Q is empty.", keywords: ["while q", "while not q", "while |q|", "while q ≠", "while q !="], weight: 2 },
+        { id: "nonneg", prompt: "(Bonus) Notes that weights must be non-negative.", keywords: ["non-negative", "nonnegative", "w >= 0", "w(u,v) ≥ 0", "no negative"], weight: 1 },
+      ],
+    },
+    explanation:
+      "Dijkstra is greedy: the extracted min is guaranteed to have its final shortest-path distance set.",
+  },
+
+  {
+    id: "fb:pseudo:kruskal",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "pseudocode",
+    prompt:
+      "Write pseudocode for MST-KRUSKAL(G, w). Use union-find (MAKE-SET, FIND-SET, UNION).",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "MST-KRUSKAL(G, w)",
+        "  A = ∅",
+        "  for each vertex v in G.V",
+        "    MAKE-SET(v)",
+        "  sort the edges of G.E into nondecreasing order by weight w",
+        "  for each edge (u, v) in G.E, in order",
+        "    if FIND-SET(u) ≠ FIND-SET(v)",
+        "      A = A ∪ {(u, v)}",
+        "      UNION(u, v)",
+        "  return A",
+      ],
+      complexityHint: "O(E log E) = O(E log V) with union-by-rank + path compression.",
+      rubric: [
+        { id: "init", prompt: "Makes a singleton set per vertex (union-find init).", keywords: ["make-set", "make_set", "makeset", "singleton"], weight: 2 },
+        { id: "sort", prompt: "Sorts edges by non-decreasing weight.", keywords: ["sort", "ascending", "nondecreasing", "non-decreasing", "by weight"], weight: 2 },
+        { id: "cycle-test", prompt: "Skips edges that would create a cycle (FIND-SET check).", keywords: ["find-set", "find_set", "findset", "same set", "same component", "different set"], weight: 3 },
+        { id: "union", prompt: "Unions components when an edge is accepted.", keywords: ["union", "merge", "a = a ∪", "add edge"], weight: 2 },
+      ],
+    },
+    explanation:
+      "Kruskal is edge-centric; Prim is vertex-centric. Both are greedy — cut / cycle property.",
+  },
+
+  {
+    id: "fb:pseudo:prim",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "pseudocode",
+    prompt: "Write pseudocode for MST-PRIM(G, w, r). Use a min-priority queue keyed by key[v].",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "MST-PRIM(G, w, r)",
+        "  for each u in G.V",
+        "    u.key = ∞",
+        "    u.π = NIL",
+        "  r.key = 0",
+        "  Q = G.V",
+        "  while Q ≠ ∅",
+        "    u = EXTRACT-MIN(Q)",
+        "    for each v in G.Adj[u]",
+        "      if v ∈ Q and w(u, v) < v.key",
+        "        v.π = u",
+        "        v.key = w(u, v)",
+        "        DECREASE-KEY(Q, v, v.key)",
+      ],
+      complexityHint: "O(E log V) with a binary heap.",
+      rubric: [
+        { id: "init", prompt: "Initializes all keys to ∞ and root to 0.", keywords: ["key = ∞", "key = infinity", "u.key = ∞", "r.key = 0"], weight: 2 },
+        { id: "pq", prompt: "Uses a min-priority queue on keys.", keywords: ["extract-min", "priority queue", "min-heap", "pq"], weight: 2 },
+        { id: "update", prompt: "Updates v.key when w(u,v) < v.key.", keywords: ["w(u, v) < v.key", "w(u,v) < v.key", "decrease-key", "decrease_key"], weight: 3 },
+        { id: "parent", prompt: "Tracks parent pointer π.", keywords: ["v.π = u", "v.pi = u", "v.parent = u", "π =", "parent ="], weight: 2 },
+      ],
+    },
+    explanation:
+      "Prim mirrors Dijkstra's shape but stores edge weights, not distances.",
+  },
+
+  {
+    id: "fb:pseudo:knapsack01",
+    topicSlug: "06-dynamic-programming/01-knapsack",
+    kind: "pseudocode",
+    prompt:
+      "Write bottom-up DP pseudocode for 0/1 KNAPSACK(w, v, n, W) where w[], v[] are length-n, W is capacity.",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "KNAPSACK-01(w, v, n, W)",
+        "  let K[0..n, 0..W] be a new table",
+        "  for i = 0 to n",
+        "    K[i, 0] = 0",
+        "  for j = 0 to W",
+        "    K[0, j] = 0",
+        "  for i = 1 to n",
+        "    for j = 1 to W",
+        "      if w[i] > j",
+        "        K[i, j] = K[i-1, j]",
+        "      else",
+        "        K[i, j] = max(K[i-1, j], v[i] + K[i-1, j - w[i]])",
+        "  return K[n, W]",
+      ],
+      complexityHint: "Θ(nW) time and space — pseudo-polynomial (W can be exponential in its bit length).",
+      rubric: [
+        { id: "table", prompt: "Declares a 2D table K[0..n, 0..W].", keywords: ["k[", "k [", "table", "dp[", "dp [", "2d array", "matrix"], weight: 2 },
+        { id: "base", prompt: "Initializes base cases (row 0 and col 0 to 0).", keywords: ["k[0", "k[i, 0]", "= 0", "k[0, j]", "dp[0]"], weight: 2 },
+        { id: "skip-case", prompt: "When w[i] > j, skip item i (copy from row above).", keywords: ["w[i] > j", "k[i-1, j]", "k[i - 1, j]", "dp[i-1][j]"], weight: 2 },
+        { id: "take-case", prompt: "Take-or-skip max uses v[i] + K[i-1, j - w[i]].", keywords: ["v[i] + k[i-1", "v[i] + dp[i-1", "max(", "max "], weight: 3 },
+        { id: "answer", prompt: "Returns K[n, W].", keywords: ["k[n, w]", "k[n][w]", "dp[n][w]", "dp[n, w]"], weight: 1 },
+      ],
+    },
+    explanation:
+      "CLRS §16/Ch. 15 variant. The max() captures the 0/1 choice: take item i or skip it.",
+  },
+
+  {
+    id: "fb:pseudo:lcs",
+    topicSlug: "06-dynamic-programming/lcs",
+    kind: "pseudocode",
+    prompt:
+      "Write bottom-up DP pseudocode for LCS-LENGTH(X, Y) where X has m chars, Y has n chars.",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 15,
+    pseudocode: {
+      reference: [
+        "LCS-LENGTH(X, Y)",
+        "  m = X.length; n = Y.length",
+        "  let c[0..m, 0..n] be a new table",
+        "  for i = 0 to m",
+        "    c[i, 0] = 0",
+        "  for j = 0 to n",
+        "    c[0, j] = 0",
+        "  for i = 1 to m",
+        "    for j = 1 to n",
+        "      if X[i] == Y[j]",
+        "        c[i, j] = c[i-1, j-1] + 1",
+        "      else",
+        "        c[i, j] = max(c[i-1, j], c[i, j-1])",
+        "  return c[m, n]",
+      ],
+      complexityHint: "Θ(mn) time and space.",
+      rubric: [
+        { id: "table", prompt: "Declares a 2D table c[0..m, 0..n].", keywords: ["c[", "c [", "table", "dp[", "2d"], weight: 2 },
+        { id: "base", prompt: "Initializes row 0 and column 0 to 0.", keywords: ["c[i, 0]", "c[0, j]", "c[i, 0] = 0", "= 0"], weight: 2 },
+        { id: "match", prompt: "On match: c[i,j] = c[i-1, j-1] + 1.", keywords: ["x[i] == y[j]", "x[i]==y[j]", "c[i-1, j-1] + 1", "c[i - 1, j - 1] + 1", "+ 1"], weight: 3 },
+        { id: "mismatch", prompt: "On mismatch: c[i,j] = max(c[i-1,j], c[i, j-1]).", keywords: ["max(", "c[i-1, j]", "c[i, j-1]", "c[i - 1, j]"], weight: 2 },
+        { id: "answer", prompt: "Returns c[m, n].", keywords: ["c[m, n]", "c[m][n]", "return c["], weight: 1 },
+      ],
+    },
+    explanation:
+      "LCS is the canonical DP on two sequences. Θ(mn) time and space.",
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RUNTIME DRILLS — structured best/avg/worst/space complexity per algorithm
+  // ══════════════════════════════════════════════════════════════════════════
+
+  {
+    id: "fb:runtime:insertion-sort",
+    topicSlug: "03-sorting/insertion-sort",
+    kind: "runtime",
+    prompt: "What are the time and space complexities of INSERTION SORT?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best case",  answer: "Θ(n)",       accepts: ["O(n)", "theta(n)", "Θ(n)", "n"] },
+        { id: "avg",   label: "Average",    answer: "Θ(n²)",      accepts: ["O(n^2)", "theta(n^2)", "n^2", "n²", "n*n"] },
+        { id: "worst", label: "Worst case", answer: "Θ(n²)",      accepts: ["O(n^2)", "theta(n^2)", "n^2", "n²"] },
+        { id: "space", label: "Space",      answer: "Θ(1)",       accepts: ["O(1)", "constant", "1"] },
+      ],
+      whyNote: "Best Θ(n) when the input is already sorted (one comparison per j). Worst Θ(n²) on reversed input. In-place.",
+    },
+  },
+
+  {
+    id: "fb:runtime:selection-sort",
+    topicSlug: "03-sorting/selection-sort",
+    kind: "runtime",
+    prompt: "Time and space complexities of SELECTION SORT?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n²)", accepts: ["O(n^2)", "theta(n^2)", "n^2", "n²"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n²)", accepts: ["O(n^2)", "theta(n^2)", "n^2", "n²"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n²)", accepts: ["O(n^2)", "theta(n^2)", "n^2", "n²"] },
+        { id: "space", label: "Space",  answer: "Θ(1)",  accepts: ["O(1)", "constant", "1"] },
+      ],
+      whyNote: "Always scans the unsorted suffix to find the min — Θ(n²) regardless of input.",
+    },
+  },
+
+  {
+    id: "fb:runtime:merge-sort",
+    topicSlug: "03-sorting/merge-sort",
+    kind: "runtime",
+    prompt: "Time and space of MERGE SORT?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn", "n*log(n)", "theta(n log n)"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "space", label: "Space",  answer: "Θ(n)",       accepts: ["O(n)", "n", "linear"] },
+      ],
+      whyNote: "T(n)=2T(n/2)+Θ(n). Requires Θ(n) auxiliary space for merge. Stable.",
+    },
+  },
+
+  {
+    id: "fb:runtime:quick-sort",
+    topicSlug: "03-sorting/quick-sort",
+    kind: "runtime",
+    prompt: "Time and space of QUICK SORT (classic last-element pivot)?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n²)",      accepts: ["O(n^2)", "n^2", "n²", "theta(n^2)"] },
+        { id: "space", label: "Space",  answer: "Θ(log n)",   accepts: ["O(log n)", "log n", "logn", "o(log n)"] },
+      ],
+      whyNote: "Worst Θ(n²) on already-sorted input with last-element pivot. Space is recursion stack.",
+    },
+  },
+
+  {
+    id: "fb:runtime:heap-sort",
+    topicSlug: "03-sorting/heap-sort",
+    kind: "runtime",
+    prompt: "Time and space of HEAP SORT?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n log n)", accepts: ["O(n log n)", "n log n", "nlogn"] },
+        { id: "space", label: "Space",  answer: "Θ(1)",       accepts: ["O(1)", "constant", "1"] },
+      ],
+      whyNote: "BUILD-MAX-HEAP is Θ(n); n extracts at Θ(log n) each. In-place. Not stable.",
+    },
+  },
+
+  {
+    id: "fb:runtime:counting-sort",
+    topicSlug: "03-sorting/counting-sort",
+    kind: "runtime",
+    prompt: "Time and space of COUNTING SORT (k distinct keys)?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n+k)", accepts: ["o(n+k)", "n+k", "n + k"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n+k)", accepts: ["o(n+k)", "n+k"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n+k)", accepts: ["o(n+k)", "n+k"] },
+        { id: "space", label: "Space",  answer: "Θ(n+k)", accepts: ["o(n+k)", "n+k"] },
+      ],
+      whyNote: "Not comparison-based. Stable — critical for use as radix-sort's inner sort.",
+    },
+  },
+
+  {
+    id: "fb:runtime:radix-sort",
+    topicSlug: "03-sorting/radix-sort",
+    kind: "runtime",
+    prompt: "Time complexity of RADIX SORT on n d-digit keys in base k?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(d(n+k))", accepts: ["o(d(n+k))", "d(n+k)", "d * (n+k)"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(d(n+k))", accepts: ["o(d(n+k))", "d(n+k)"] },
+        { id: "worst", label: "Worst",  answer: "Θ(d(n+k))", accepts: ["o(d(n+k))", "d(n+k)"] },
+        { id: "space", label: "Space",  answer: "Θ(n+k)",    accepts: ["o(n+k)", "n+k"] },
+      ],
+      whyNote: "Uses a stable sort (usually counting sort) per digit. Stability is required for correctness.",
+    },
+  },
+
+  {
+    id: "fb:runtime:bfs",
+    topicSlug: "07-graph-algorithms/bfs",
+    kind: "runtime",
+    prompt: "Time and space of BFS (adjacency list, |V|=n vertices, |E|=m edges)?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "worst", label: "Worst",  answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "space", label: "Space",  answer: "Θ(V)",   accepts: ["o(v)", "v", "o(n)", "n"] },
+      ],
+      whyNote: "Each vertex enqueued/dequeued once; each edge examined twice (undirected).",
+    },
+  },
+
+  {
+    id: "fb:runtime:dfs",
+    topicSlug: "07-graph-algorithms/dfs",
+    kind: "runtime",
+    prompt: "Time and space of DFS (adjacency list)?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "worst", label: "Worst",  answer: "Θ(V+E)", accepts: ["o(v+e)", "v+e", "n+m"] },
+        { id: "space", label: "Space",  answer: "Θ(V)",   accepts: ["o(v)", "v", "o(n)", "n"] },
+      ],
+      whyNote: "Recursion stack is O(V) in the worst case (linear chain).",
+    },
+  },
+
+  {
+    id: "fb:runtime:dijkstra",
+    topicSlug: "07-graph-algorithms/shortest-paths",
+    kind: "runtime",
+    prompt: "Time complexity of DIJKSTRA (USF's Θ(n²) array-based formulation)?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n²)", accepts: ["O(n^2)", "n^2", "n²", "v^2"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n²)", accepts: ["O(n^2)", "n^2", "n²", "v^2"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n²)", accepts: ["O(n^2)", "n^2", "n²", "v^2"] },
+        { id: "space", label: "Space",  answer: "Θ(n)",  accepts: ["O(n)", "n", "v"] },
+      ],
+      whyNote: "Linear scan for extract-min over n iterations = Θ(n²). With a binary heap: O((V+E) log V).",
+    },
+  },
+
+  {
+    id: "fb:runtime:bellman-ford",
+    topicSlug: "07-graph-algorithms/shortest-paths",
+    kind: "runtime",
+    prompt: "Time complexity of BELLMAN-FORD on a graph with V vertices and E edges?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n²)", accepts: ["O(n^2)", "n^2", "n²", "v^2"] },
+        { id: "avg",   label: "Avg",    answer: "O(VE)", accepts: ["o(ve)", "ve", "v*e", "v e"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n³)", accepts: ["O(n^3)", "n^3", "n³", "v^3", "o(ve) = o(n^3)"] },
+        { id: "space", label: "Space",  answer: "Θ(V)",  accepts: ["O(V)", "v", "n"] },
+      ],
+      whyNote: "V-1 passes over E edges = O(VE). On a complete graph E = Θ(V²) so worst is Θ(V³).",
+    },
+  },
+
+  {
+    id: "fb:runtime:prim",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "runtime",
+    prompt: "Time complexity of MST-PRIM with a binary heap?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "O((V+E) log V)", accepts: ["o((v+e) log v)", "(v+e)log v", "o(e log v)", "e log v"] },
+        { id: "avg",   label: "Avg",    answer: "O((V+E) log V)", accepts: ["o((v+e) log v)", "(v+e)log v", "o(e log v)"] },
+        { id: "worst", label: "Worst",  answer: "O((V+E) log V)", accepts: ["o((v+e) log v)", "(v+e)log v", "o(e log v)"] },
+        { id: "space", label: "Space",  answer: "Θ(V+E)",         accepts: ["o(v+e)", "v+e"] },
+      ],
+      whyNote: "V extract-mins (V log V) + E decrease-keys (E log V) = O((V+E) log V).",
+    },
+  },
+
+  {
+    id: "fb:runtime:kruskal",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "runtime",
+    prompt: "Time complexity of MST-KRUSKAL with union-by-rank + path compression?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "O(E log E)", accepts: ["o(e log v)", "e log v", "e log e", "o(e log v)"] },
+        { id: "avg",   label: "Avg",    answer: "O(E log E)", accepts: ["o(e log v)", "e log v", "e log e"] },
+        { id: "worst", label: "Worst",  answer: "O(E log E)", accepts: ["o(e log v)", "e log v", "e log e"] },
+        { id: "space", label: "Space",  answer: "Θ(V)",       accepts: ["o(v)", "v"] },
+      ],
+      whyNote: "Dominated by edge sorting. Since E ≤ V², log E = O(log V), so equivalently O(E log V).",
+    },
+  },
+
+  {
+    id: "fb:runtime:bst-search",
+    topicSlug: "04-data-structures/binary-search-trees",
+    kind: "runtime",
+    prompt: "Time of BST search / insert / delete in a balanced vs. unbalanced BST?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Balanced (avg)", answer: "O(log n)", accepts: ["o(log n)", "log n", "logn"] },
+        { id: "avg",   label: "Average",        answer: "O(log n)", accepts: ["o(log n)", "log n", "logn"] },
+        { id: "worst", label: "Unbalanced",     answer: "O(n)",     accepts: ["o(n)", "n", "linear"] },
+        { id: "space", label: "Space",          answer: "O(n)",     accepts: ["o(n)", "n"] },
+      ],
+      whyNote: "Height h: balanced h=O(log n), degenerate (stick) h=O(n).",
+    },
+  },
+
+  {
+    id: "fb:runtime:rbt",
+    topicSlug: "04-data-structures/red-black-trees",
+    kind: "runtime",
+    prompt: "Time of RED-BLACK TREE search / insert / delete?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "O(log n)", accepts: ["o(log n)", "log n"] },
+        { id: "avg",   label: "Avg",    answer: "O(log n)", accepts: ["o(log n)", "log n"] },
+        { id: "worst", label: "Worst",  answer: "O(log n)", accepts: ["o(log n)", "log n"] },
+        { id: "space", label: "Space",  answer: "O(n)",     accepts: ["o(n)", "n"] },
+      ],
+      whyNote: "Height is guaranteed O(log n) by the 5 RBT properties — rotations keep balance.",
+    },
+  },
+
+  {
+    id: "fb:runtime:hash",
+    topicSlug: "04-data-structures/hash-tables",
+    kind: "runtime",
+    prompt: "Hash table (chaining) average and worst-case time for search?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "O(1)", accepts: ["o(1)", "1", "constant"] },
+        { id: "avg",   label: "Avg",    answer: "O(1)", accepts: ["o(1)", "1", "o(1+α)", "1 + alpha"] },
+        { id: "worst", label: "Worst",  answer: "O(n)", accepts: ["o(n)", "n"] },
+        { id: "space", label: "Space",  answer: "O(n)", accepts: ["o(n)", "n"] },
+      ],
+      whyNote: "Avg O(1+α) under simple uniform hashing; worst when all keys collide into one chain.",
+    },
+  },
+
+  {
+    id: "fb:runtime:knapsack",
+    topicSlug: "06-dynamic-programming/01-knapsack",
+    kind: "runtime",
+    prompt: "Time and space of the 0/1 KNAPSACK DP?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(nW)", accepts: ["o(nw)", "nw", "n*w", "n w"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(nW)", accepts: ["o(nw)", "nw"] },
+        { id: "worst", label: "Worst",  answer: "Θ(nW)", accepts: ["o(nw)", "nw"] },
+        { id: "space", label: "Space",  answer: "Θ(nW)", accepts: ["o(nw)", "nw"] },
+      ],
+      whyNote: "Pseudo-polynomial: Θ(nW), not polynomial in the bit-length of W.",
+    },
+  },
+
+  {
+    id: "fb:runtime:lcs",
+    topicSlug: "06-dynamic-programming/lcs",
+    kind: "runtime",
+    prompt: "Time and space of LCS-LENGTH on strings of length m and n?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(mn)", accepts: ["o(mn)", "mn", "m*n", "m n"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(mn)", accepts: ["o(mn)", "mn"] },
+        { id: "worst", label: "Worst",  answer: "Θ(mn)", accepts: ["o(mn)", "mn"] },
+        { id: "space", label: "Space",  answer: "Θ(mn)", accepts: ["o(mn)", "mn"] },
+      ],
+      whyNote: "Fills an (m+1)×(n+1) table; each cell is O(1) work.",
+    },
+  },
+
+  {
+    id: "fb:runtime:matrix-chain",
+    topicSlug: "06-dynamic-programming/matrix-chain-multiplication",
+    kind: "runtime",
+    prompt: "Time and space of MATRIX-CHAIN-ORDER DP?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 4,
+    runtime: {
+      slots: [
+        { id: "best",  label: "Best",   answer: "Θ(n³)", accepts: ["o(n^3)", "n^3", "n³"] },
+        { id: "avg",   label: "Avg",    answer: "Θ(n³)", accepts: ["o(n^3)", "n^3", "n³"] },
+        { id: "worst", label: "Worst",  answer: "Θ(n³)", accepts: ["o(n^3)", "n^3", "n³"] },
+        { id: "space", label: "Space",  answer: "Θ(n²)", accepts: ["o(n^2)", "n^2", "n²"] },
+      ],
+      whyNote: "Θ(n²) subproblems × Θ(n) split choices = Θ(n³).",
+    },
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MCQ — extra questions drafted to match the real exam style
+  //         (16-MCQ block at the top of the final, 40 pts)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  {
+    id: "fb:mcq:asymptotic-1",
+    topicSlug: "00-foundations/asymptotic-notation",
+    kind: "mcq",
+    prompt: "If f(n) = 3n² + 5n log n + 7, what is the tightest asymptotic bound on f(n)?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Θ(n log n)", correct: false, why: "n² dominates n log n for large n." },
+      { text: "Θ(n²)",      correct: true,  why: "Drop lower-order terms; the leading term 3n² sets the bound." },
+      { text: "Θ(n³)",      correct: false, why: "f is not that large — n² is the actual growth rate." },
+      { text: "O(n log n)", correct: false, why: "This is a lower bound, not tight." },
+    ],
+    explanation: "Big-Θ captures the exact growth rate. Drop constants and lower-order terms.",
+  },
+
+  {
+    id: "fb:mcq:asymptotic-2",
+    topicSlug: "00-foundations/asymptotic-notation",
+    kind: "mcq",
+    prompt: "Which statement about O(n) and o(n) is TRUE?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "O(n) ⊂ o(n)", correct: false, why: "Inclusion runs the other way." },
+      { text: "o(n) ⊂ O(n)", correct: true,  why: "Little-o is a strictly stronger bound than big-O." },
+      { text: "O(n) = o(n)", correct: false, why: "Not equal — little-o requires the ratio to go to 0." },
+      { text: "Neither set contains the other.", correct: false, why: "o(n) is a proper subset of O(n)." },
+    ],
+    explanation: "o(n) means lim f(n)/n = 0; O(n) means the ratio is bounded. Every little-o function is also big-O.",
+  },
+
+  {
+    id: "fb:mcq:master-1",
+    topicSlug: "02-divide-and-conquer/master-theorem",
+    kind: "mcq",
+    prompt: "Solve T(n) = 2T(n/2) + n using the master theorem.",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Θ(n)",         correct: false, why: "Case 2: f(n) = Θ(n^log_b a) so we multiply by log n." },
+      { text: "Θ(n log n)",   correct: true,  why: "log_b a = log_2 2 = 1; f(n) = n = Θ(n¹) → case 2." },
+      { text: "Θ(n²)",        correct: false, why: "That's T(n) = 4T(n/2) + n." },
+      { text: "Θ(n log² n)",  correct: false, why: "That's case 2 with an extra log factor, e.g., f(n) = n log n." },
+    ],
+    explanation: "This is the merge-sort recurrence. Master theorem case 2 gives Θ(n log n).",
+  },
+
+  {
+    id: "fb:mcq:graph-1",
+    topicSlug: "07-graph-algorithms/bfs",
+    kind: "mcq",
+    prompt: "BFS on an unweighted graph correctly finds the shortest path between any two vertices because:",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "It uses a priority queue ordered by distance.", correct: false, why: "That's Dijkstra. BFS uses a FIFO queue." },
+      { text: "It explores all vertices at distance k before any at distance k+1.", correct: true, why: "The level-by-level invariant guarantees first-discovery = shortest distance." },
+      { text: "It uses DFS backtracking.", correct: false, why: "BFS is iterative and queue-based, not recursive." },
+      { text: "It sorts edges by weight.", correct: false, why: "Irrelevant — BFS doesn't look at weights." },
+    ],
+    explanation: "The level-order invariant is what makes BFS optimal for unweighted shortest paths.",
+  },
+
+  {
+    id: "fb:mcq:graph-2",
+    topicSlug: "07-graph-algorithms/shortest-paths",
+    kind: "mcq",
+    prompt: "Which algorithm correctly handles negative edge weights (but no negative cycles) on a directed graph?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Dijkstra's algorithm",   correct: false, why: "Dijkstra's greedy choice fails with negative edges." },
+      { text: "BFS",                     correct: false, why: "BFS assumes unit weights." },
+      { text: "Bellman-Ford",           correct: true,  why: "Relaxes all edges V-1 times; correct on negative weights; detects negative cycles." },
+      { text: "Prim's algorithm",       correct: false, why: "Prim's computes MST, not shortest paths." },
+    ],
+    explanation: "Bellman-Ford is the 'negative-weights tolerant' SSSP algorithm. O(VE).",
+  },
+
+  {
+    id: "fb:mcq:greedy-1",
+    topicSlug: "05-greedy/activity-selection",
+    kind: "mcq",
+    prompt: "The greedy strategy that provably solves activity selection is:",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Pick the activity with the earliest START time.",  correct: false, why: "Can force a long activity that blocks many others." },
+      { text: "Pick the activity with the shortest DURATION.",    correct: false, why: "A short activity in the middle can conflict with two longer ones." },
+      { text: "Pick the activity with the earliest FINISH time.", correct: true,  why: "Leaves the resource free as early as possible — provably optimal." },
+      { text: "Pick activities in random order.",                 correct: false, why: "No optimality guarantee." },
+    ],
+    explanation: "CLRS §16.1. Finish-time ordering is the classical correct greedy choice.",
+  },
+
+  {
+    id: "fb:mcq:dp-1",
+    topicSlug: "06-dynamic-programming/dp-paradigm",
+    kind: "mcq",
+    prompt: "A problem is amenable to dynamic programming when it has:",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Greedy choice property only.",                              correct: false, why: "That's the greedy paradigm." },
+      { text: "Optimal substructure AND overlapping subproblems.",         correct: true,  why: "Overlap is what makes memoization pay off over DAC." },
+      { text: "No recursion.",                                              correct: false, why: "DP is often implemented recursively (top-down)." },
+      { text: "Discrete-only input.",                                       correct: false, why: "Not a structural requirement." },
+    ],
+    explanation: "Without overlapping subproblems, DAC suffices. Without optimal substructure, DP's composition doesn't work.",
+  },
+
+  {
+    id: "fb:mcq:sort-1",
+    topicSlug: "03-sorting/radix-sort",
+    kind: "mcq",
+    prompt: "Radix sort's correctness depends on which property of its inner sort?",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "In-place",      correct: false, why: "Not required; counting sort isn't in-place." },
+      { text: "Comparison-based", correct: false, why: "Radix sort avoids comparisons; the inner sort often isn't comparison-based either." },
+      { text: "Stability",      correct: true,  why: "Stability preserves earlier-digit order when sorting by a later digit." },
+      { text: "Adaptive",       correct: false, why: "Irrelevant for radix." },
+    ],
+    explanation: "Radix sort works digit-by-digit; stability keeps prior digit comparisons intact.",
+  },
+
+  {
+    id: "fb:mcq:tree-1",
+    topicSlug: "04-data-structures/tree-traversals",
+    kind: "mcq",
+    prompt: "Can a binary tree be uniquely reconstructed from its preorder traversal alone?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Yes, always.", correct: false, why: "Preorder alone is ambiguous — many trees share a preorder." },
+      { text: "Only if the tree is balanced.", correct: false, why: "Balance doesn't save you." },
+      { text: "No — you need preorder plus inorder (or postorder plus inorder).", correct: true, why: "Inorder splits subtrees; either pre or post provides the roots." },
+      { text: "Only if the tree is a BST.", correct: false, why: "Reconstructing a BST from preorder works because inorder = sorted; without that BST structure, preorder alone is insufficient." },
+    ],
+    explanation: "This was an Exam 2 trap. Preorder alone is AMBIGUOUS.",
+  },
+
+  {
+    id: "fb:mcq:mst-1",
+    topicSlug: "07-graph-algorithms/minimum-spanning-tree",
+    kind: "mcq",
+    prompt: "Which statement about MSTs is TRUE?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "The MST of a graph with distinct edge weights is unique.", correct: true, why: "No tie means no alternative minimum-weight choice at any cut." },
+      { text: "Prim's and Kruskal's always return the SAME edges.", correct: false, why: "With ties they can pick different edges but same total weight." },
+      { text: "An MST can have a cycle if it uses distinct weights.", correct: false, why: "A tree by definition has no cycles." },
+      { text: "MSTs require non-negative edge weights.", correct: false, why: "Negative weights are fine; only cycles are forbidden." },
+    ],
+    explanation: "Cut property + uniqueness of minimum weights gives a unique MST.",
+  },
+
+  {
+    id: "fb:mcq:dfs-edges",
+    topicSlug: "07-graph-algorithms/dfs",
+    kind: "mcq",
+    prompt: "In DFS on a directed graph, a BACK edge from u to v means:",
+    difficulty: "tricky",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "v was a descendant of u when the edge was examined.", correct: false, why: "That describes a forward edge." },
+      { text: "v is an ancestor of u (still on the recursion stack).", correct: true, why: "Back edges connect a vertex to an ancestor still being processed — signal a cycle in directed graphs." },
+      { text: "v has already finished (color BLACK).", correct: false, why: "That's a cross or forward edge." },
+      { text: "v has never been visited.", correct: false, why: "That's a tree edge." },
+    ],
+    explanation: "Back edges are the sufficient-and-necessary signal of a cycle in a directed graph.",
+  },
+
+  {
+    id: "fb:mcq:topo-1",
+    topicSlug: "07-graph-algorithms/topological-sort",
+    kind: "mcq",
+    prompt: "Topological sort is defined for which kind of graph?",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Any directed graph.",         correct: false, why: "Cycles make topological order impossible." },
+      { text: "Any undirected graph.",       correct: false, why: "Topo order requires direction." },
+      { text: "A directed ACYCLIC graph.",   correct: true,  why: "No cycles means a valid linear order exists." },
+      { text: "Any graph with ≤ V-1 edges.", correct: false, why: "Edge count is irrelevant." },
+    ],
+    explanation: "Topological sort requires a DAG (directed acyclic graph).",
+  },
+
+  {
+    id: "fb:mcq:heap-1",
+    topicSlug: "03-sorting/heap-sort",
+    kind: "mcq",
+    prompt: "BUILD-MAX-HEAP runs in what time on an array of length n?",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Θ(n log n)", correct: false, why: "The naïve upper bound, but the tight bound is better." },
+      { text: "Θ(n)",       correct: true,  why: "The careful amortized analysis collapses the sum to Θ(n)." },
+      { text: "Θ(log n)",    correct: false, why: "That's one heapify call, not building from scratch." },
+      { text: "Θ(n²)",      correct: false, why: "Far too loose." },
+    ],
+    explanation: "CLRS §6.3. Each MAX-HEAPIFY is O(h) with h ≤ floor(log(n/(2^(h+1)))); the sum telescopes to Θ(n).",
+  },
+
+  {
+    id: "fb:mcq:quick-1",
+    topicSlug: "03-sorting/quick-sort",
+    kind: "mcq",
+    prompt: "On an already-sorted array, classic quicksort with last-element pivot runs in:",
+    difficulty: "firm",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Θ(n log n)", correct: false, why: "That's the good case with balanced partitions." },
+      { text: "Θ(n)",       correct: false, why: "No — you still do Θ(n) work per level over n levels." },
+      { text: "Θ(n²)",      correct: true,  why: "Pivot is always the max → T(n) = T(n-1) + Θ(n) = Θ(n²)." },
+      { text: "Θ(n^1.5)",   correct: false, why: "No standard analysis gives this." },
+    ],
+    explanation: "This is quicksort's classic worst case — and why randomized pivots exist.",
+  },
+
+  {
+    id: "fb:mcq:dac-1",
+    topicSlug: "02-divide-and-conquer/maximum-subarray",
+    kind: "mcq",
+    prompt: "The DAC maximum-subarray algorithm recurrence is T(n) = 2T(n/2) + Θ(n), giving:",
+    difficulty: "gentle",
+    source: "final-bank",
+    points: 2.5,
+    choices: [
+      { text: "Θ(n)",         correct: false, why: "Kadane's iterative version is Θ(n); the DAC version has log n levels." },
+      { text: "Θ(n log n)",    correct: true,  why: "Master theorem case 2." },
+      { text: "Θ(n²)",        correct: false, why: "That's the naïve brute-force version." },
+      { text: "Θ(log n)",     correct: false, why: "Too fast — you still touch each element." },
+    ],
+    explanation: "DAC max-subarray is a staple of case-2 master theorem application.",
+  },
+];

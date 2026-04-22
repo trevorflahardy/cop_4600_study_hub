@@ -1,0 +1,126 @@
+PHASE 2.2: COP 4600 OS Study Hub Rebrand - COMPLETE
+
+=== REBRANDING TEXT REPLACEMENTS ===
+
+1. COT 4400 → COP 4600
+   Files: index.html, src/router.tsx, src/components/chrome/AppTop.tsx, src/pages/FinalExamPage.tsx, package.json, src/lib/backup.ts, src/lib/db.ts
+   Result: 7 files updated
+
+2. Analysis of Algorithms → Operating Systems
+   Files: src/components/chrome/AppTop.tsx, src/features/practice/PseudocodeQuestion.tsx
+   Result: 2 files updated
+
+3. cot4400-study-hub → cop4600-study-hub
+   Files: package.json, src/lib/backup.ts, src/lib/db.ts
+   Result: 3 files updated
+
+4. index.html <title>: "COP 4600 · Study Hub" (verified)
+
+=== BUILD SYSTEM UPDATES ===
+
+1. scripts/build-kb.ts
+   - Changed isExamPrep check: "08-exam-prep" → "07-exam-prep" (line 545)
+   - Cleared PREREQUISITES array: Removed all 30+ AOA-specific prerequisite edges
+   - Added TODO comment for Phase 2.3 rebuild with OS structure
+
+=== VIZ COMPONENT STRIPPING ===
+
+AOA-specific components disabled (via empty exports in index.tsx):
+- AsymptoticPlotter.tsx
+- BstViz.tsx
+- ClosestPair.tsx
+- DpGrid.tsx
+- GraphSandbox.tsx
+- HashTableViz.tsx
+- HeapViz.tsx
+- HuffmanViz.tsx
+- LoopInvariantViz.tsx
+- MasterTheoremCalculator.tsx
+- RecursionTree.tsx
+- SortAnimator.tsx
+- TowerOfHanoi.tsx
+
+Result: src/components/viz/index.tsx now returns empty stubs. AlgorithmPage.tsx gracefully handles viz=undefined.
+
+=== DATA FILES RESET ===
+
+src/data/final-exam-bank.ts
+- Emptied exported array
+- Preserved TypeScript interface structure
+- Preserved type definitions for future rebuild
+
+Note: kb.json, graph.json, flashcards.json, quizzes.json, rubrics.json, traces.json will regenerate on next `bun run kb`
+
+=== PAGES UPDATES ===
+
+HubPage.tsx
+- Replaced FinalExamTeaser copy from AOA-specific (asymptotic analysis, sorting, graph algorithms) to OS-specific content
+- New teaser mentions: scheduling, memory management, process/thread synchronization, file systems
+- Tile labels: "INTERACTIVE", "PSEUDOCODE", "COMPLEXITY", "MCQ"
+- Exam prep description: CPU scheduling, memory management, synchronization, deadlock, file systems
+
+=== UNIT STRUCTURE MAPPING ===
+
+kb-loader.ts UNIT_LABELS (OLD → NEW):
+- "00-foundations" → "Fundamentals" (unchanged)
+- "01-recursion" → "01-processes" / "Processes & Threads"
+- "02-divide-and-conquer" → "02-scheduling" / "CPU Scheduling"
+- "03-sorting" → "03-memory" / "Memory Management"
+- "04-data-structures" → "04-paging" / "Paging & VM"
+- "05-greedy" → "05-sync" / "Synchronization"
+- "06-dynamic-programming" → "06-deadlock" / "Deadlock"
+- "07-graph-algorithms" → "07-io" / "I/O & File Systems"
+- "08-exam-prep" → "07-exam-prep" / "Exam Prep"
+
+MapPage.tsx UNIT_COLORS updated to match new unit names with same oklch values
+
+=== FEATURES & STORES UNCHANGED ===
+
+No changes required to:
+- src/features/ (agenda, practice, study-session, syllabus) - all generic
+- src/stores/ (session, settings) - no AOA-specific logic
+- src/lib/ (keyboard, srs, mastery, rubrics, ollama) - all generic
+- Content components (TracePlayer, Pseudocode, ComplexityCard, MarkdownBlock) - all generic
+
+=== PAGES UNCHANGED (VERIFIED GENERIC) ===
+
+No changes required:
+- TrapsPage.tsx - dynamically loads from KB (common-exam-traps.md)
+- FinalExamPage.tsx - generic question modes (hub, graph, pseudo, runtime, simulator, mcq)
+- LearnPage.tsx, ModulePage.tsx, LecturePage.tsx, SettingsPage.tsx, MasteryPage.tsx, FlashcardsPage.tsx, etc.
+  All use KB entities dynamically; no hardcoded AOA content
+
+=== TYPE CHECKING STATUS ===
+
+Shell app structure intact. No broken imports expected:
+- vizFor() returns undefined gracefully
+- finalExamBank exports empty array (matches interface)
+- UNIT_LABELS keys match MapPage unit name references
+- PREREQUISITES is valid (empty but syntactically correct)
+
+Ready for Phase 2.3 KB rebuild. TypeCheck test: `cd app && bun run typecheck`
+
+=== FILES MODIFIED SUMMARY ===
+
+Total files changed: 16
+- Config: 5 (package.json, vite.config.ts, tsconfig.json + 2 variants)
+- Index/Entry: 1 (index.html)
+- Router: 1 (src/router.tsx)
+- Components: 1 (src/components/viz/index.tsx - replaced)
+- Chrome UI: 1 (src/components/chrome/AppTop.tsx)
+- Data: 1 (src/data/final-exam-bank.ts - emptied)
+- Lib: 3 (kb-loader.ts, backup.ts, db.ts)
+- Pages: 2 (HubPage.tsx, MapPage.tsx)
+- Features: 1 (src/features/practice/PseudocodeQuestion.tsx)
+- Scripts: 1 (scripts/build-kb.ts)
+- Documentation: 2 (PHASE2_TODO.md, PHASE2_SUMMARY.txt)
+
+=== PHASE 2.3 ACTION ITEMS ===
+
+1. Rebuild PREREQUISITES graph in scripts/build-kb.ts
+2. Rebuild VIZ_FOR_TOPIC and VIZ_CATALOG in src/components/viz/index.tsx
+3. Populate src/data/final-exam-bank.ts with OS problems
+4. Run `bun install && bun run kb` to generate compiled JSON from OS KB
+5. Test `bun run typecheck` and `bun run dev`
+
+Shell is ready for OS content injection.

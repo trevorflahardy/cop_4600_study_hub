@@ -1,0 +1,637 @@
+import { useMemo, useState, useEffect } from "react";
+import { Link, useSearch, useNavigate } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, ArrowRight, Clock, Timer, Trophy, CheckCircle2, GitBranch, Code2, Gauge, ListChecks, Sparkles } from "lucide-react";
+import { Frame, Button, Chip, Eyebrow, MiniLabel, Highlighter, StatCard, PipRow, type PipState } from "@/components/notebook";
+import { allQuizzes, quizzesFromBank, type KbQuizQuestion } from "@/lib/kb-loader";
+import { recordAnswer } from "@/lib/mastery";
+import { GraphWalkQuestion } from "@/features/practice/GraphWalkQuestion";
+import { PseudocodeQuestion } from "@/features/practice/PseudocodeQuestion";
+import { RuntimeQuestion } from "@/features/practice/RuntimeQuestion";
+import { useSettings } from "@/stores/settings";
+
+type Mode = "hub" | "graph" | "pseudo" | "runtime" | "simulator" | "mcq";
+
+/**
+ * Final Exam Prep hub.
+ *
+ * Design goals (from README "How Trev prefers to learn"):
+ *  - Coherent flow: mode selection → focused drill → debrief → next CTA.
+ *  - Notebook aesthetic (Frames, Eyebrows, Highlighter, JetBrains Mono).
+ *  - No dead ends: every finished drill points at what to do next.
+ *  - Reuse existing question types where possible (MCQ bank = same type the
+ *    rest of the app renders; we just filter to the final-bank source).
+ *  - Real exam style, modeled on Exam 1 + Exam 2:
+ *        16 MCQ (40 pts) + 3-4 long-form (60 pts) = 100 pts.
+ */
+export function FinalExamPage() {
+  const search = useSearch({ strict: false }) as { mode?: Mode };
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>(search.mode ?? "hub");
+
+  useEffect(() => {
+    if (search.mode && search.mode !== mode) setMode(search.mode);
+  }, [search.mode, mode]);
+
+  function go(m: Mode) {
+    setMode(m);
+    navigate({ to: "/final", search: { mode: m } });
+  }
+
+  const bank = useMemo(() => quizzesFromBank(), []);
+  const graphWalks = bank.filter((q) => q.kind === "graph-walk");
+  const pseudocodes = bank.filter((q) => q.kind === "pseudocode");
+  const runtimes = bank.filter((q) => q.kind === "runtime");
+  const mcqBank = bank.filter((q) => q.kind === "mcq");
+
+  if (mode === "hub") {
+    return <FinalHub
+      counts={{ graph: graphWalks.length, pseudo: pseudocodes.length, runtime: runtimes.length, mcq: mcqBank.length }}
+      onGo={go}
+    />;
+  }
+  if (mode === "graph") return <DrillRunner title="Graph walkthroughs" questions={graphWalks} onDone={() => go("hub")} />;
+  if (mode === "pseudo") return <DrillRunner title="Pseudocode drills" questions={pseudocodes} onDone={() => go("hub")} />;
+  if (mode === "runtime") return <DrillRunner title="Runtime drills" questions={runtimes} onDone={() => go("hub")} />;
+  if (mode === "mcq") return <DrillRunner title="MCQ practice · exam-style" questions={mcqBank} onDone={() => go("hub")} />;
+  if (mode === "simulator") return <Simulator onDone={() => go("hub")} />;
+  return null;
+}
+
+// ─── Hub ─────────────────────────────────────────────────────────────────────
+
+function FinalHub({ counts, onGo }: {
+  counts: { graph: number; pseudo: number; runtime: number; mcq: number };
+  onGo: (m: Mode) => void;
+}) {
+  const { ollamaEnabled } = useSettings();
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Frame variant="wobble" shadow="card" className="!p-8">
+        <Eyebrow>final exam prep · COT 4400</Eyebrow>
+        <h1 className="mt-3">
+          Dry-run the final with <Highlighter>real exam shape</Highlighter>.
+        </h1>
+        <p className="mt-3 serif italic text-[var(--ink-2)] max-w-[62ch]">
+          Built from your actual Exam 1 and Exam 2 patterns: 16 MCQ for 40 pts,
+          then long-form work — pseudocode, runtime analysis, graph traces.
+          Pick a drill, or run the full simulator end-to-end.
+        </p>
+        <div className="mt-4 flex gap-2 flex-wrap">
+          <Chip tone="sky">16 MCQ + 4 long-form</Chip>
+          <Chip tone="hl">~75 min simulator</Chip>
+          <Chip tone={ollamaEnabled ? "mint" : "soft"}>
+            Ollama {ollamaEnabled ? "on" : "off"} · pseudocode grading
+          </Chip>
+        </div>
+      </Frame>
+
+      <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+        <DrillTile
+          icon={<GitBranch size={20} />}
+          kicker="GRAPH"
+          title="Walk through graph algorithms"
+          blurb="Click nodes in BFS / DFS / Dijkstra / Prim order. Kruskal: click edges."
+          count={counts.graph}
+          onClick={() => onGo("graph")}
+        />
+        <DrillTile
+          icon={<Code2 size={20} />}
+          kicker="PSEUDOCODE"
+          title="Write pseudocode · Ollama grades"
+          blurb="Offline rubric runs always; Ollama streams tutor feedback if enabled."
+          count={counts.pseudo}
+          onClick={() => onGo("pseudo")}
+        />
+        <DrillTile
+          icon={<Gauge size={20} />}
+          kicker="RUNTIME"
+          title="Best / avg / worst / space"
+          blurb="For every algorithm in the course. Asymptotic notation, partial credit."
+          count={counts.runtime}
+          onClick={() => onGo("runtime")}
+        />
+        <DrillTile
+          icon={<ListChecks size={20} />}
+          kicker="MCQ"
+          title="Exam-style MCQs"
+          blurb="Short definitional traps, asymptotic comparisons, graph / DP / greedy."
+          count={counts.mcq}
+          onClick={() => onGo("mcq")}
+        />
+      </div>
+
+      <Frame>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <Eyebrow>full simulator</Eyebrow>
+          <span className="flex-1" />
+          <MiniLabel>pace like the real thing</MiniLabel>
+        </div>
+        <div className="mt-2 flex items-baseline gap-6 flex-wrap">
+          <div>
+            <div className="display text-4xl">100</div>
+            <div className="mini-label">total points</div>
+          </div>
+          <div>
+            <div className="display text-4xl">16</div>
+            <div className="mini-label">MCQ · 40 pts</div>
+          </div>
+          <div>
+            <div className="display text-4xl">4</div>
+            <div className="mini-label">long-form · ~15 pts each</div>
+          </div>
+          <div>
+            <div className="display text-4xl">75</div>
+            <div className="mini-label">minutes budgeted</div>
+          </div>
+          <span className="flex-1" />
+          <Button variant="pop" size="big" onClick={() => onGo("simulator")}>
+            <Timer size={18} /> Start simulator
+          </Button>
+        </div>
+        <p className="serif italic text-[14px] text-[var(--ink-2)] mt-3 max-w-[62ch]">
+          Runs a randomized sample that mirrors the real exam structure (16 MCQ
+          then 4 long-form covering graph trace, pseudocode, runtime analysis,
+          and one integrative problem). Timer is visible but doesn't lock you
+          out — you can keep going.
+        </p>
+      </Frame>
+
+      <Frame variant="soft">
+        <Eyebrow>what the final will probably look like</Eyebrow>
+        <div className="grid gap-4 mt-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+          <div>
+            <MiniLabel>part 1 · 16 MCQ · 40 pts</MiniLabel>
+            <p className="serif text-[14px] mt-2">
+              Mix of asymptotic properties, traversal order, DP vs DAC vs greedy,
+              pseudocode tracing, and a fresh slice of graph-algorithm traps
+              (BFS invariants, MST properties, topo sort prerequisites).
+            </p>
+          </div>
+          <div>
+            <MiniLabel>part 2 · long-form · ~60 pts</MiniLabel>
+            <ul className="serif text-[14px] mt-2 list-disc pl-5 space-y-1">
+              <li>Trace one graph algorithm (BFS, DFS, Dijkstra, Prim, or Kruskal).</li>
+              <li>Write pseudocode for a named algorithm.</li>
+              <li>Analyze the runtime of given code (sum a loop-count expression).</li>
+              <li>An integrative problem spanning two chapters.</li>
+            </ul>
+          </div>
+        </div>
+      </Frame>
+
+      <div className="flex flex-wrap gap-3 mt-2">
+        <Link to="/map" className="btn-sk ghost">← the map</Link>
+        <Link to="/mastery" className="btn-sk ghost">mastery</Link>
+        <Link to="/settings" className="btn-sk ghost">Ollama · settings</Link>
+      </div>
+    </div>
+  );
+}
+
+function DrillTile({ icon, kicker, title, blurb, count, onClick }: {
+  icon: React.ReactNode;
+  kicker: string;
+  title: string;
+  blurb: string;
+  count: number;
+  onClick: () => void;
+}) {
+  return (
+    <Frame className="!p-5" variant="default" style={{ cursor: "pointer" }} onClick={onClick}>
+      <div className="flex items-center gap-2">
+        {icon}
+        <MiniLabel>{kicker}</MiniLabel>
+        <span className="flex-1" />
+        <Chip tone="soft">{count}</Chip>
+      </div>
+      <h3 className="mt-2">{title}</h3>
+      <p className="serif italic text-[13.5px] text-[var(--ink-2)] mt-1">{blurb}</p>
+      <div className="mt-3 flex justify-end">
+        <span className="btn-sk pop small">
+          start <ArrowRight size={14} />
+        </span>
+      </div>
+    </Frame>
+  );
+}
+
+// ─── Generic drill runner — steps through a list of questions ─────────────────
+
+function DrillRunner({ title, questions, onDone }: {
+  title: string;
+  questions: KbQuizQuestion[];
+  onDone: () => void;
+}) {
+  const [i, setI] = useState(0);
+  const [results, setResults] = useState<("correct" | "incorrect" | "skipped")[]>([]);
+  const q = questions[i];
+
+  const pips: PipState[] = useMemo(() => {
+    return questions.map((_, idx) => {
+      if (idx < results.length) return results[idx] === "correct" ? "done" : results[idx] === "incorrect" ? "wrong" : "review";
+      if (idx === i) return "now";
+      return "pending";
+    });
+  }, [questions, results, i]);
+
+  async function onAnswered(outcome: "correct" | "incorrect" | "skipped") {
+    if (q && outcome !== "skipped") {
+      await recordAnswer(q.topicSlug, outcome === "correct" ? "correct" : "incorrect");
+    }
+  }
+
+  function advance(outcome: "correct" | "incorrect" | "skipped") {
+    const next = [...results, outcome];
+    setResults(next);
+    if (i + 1 >= questions.length) return; // finished
+    setI(i + 1);
+  }
+
+  if (!questions.length) {
+    return (
+      <Frame>
+        <Eyebrow>empty drill</Eyebrow>
+        <h2 className="mt-2">No questions yet in this bank.</h2>
+        <div className="mt-4">
+          <Button onClick={onDone}><ArrowLeft size={14} /> back</Button>
+        </div>
+      </Frame>
+    );
+  }
+
+  const finished = results.length >= questions.length;
+
+  if (finished) {
+    const correct = results.filter((r) => r === "correct").length;
+    return <DrillDebrief title={title} correct={correct} total={questions.length} onRestart={() => { setI(0); setResults([]); }} onDone={onDone} />;
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-4 flex-wrap">
+        <button onClick={onDone} className="btn-sk ghost small">
+          <ArrowLeft size={14} /> final-exam hub
+        </button>
+        <Eyebrow>{title}</Eyebrow>
+        <span className="flex-1" />
+        <MiniLabel>{i + 1} of {questions.length}</MiniLabel>
+        <PipRow states={pips} />
+      </div>
+
+      {q && q.kind === "graph-walk" && (
+        <AnimatedSwap k={q.id}>
+          <GraphWalkQuestion
+            question={q}
+            onAnswered={(o) => { void onAnswered(o); advance(o); }}
+          />
+        </AnimatedSwap>
+      )}
+      {q && q.kind === "pseudocode" && (
+        <AnimatedSwap k={q.id}>
+          <PseudocodeQuestion
+            question={q}
+            onAnswered={(o) => { void onAnswered(o); advance(o); }}
+          />
+        </AnimatedSwap>
+      )}
+      {q && q.kind === "runtime" && (
+        <AnimatedSwap k={q.id}>
+          <RuntimeQuestion
+            question={q}
+            onAnswered={(o) => { void onAnswered(o); advance(o); }}
+          />
+        </AnimatedSwap>
+      )}
+      {q && q.kind === "mcq" && (
+        <AnimatedSwap k={q.id}>
+          <McqCard
+            question={q}
+            onAnswered={(o) => { void onAnswered(o); advance(o); }}
+          />
+        </AnimatedSwap>
+      )}
+
+      <div className="flex justify-end">
+        <Button variant="ghost" onClick={() => advance("skipped")}>
+          Skip · mark for review →
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function AnimatedSwap({ k, children }: { k: string; children: React.ReactNode }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={k}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.18 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// Inline MCQ card — keeps the runner self-contained rather than importing the
+// full QuizRunner (which has its own navigation).
+function McqCard({ question: q, onAnswered }: {
+  question: KbQuizQuestion;
+  onAnswered: (o: "correct" | "incorrect") => void;
+}) {
+  const [picked, setPicked] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  if (!q.choices) return null;
+
+  function submit() {
+    if (picked === null || !q.choices) return;
+    setRevealed(true);
+    const isRight = q.choices[picked].correct;
+    onAnswered(isRight ? "correct" : "incorrect");
+  }
+
+  return (
+    <Frame className="!p-6">
+      <Eyebrow>multiple choice · {q.points ?? "—"} pts</Eyebrow>
+      <h3 className="mt-2">{q.prompt}</h3>
+
+      <div className="m3-choices mt-5">
+        {q.choices.map((c, idx) => {
+          const letter = String.fromCharCode(65 + idx);
+          const isPicked = picked === idx;
+          return (
+            <button
+              type="button"
+              key={idx}
+              className={"m3-ch" + (isPicked ? " picked" : "") + (revealed && isPicked ? (c.correct ? " right" : " wrong") : "")}
+              onClick={() => !revealed && setPicked(idx)}
+              disabled={revealed}
+            >
+              <span className="letter">{letter}</span>
+              <span>{c.text}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {!revealed ? (
+        <div className="mt-5">
+          <Button variant="pop" size="big" disabled={picked === null} onClick={submit}>
+            Submit
+          </Button>
+        </div>
+      ) : (
+        <div
+          className="mt-5 p-4"
+          style={{
+            border: "1.5px solid var(--ink)",
+            borderRadius: 10,
+            background: q.choices[picked!].correct
+              ? "var(--hl-2)"
+              : "color-mix(in oklch, var(--wrong) 12%, var(--paper))",
+          }}
+        >
+          <h4>{q.choices[picked!].correct ? "✓ Right." : "✗ Not quite."}</h4>
+          <p className="mt-1"><strong>Why:</strong> {q.choices[picked!].why ?? q.explanation}</p>
+          {!q.choices[picked!].correct && (
+            <p className="mt-2 text-[13.5px] text-[var(--ink-2)]">
+              <strong>Correct choice:</strong> {q.choices.find((c) => c.correct)?.text}
+            </p>
+          )}
+        </div>
+      )}
+    </Frame>
+  );
+}
+
+// ─── Drill debrief ───────────────────────────────────────────────────────────
+
+function DrillDebrief({ title, correct, total, onRestart, onDone }: {
+  title: string;
+  correct: number;
+  total: number;
+  onRestart: () => void;
+  onDone: () => void;
+}) {
+  const pct = total === 0 ? 0 : Math.round((correct / total) * 100);
+  return (
+    <Frame className="!p-8">
+      <Eyebrow>drill complete · {title}</Eyebrow>
+      <h1 className="mt-2">
+        {pct >= 85 ? "Solid pass — " : pct >= 70 ? "Passing — " : "Needs more reps — "}
+        <Highlighter>{correct}/{total}</Highlighter> correct.
+      </h1>
+      <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+        <StatCard n={pct + "%"} label="accuracy" tone={pct >= 85 ? "mint" : "default"} />
+        <StatCard n={String(correct)} label="correct" />
+        <StatCard n={String(total - correct)} label="to revisit" />
+      </div>
+      <div className="mt-6 flex gap-3 flex-wrap">
+        <Button variant="pop" onClick={onRestart}>
+          <Sparkles size={16} /> Do it again
+        </Button>
+        <Button variant="ghost" onClick={onDone}>
+          Back to final-exam hub
+        </Button>
+        <Link to="/review" className="btn-sk ghost">
+          Review queue →
+        </Link>
+      </div>
+    </Frame>
+  );
+}
+
+// ─── Full simulator ──────────────────────────────────────────────────────────
+// Pulls 16 MCQs (mixed across the whole KB + bank), then 4 long-form:
+// one graph walk, one pseudocode, one runtime, one hardest MCQ.
+
+function Simulator({ onDone }: { onDone: () => void }) {
+  const paper = useMemo(() => buildSimulatorPaper(), []);
+  const [startedAt] = useState(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [i, setI] = useState(0);
+  const [scoreByIdx, setScoreByIdx] = useState<Record<number, "correct" | "incorrect" | "skipped">>({});
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+
+  const q = paper[i];
+  const done = Object.keys(scoreByIdx).length >= paper.length;
+
+  async function onAnswered(outcome: "correct" | "incorrect" | "skipped") {
+    if (q && outcome !== "skipped") {
+      await recordAnswer(q.topicSlug, outcome === "correct" ? "correct" : "incorrect");
+    }
+    setScoreByIdx((s) => ({ ...s, [i]: outcome }));
+  }
+
+  function next() {
+    if (i + 1 >= paper.length) return;
+    setI(i + 1);
+  }
+  function back() {
+    if (i <= 0) return;
+    setI(i - 1);
+  }
+
+  if (done) return <SimulatorDebrief paper={paper} scores={scoreByIdx} elapsedSec={elapsed} onDone={onDone} onRestart={() => window.location.reload()} />;
+
+  if (!q) return null;
+
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = (elapsed % 60).toString().padStart(2, "0");
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Frame className="!p-5">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={onDone} className="btn-sk ghost small">
+            <ArrowLeft size={14} /> exit simulator
+          </button>
+          <Eyebrow>final exam · simulator</Eyebrow>
+          <span className="flex-1" />
+          <Chip tone="sky"><Clock size={12} /> {minutes}:{seconds}</Chip>
+          <Chip tone="soft">
+            {i + 1}/{paper.length} · {q.kind.toUpperCase()}
+          </Chip>
+          <Chip tone="hl">{q.points ?? "—"} pts</Chip>
+        </div>
+      </Frame>
+
+      {q.kind === "mcq" && <McqCard key={q.id} question={q} onAnswered={onAnswered} />}
+      {q.kind === "graph-walk" && <GraphWalkQuestion key={q.id} question={q} onAnswered={onAnswered} />}
+      {q.kind === "pseudocode" && <PseudocodeQuestion key={q.id} question={q} onAnswered={onAnswered} />}
+      {q.kind === "runtime" && <RuntimeQuestion key={q.id} question={q} onAnswered={onAnswered} />}
+
+      <div className="flex gap-3 flex-wrap justify-end">
+        <Button variant="ghost" onClick={back} disabled={i === 0}>
+          <ArrowLeft size={14} /> back
+        </Button>
+        <Button variant="ghost" onClick={() => { void onAnswered("skipped"); next(); }}>
+          Skip →
+        </Button>
+        <Button variant="pop" onClick={next} disabled={scoreByIdx[i] === undefined}>
+          Next question <ArrowRight size={14} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function buildSimulatorPaper(): KbQuizQuestion[] {
+  const all = allQuizzes();
+  const bank = quizzesFromBank();
+
+  // 16 MCQs: prefer final-bank MCQ first (exam-style), then fill from KB-generated.
+  const mcqPool = [...bank.filter((q) => q.kind === "mcq"), ...all.filter((q) => q.kind === "mcq" && q.source !== "final-bank")];
+  const mcqs = shuffle(mcqPool).slice(0, 16).map((q) => ({ ...q, points: q.points ?? 2.5 }));
+
+  // Long-form: 1 graph-walk, 1 pseudocode, 1 runtime, 1 high-weight MCQ as the integrative question.
+  const longForm: KbQuizQuestion[] = [];
+  const gw = shuffle(bank.filter((q) => q.kind === "graph-walk"))[0];
+  if (gw) longForm.push({ ...gw, points: gw.points ?? 15 });
+  const pc = shuffle(bank.filter((q) => q.kind === "pseudocode"))[0];
+  if (pc) longForm.push({ ...pc, points: pc.points ?? 15 });
+  const rt = shuffle(bank.filter((q) => q.kind === "runtime"))[0];
+  if (rt) longForm.push({ ...rt, points: rt.points ?? 10 });
+  const pc2 = shuffle(bank.filter((q) => q.kind === "pseudocode" && q !== pc))[0];
+  if (pc2) longForm.push({ ...pc2, points: pc2.points ?? 15 });
+
+  return [...mcqs, ...longForm];
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function SimulatorDebrief({ paper, scores, elapsedSec, onDone, onRestart }: {
+  paper: KbQuizQuestion[];
+  scores: Record<number, "correct" | "incorrect" | "skipped">;
+  elapsedSec: number;
+  onDone: () => void;
+  onRestart: () => void;
+}) {
+  const earned = paper.reduce((sum, q, idx) => sum + (scores[idx] === "correct" ? (q.points ?? 0) : 0), 0);
+  const total = paper.reduce((sum, q) => sum + (q.points ?? 0), 0);
+  const pct = total === 0 ? 0 : Math.round((earned / total) * 100);
+  const minutes = Math.floor(elapsedSec / 60);
+  const grade = pct >= 90 ? "A" : pct >= 80 ? "B" : pct >= 70 ? "C" : pct >= 60 ? "D" : "F";
+
+  // Weakest topics — from incorrect answers, rolled up by topic.
+  const weakTopics = new Map<string, number>();
+  paper.forEach((q, idx) => {
+    if (scores[idx] === "incorrect" || scores[idx] === "skipped") {
+      weakTopics.set(q.topicSlug, (weakTopics.get(q.topicSlug) ?? 0) + 1);
+    }
+  });
+  const weakest = [...weakTopics.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <Frame className="!p-8">
+        <Eyebrow>simulator complete</Eyebrow>
+        <h1 className="mt-2">
+          <Trophy size={28} style={{ display: "inline", marginRight: 8, verticalAlign: "baseline" }} />
+          You scored <Highlighter>{earned} / {total}</Highlighter> — a {grade} ({pct}%).
+        </h1>
+        <div className="mt-5 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+          <StatCard n={`${pct}%`} label="score" tone={pct >= 80 ? "mint" : pct >= 70 ? "default" : "default"} />
+          <StatCard n={grade} label="letter grade" />
+          <StatCard n={`${minutes} min`} label="elapsed" />
+          <StatCard n={`${Object.values(scores).filter((s) => s === "correct").length}/${paper.length}`} label="questions correct" />
+        </div>
+      </Frame>
+
+      {weakest.length > 0 && (
+        <Frame>
+          <Eyebrow>circle back on</Eyebrow>
+          <p className="serif italic text-[14px] text-[var(--ink-2)] mt-2">
+            You missed or skipped these topics — run the stepper on each before the real final.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {weakest.map(([slug, n]) => (
+              <Link
+                key={slug}
+                to="/learn/$"
+                params={{ _splat: slug }}
+                className="flex items-center gap-3 p-3"
+                style={{
+                  border: "1.5px solid var(--ink)",
+                  borderRadius: 8,
+                  background: "var(--paper)",
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <code className="mono text-[13px]">{slug}</code>
+                <span className="flex-1" />
+                <Chip tone="amber">{n} missed</Chip>
+                <ArrowRight size={14} />
+              </Link>
+            ))}
+          </div>
+        </Frame>
+      )}
+
+      <div className="flex gap-3 flex-wrap">
+        <Button variant="pop" onClick={onRestart}>
+          <Sparkles size={16} /> Run simulator again
+        </Button>
+        <Button variant="ghost" onClick={onDone}>Back to hub</Button>
+        <Link to="/review" className="btn-sk ghost">Review queue →</Link>
+      </div>
+    </div>
+  );
+}

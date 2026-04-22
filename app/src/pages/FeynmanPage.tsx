@@ -1,0 +1,303 @@
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link, useSearch, useNavigate } from "@tanstack/react-router";
+import { allTopics, getTopic, unitLabel, rubricFor } from "@/lib/kb-loader";
+import { Frame, Chip, Eyebrow, MiniLabel, Highlighter, Button, StatCard } from "@/components/notebook";
+import { useSettings } from "@/stores/settings";
+import { streamChat, checkAvailability } from "@/lib/ollama";
+import { gradeWithRubric, type RubricScore } from "@/lib/rubrics";
+import { db } from "@/lib/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { motion } from "motion/react";
+import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+
+const SCAFFOLDS = [
+  "What problem does this concept solve?",
+  "Explain the mechanism in your own words.",
+  "Give a worked example with a small input.",
+  "Why is it correct?",
+  "When does it break or not apply?",
+];
+
+export function FeynmanPage() {
+  const search = useSearch({ strict: false }) as { topic?: string };
+  const navigate = useNavigate();
+  const [slug, setSlug] = useState<string>(search.topic ?? "02-scheduling/fifo");
+  const [explanation, setExplanation] = useState("");
+  const [score, setScore] = useState<RubricScore | null>(null);
+  const [llmOutput, setLlmOutput] = useState<string>("");
+  const [llmStatus, setLlmStatus] = useState<"idle" | "running" | "error" | "done" | "disabled">("idle");
+  const [llmError, setLlmError] = useState<string | null>(null);
+  const { ollamaEnabled, ollamaEndpoint, ollamaModel } = useSettings();
+
+  const topic = useMemo(() => getTopic(slug), [slug]);
+  const rubric = useMemo(() => rubricFor(slug), [slug]);
+  const history = useLiveQuery(() => db.feynman.where("topicSlug").equals(slug).reverse().sortBy("createdAt"), [slug]) ?? [];
+
+  useEffect(() => {
+    if (search.topic && search.topic !== slug) setSlug(search.topic);
+  }, [search.topic, slug]);
+
+  const grade = useCallback(async () => {
+    if (!topic) return;
+    const rubricScore = gradeWithRubric(slug, explanation);
+    setScore(rubricScore);
+    setLlmOutput("");
+    setLlmError(null);
+
+    // Persist
+    const entry = {
+      id: slug + "-" + Date.now(),
+      topicSlug: slug,
+      explanation,
+      rubricScore: rubricScore?.pct ?? 0,
+      rubricBreakdown: Object.fromEntries((rubricScore?.items ?? []).map((i) => [i.id, i.met])),
+      llmFeedback: null as string | null,
+      createdAt: Date.now(),
+    };
+    await db.feynman.put(entry);
+
+    if (!ollamaEnabled) {
+      setLlmStatus("disabled");
+      return;
+    }
+
+    setLlmStatus("running");
+    const availability = await checkAvailability(ollamaEndpoint);
+    if (!availability.ok) {
+      setLlmStatus("error");
+      setLlmError("Ollama unreachable — running offline. " + (availability.error ?? ""));
+      return;
+    }
+
+    const kbSummary = topic.sections.slice(0, 2).map((s) => `### ${s.heading}\n${s.body}`).join("\n\n").slice(0, 4000);
+    const rubricLines = rubric?.items.map((i) => `- ${i.prompt}`).join("\n") ?? "";
+
+    const sys: string =
+`You are an expert algorithms tutor helping a student check their understanding via Feynman-style self-explanation.
+
+Your job:
+- Read the KB excerpt and rubric.
+- Read the student's explanation.
+- Respond with short, specific feedback (under 200 words) calling out 2 concrete strengths and 2 concrete gaps. No generic praise.
+- If the student says something wrong, quote it and correct it.
+- Do not re-explain the whole topic.
+
+Topic: ${topic.title}
+
+## KB excerpt
+${kbSummary}
+
+## Rubric
+${rubricLines}
+
+Stay kind, direct, and specific.`;
+
+    try {
+      let acc = "";
+      await streamChat({
+        endpoint: ollamaEndpoint,
+        model: ollamaModel,
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: "Student explanation:\n\n" + explanation },
+        ],
+        onToken: (tok) => {
+          acc += tok;
+          setLlmOutput(acc);
+        },
+      });
+      setLlmStatus("done");
+      entry.llmFeedback = acc;
+      await db.feynman.put(entry);
+    } catch (err) {
+      setLlmStatus("error");
+      setLlmError((err as Error).message);
+    }
+  }, [slug, explanation, topic, rubric, ollamaEnabled, ollamaEndpoint, ollamaModel]);
+
+  if (!topic) {
+    return (
+      <Frame>
+        <h2>Topic not found.</h2>
+      </Frame>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Frame className="!p-8">
+        <Eyebrow>feynman workbench</Eyebrow>
+        <h1 className="mt-2">Explain <Highlighter>{topic.title}</Highlighter> back.</h1>
+        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+          Type it out as if teaching a friend. We grade with a rubric offline, and if Ollama is on,
+          stream deeper feedback. Cross-check against the KB entry and revise — that's where understanding lives.
+        </p>
+      </Frame>
+
+      <Frame>
+        <Eyebrow>topic</Eyebrow>
+        <select
+          value={slug}
+          onChange={(e) => {
+            setSlug(e.target.value);
+            setExplanation("");
+            setScore(null);
+            setLlmOutput("");
+            navigate({ to: "/feynman", search: { topic: e.target.value } });
+          }}
+          className="ask-box field mt-2 mono"
+          style={{ minHeight: 0 }}
+        >
+          {allTopics().map((t) => (
+            <option key={t.slug} value={t.slug}>
+              {unitLabel(t.unit)} · {t.title}
+            </option>
+          ))}
+        </select>
+      </Frame>
+
+      <Frame>
+        <Eyebrow>scaffolding questions</Eyebrow>
+        <div className="mt-2 flex gap-2 flex-wrap">
+          {SCAFFOLDS.map((q) => (
+            <button
+              key={q}
+              className="chip soft"
+              onClick={() => setExplanation((prev) => (prev.trim() ? prev + "\n\n" + q + "\n" : q + "\n"))}
+              style={{ cursor: "pointer" }}
+            >
+              + {q}
+            </button>
+          ))}
+        </div>
+      </Frame>
+
+      <Frame>
+        <Eyebrow>your explanation</Eyebrow>
+        <textarea
+          className="workspace mt-2"
+          rows={10}
+          placeholder={`Explain ${topic.title} as if to a smart high-schooler. Cover: what problem it solves, the mechanism, a small example, and why it works.`}
+          value={explanation}
+          onChange={(e) => setExplanation(e.target.value)}
+        />
+        <div className="mt-3 flex items-center gap-3 flex-wrap">
+          <Button variant="pop" size="big" disabled={!explanation.trim()} onClick={grade}>
+            Grade my explanation
+          </Button>
+          <MiniLabel>{explanation.trim().split(/\s+/).filter(Boolean).length} words · rubric-first · Ollama {ollamaEnabled ? "on" : "off"}</MiniLabel>
+        </div>
+      </Frame>
+
+      {score && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <Frame>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Eyebrow>rubric result</Eyebrow>
+              <span className="flex-1" />
+              <Chip tone={score.pct >= 0.75 ? "mint" : score.pct >= 0.5 ? "hl" : "amber"}>
+                {Math.round(score.pct * 100)}% of rubric met
+              </Chip>
+            </div>
+
+            <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+              {score.items.map((i) => (
+                <div
+                  key={i.id}
+                  style={{
+                    border: "1.5px solid var(--ink)",
+                    borderRadius: 8,
+                    padding: 12,
+                    background: i.met ? "var(--hl-2)" : "color-mix(in oklch, var(--wrong) 10%, var(--paper))",
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    {i.met ? <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> : <XCircle size={16} className="shrink-0 mt-0.5" />}
+                    <span className="text-[13px]">{i.prompt}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {(score.strengths.length > 0 || score.gaps.length > 0) && (
+              <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                {score.strengths.length > 0 && (
+                  <div>
+                    <MiniLabel>strengths</MiniLabel>
+                    <ul className="list-disc pl-5 mt-1">
+                      {score.strengths.map((s, i) => <li key={i} className="serif text-[14px]">{s}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {score.gaps.length > 0 && (
+                  <div>
+                    <MiniLabel>gaps</MiniLabel>
+                    <ul className="list-disc pl-5 mt-1">
+                      {score.gaps.map((s, i) => <li key={i} className="serif text-[14px]">{s}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {llmStatus === "disabled" && (
+              <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "var(--paper-2)" }}>
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <div className="text-[13px]">
+                  Ollama is disabled. Enable it in <Link to="/settings" className="underline decoration-dashed">settings</Link> for deeper feedback streamed in real time.
+                </div>
+              </div>
+            )}
+
+            {llmStatus === "error" && (
+              <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "color-mix(in oklch, var(--wrong) 10%, var(--paper))" }}>
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <div className="text-[13px]">{llmError} Offline mode active — still got your rubric score above.</div>
+              </div>
+            )}
+
+            {(llmStatus === "running" || llmStatus === "done") && (
+              <div className="mt-5">
+                <MiniLabel>{llmStatus === "running" ? "ollama · streaming…" : "ollama · done"}</MiniLabel>
+                <div
+                  className="serif mt-2 whitespace-pre-wrap text-[14px] leading-relaxed"
+                  style={{ border: "1.5px solid var(--ink)", borderRadius: 8, padding: 14, background: "var(--paper)" }}
+                >
+                  {llmOutput || <span className="italic text-[var(--ink-3)]">thinking…</span>}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3 flex-wrap" style={{ borderTop: "1px dashed var(--rule)", paddingTop: 16 }}>
+              <MiniLabel>what's next</MiniLabel>
+              <span className="flex-1" />
+              <Link to="/learn/$" params={{ _splat: slug }} className="btn-sk pop">
+                Quiz myself on this topic →
+              </Link>
+              <Link to="/review" className="btn-sk ghost">
+                Back to review queue
+              </Link>
+            </div>
+          </Frame>
+        </motion.div>
+      )}
+
+      {history.length > 0 && (
+        <Frame>
+          <Eyebrow>your attempts on this topic</Eyebrow>
+          <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+            {history.slice(0, 6).map((h) => (
+              <StatCard
+                key={h.id}
+                n={Math.round(h.rubricScore * 100) + "%"}
+                label={new Date(h.createdAt).toLocaleDateString()}
+                foot={h.explanation.slice(0, 60) + "…"}
+                tone={h.rubricScore >= 0.75 ? "mint" : "default"}
+              />
+            ))}
+          </div>
+        </Frame>
+      )}
+    </div>
+  );
+}

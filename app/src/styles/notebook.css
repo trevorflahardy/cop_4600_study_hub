@@ -1,0 +1,828 @@
+/* ============================================================
+   Notebook component classes
+   Ported from .claude/skills/usf-ui-styling/SKILL.md
+   ============================================================ */
+
+/* ---------- Frames ---------- */
+.frame {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  position: relative;
+}
+.frame.dashed { border-style: dashed; border-color: var(--ink-3); }
+.frame.soft { border-color: var(--rule); }
+.frame.wobble {
+  /* Was a hand-drawn wobble; now just a slightly larger radius */
+  border-radius: 14px;
+}
+
+/* ---------- Buttons ---------- */
+.btn-sk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--ff-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  padding: 8px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-btn);
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  text-decoration: none;
+}
+.btn-sk:hover { background: var(--paper-2); border-color: var(--ink-3); }
+.btn-sk:active { transform: translateY(1px); box-shadow: var(--shadow-active); }
+.btn-sk.primary { background: var(--hl); border-color: color-mix(in oklch, var(--hl) 60%, var(--ink-3)); }
+.btn-sk.pop { background: var(--pop); color: #fff; border-color: color-mix(in oklch, var(--pop) 60%, black); }
+.btn-sk.pop:hover { filter: brightness(1.05); background: var(--pop); }
+.btn-sk.ghost { box-shadow: none; background: transparent; border-style: dashed; border-color: var(--ink-3); }
+.btn-sk.big { font-size: 16px; padding: 12px 22px; border-radius: 10px; }
+.btn-sk[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Chips ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 2px 8px;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+.chip.hl { background: var(--hl); color: var(--ink); border-color: color-mix(in oklch, var(--hl) 60%, var(--ink-3)); }
+.chip.mint { background: var(--hl-2); color: var(--ink); border-color: color-mix(in oklch, var(--hl-2) 60%, var(--ink-3)); }
+.chip.sky { background: var(--hl-3); color: var(--ink); border-color: color-mix(in oklch, var(--hl-3) 60%, var(--ink-3)); }
+.chip.amber { background: var(--hl-4); color: var(--ink); border-color: color-mix(in oklch, var(--hl-4) 60%, var(--ink-3)); }
+.chip.pop { background: var(--pop); color: #fff; border-color: color-mix(in oklch, var(--pop) 60%, black); }
+.chip.soft { border-style: dashed; border-color: var(--ink-3); background: transparent; }
+
+/* ---------- Labels ---------- */
+.label,
+.mini-label {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
+}
+
+/* ---------- Highlighter text effect ---------- */
+.highlighter {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    var(--hl) 58% 92%,
+    transparent 92%
+  );
+  padding: 0 4px;
+}
+.highlighter.mint {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    var(--hl-2) 58% 92%,
+    transparent 92%
+  );
+}
+.highlighter.sky {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    var(--hl-3) 58% 92%,
+    transparent 92%
+  );
+}
+.highlighter.amber {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    var(--hl-4) 58% 92%,
+    transparent 92%
+  );
+}
+.highlighter.pop {
+  background: linear-gradient(
+    180deg,
+    transparent 58%,
+    color-mix(in oklch, var(--pop) 35%, white) 58% 92%,
+    transparent 92%
+  );
+}
+
+/* ---------- Mastery pips ---------- */
+.mastery {
+  display: inline-flex;
+  gap: 2px;
+}
+.mastery i {
+  width: 10px;
+  height: 10px;
+  border: 1.2px solid var(--ink);
+  border-radius: 2px;
+  background: var(--paper);
+  display: block;
+}
+.mastery i.on { background: var(--pop); }
+.mastery i.gain {
+  background: var(--hl);
+  position: relative;
+}
+.mastery.lg i {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Progress bars ---------- */
+.progress-bar {
+  height: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.progress-bar i {
+  display: block;
+  height: 100%;
+  background: var(--pop);
+  transition: width 0.3s ease;
+}
+.progress-tiny {
+  width: 180px;
+  height: 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.progress-tiny i {
+  display: block;
+  height: 100%;
+  background: var(--pop);
+  transition: width 0.3s ease;
+}
+
+/* ---------- Skeleton lines ---------- */
+.sk-line {
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink-3) 0 8px,
+    transparent 8px 14px
+  );
+  opacity: 0.45;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+.sk-line.short { width: 45%; }
+.sk-line.mid { width: 70%; }
+.sk-line.long { width: 92%; }
+
+/* ---------- Placeholder hatched box ---------- */
+.placeholder {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 8px, rgba(0, 0, 0, 0.05) 8px 9px),
+    var(--paper-2);
+  border: 1.5px dashed var(--ink-2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  text-align: center;
+  padding: 10px;
+  min-height: 60px;
+}
+
+/* ---------- Callout ---------- */
+.callout {
+  position: absolute;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--pop-ink);
+  pointer-events: none;
+  max-width: 180px;
+  line-height: 1.35;
+  padding: 2px 6px;
+  background: color-mix(in oklch, var(--pop) 10%, var(--paper));
+  border: 1px solid color-mix(in oklch, var(--pop) 35%, var(--rule));
+  border-radius: 4px;
+}
+.callout::before { content: none; }
+.callout.tl, .callout.tr, .callout.bl { /* positional utility, no arrow */ }
+
+/* ---------- Window chrome frame — styled like a real OS title bar ---------- */
+.chrome {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+.chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+  padding: 8px 12px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.chrome-bar .dots {
+  display: flex;
+  gap: 6px;
+}
+.chrome-bar .dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: none;
+  display: block;
+}
+/* macOS traffic lights */
+.chrome-bar .dots i:nth-child(1) { background: #ff5f57; }
+.chrome-bar .dots i:nth-child(2) { background: #febc2e; }
+.chrome-bar .dots i:nth-child(3) { background: #28c840; }
+.chrome-bar .url {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 3px 10px;
+  color: var(--ink-2);
+}
+
+/* ---------- Tabs + Canvas ---------- */
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-left: 10px;
+  position: relative;
+  z-index: 2;
+}
+.tab {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-bottom: none;
+  padding: 9px 16px 11px;
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border-radius: 10px 10px 0 0;
+  transform: translateY(1px);
+  transition: background 0.15s, color 0.15s;
+  color: var(--ink-3);
+}
+.tab:hover { background: var(--paper-3); color: var(--ink-2); }
+.tab.active {
+  background: var(--paper);
+  color: var(--ink);
+  transform: translateY(0);
+  z-index: 3;
+}
+.tab .num {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+.tab.active .num { color: var(--pop); }
+
+.canvas {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: var(--shadow-canvas);
+  min-height: 600px;
+  position: relative;
+}
+
+/* ---------- Note panel ---------- */
+.note {
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-family: var(--ff-serif);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.note .time {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+.note.auto {
+  background: var(--paper-2);
+  border-style: dashed;
+}
+.note.user { background: var(--hl); }
+
+/* ---------- Feedback cards ---------- */
+.feedback-card {
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-top: 6px;
+  background: var(--hl-2);
+}
+.feedback-card.wrong {
+  background: color-mix(in oklch, var(--wrong) 14%, var(--paper));
+}
+.feedback-card h4 {
+  font-family: var(--ff-display);
+  font-size: 28px;
+  margin: 0 0 4px;
+}
+.feedback-card .why {
+  font-family: var(--ff-serif);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- Ask / Feynman input box ---------- */
+.ask-box {
+  border: 2px dashed var(--ink);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--paper);
+  margin-top: 14px;
+}
+.ask-box h4 {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.ask-box .field {
+  border: 1.5px solid var(--ink-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 48px;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper-2);
+  width: 100%;
+  resize: vertical;
+}
+
+/* ---------- State semantics ---------- */
+.done-state { background: var(--hl-2); }
+.now-state { background: var(--hl); }
+.locked-state { opacity: 0.55; border-style: dashed; }
+
+.lesson {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.lesson.done { background: var(--paper-2); }
+.lesson.now {
+  background: color-mix(in oklch, var(--pop) 6%, var(--paper));
+  border-color: color-mix(in oklch, var(--pop) 50%, var(--rule));
+  box-shadow: var(--shadow-card);
+}
+.lesson.locked {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.lesson .n-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-weight: 600;
+  font-size: 12.5px;
+  flex-shrink: 0;
+  background: var(--paper);
+  color: var(--ink-2);
+}
+.lesson.done .n-circle { background: var(--hl-2); color: var(--ink); }
+.lesson.now .n-circle {
+  background: var(--pop);
+  color: #fff;
+  border-color: color-mix(in oklch, var(--pop) 60%, black);
+}
+
+/* ---------- App top nav ---------- */
+.app-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13.5px;
+  background: color-mix(in oklch, var(--paper) 85%, transparent);
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
+}
+.app-top .crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+}
+.app-top .crumb b {
+  color: var(--ink);
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.app-top .sep {
+  color: var(--ink-3);
+  font-family: var(--ff-mono);
+}
+.app-top .spacer { flex: 1; }
+
+/* ---------- Ribbon / tag ---------- */
+.ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--hl);
+  border: 1px solid color-mix(in oklch, var(--hl) 60%, var(--ink-3));
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.ribbon.pop { background: var(--pop); color: #fff; border-color: color-mix(in oklch, var(--pop) 60%, black); }
+.ribbon.mint { background: var(--hl-2); border-color: color-mix(in oklch, var(--hl-2) 60%, var(--ink-3)); }
+.ribbon.sky { background: var(--hl-3); border-color: color-mix(in oklch, var(--hl-3) 60%, var(--ink-3)); }
+.ribbon.amber { background: var(--hl-4); border-color: color-mix(in oklch, var(--hl-4) 60%, var(--ink-3)); }
+
+/* ---------- Quiz choices ---------- */
+.m3-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 640px;
+}
+.m3-ch {
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: var(--paper);
+  font-family: var(--ff-body);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.m3-ch:hover { background: var(--paper-2); }
+.m3-ch .letter {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  background: var(--paper);
+}
+.m3-ch.picked { background: var(--hl); }
+.m3-ch.picked .letter {
+  background: var(--ink);
+  color: var(--paper);
+}
+.m3-ch.picked.right { background: var(--right); color: #fff; }
+.m3-ch.picked.right .letter { background: var(--paper); color: var(--ink); }
+.m3-ch.picked.wrong { background: var(--wrong); color: #fff; }
+.m3-ch.picked.wrong .letter { background: var(--paper); color: var(--ink); }
+
+/* ---------- Progress pip row ---------- */
+.pip-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pip-row .pip {
+  width: 28px;
+  height: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--paper);
+}
+.pip-row .pip.done { background: var(--hl-2); }
+.pip-row .pip.wrong { background: var(--wrong); }
+.pip-row .pip.now {
+  background: var(--hl);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+.pip-row .pip.review {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--hl-3) 0 4px,
+    var(--paper) 4px 8px
+  );
+}
+
+/* ---------- Workspace scratch area ---------- */
+.workspace {
+  border: 2px dashed var(--ink-2);
+  border-radius: 10px;
+  background: var(--paper-2);
+  min-height: 140px;
+  padding: 14px 16px;
+  font-family: var(--ff-body);
+  color: var(--ink-3);
+  width: 100%;
+}
+
+/* ---------- Stage (media placeholder) ---------- */
+.stage {
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in oklch, var(--hl) 20%, transparent), transparent 40%),
+    var(--paper-2);
+  padding: 18px;
+  min-height: 340px;
+  position: relative;
+}
+
+/* ---------- Key idea callout ---------- */
+.key-idea {
+  border: 2px dashed var(--ink);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  font-family: var(--ff-serif);
+  font-style: italic;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.key-idea b {
+  font-family: var(--ff-display);
+  font-style: normal;
+  font-size: 18px;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+/* ---------- Code / formula blocks ---------- */
+.code-block {
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink-2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.code-block.inline {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* ---------- Review banner ---------- */
+.review-banner {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklch, var(--hl-3) 60%, var(--paper)) 0 14px,
+    var(--paper) 14px 28px
+  );
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Queue row ---------- */
+.queue-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--rule);
+  align-items: center;
+}
+.queue-row:last-child { border-bottom: none; }
+.queue-row .tt {
+  font-family: var(--ff-display);
+  font-size: 18px;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.queue-row .src {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.queue-row.current {
+  background: var(--hl);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 4px -10px;
+  border-bottom: none;
+}
+
+/* ---------- Stats grid ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.stat-card {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+.stat-card.accent { background: var(--hl); border-color: color-mix(in oklch, var(--hl) 60%, var(--ink-3)); }
+.stat-card.mint { background: var(--hl-2); border-color: color-mix(in oklch, var(--hl-2) 60%, var(--ink-3)); }
+.stat-card .n {
+  font-family: var(--ff-display);
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--ink);
+}
+.stat-card .l {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 6px;
+}
+.stat-card .foot {
+  font-family: var(--ff-body);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+/* ---------- Utility ---------- */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hide { display: none !important; }
+.muted { color: var(--ink-3); }
+.ink-2 { color: var(--ink-2); }
+.mono {
+  font-family: var(--ff-mono);
+}
+.serif {
+  font-family: var(--ff-serif);
+}
+.display {
+  font-family: var(--ff-display);
+}
+
+/* ---------- Split panel (was "notebook spread") ---------- */
+.spread {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+}
+.spread-left {
+  padding: 36px 44px;
+  border-right: 1px solid var(--rule);
+  background: var(--paper);
+}
+.spread-right {
+  background: var(--paper-2);
+  padding: 32px 28px;
+  position: relative;
+}
+.spread-right::before {
+  content: none;
+}
+
+/* ---------- Session arc (4-step pipeline) ---------- */
+.session-arc {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  position: relative;
+  padding-top: 12px;
+}
+.session-arc::before {
+  content: "";
+  position: absolute;
+  top: 38px;
+  left: 40px;
+  right: 40px;
+  height: 1px;
+  background: var(--rule);
+  z-index: 0;
+}
+.session-arc .step {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.session-arc .step .dotnum {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ff-mono);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.session-arc .step.done { background: var(--paper-2); }
+.session-arc .step.now {
+  background: color-mix(in oklch, var(--pop) 6%, var(--paper));
+  border-color: color-mix(in oklch, var(--pop) 50%, var(--rule));
+}
+.session-arc .step.now .dotnum {
+  background: var(--pop);
+  color: #fff;
+  border-color: color-mix(in oklch, var(--pop) 60%, black);
+}

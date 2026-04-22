@@ -1,0 +1,414 @@
+{
+  "topics": {
+    "00-foundations/what-is-an-os": {
+      "unit": "00-foundations",
+      "title": "What Is an Operating System?",
+      "prereqs": []
+    },
+    "00-foundations/virtualization-overview": {
+      "unit": "00-foundations",
+      "title": "The Virtualization Abstraction",
+      "prereqs": []
+    },
+    "00-foundations/user-vs-kernel-mode": {
+      "unit": "00-foundations",
+      "title": "User Mode vs Kernel Mode",
+      "prereqs": ["00-foundations/what-is-an-os"]
+    },
+    "00-foundations/traps-interrupts-syscalls": {
+      "unit": "00-foundations",
+      "title": "Traps, Interrupts, and System Calls",
+      "prereqs": ["00-foundations/user-vs-kernel-mode"]
+    },
+    "00-foundations/limited-direct-execution": {
+      "unit": "00-foundations",
+      "title": "Limited Direct Execution",
+      "prereqs": ["00-foundations/user-vs-kernel-mode", "00-foundations/traps-interrupts-syscalls"]
+    },
+    "01-processes/process-abstraction": {
+      "unit": "01-processes",
+      "title": "The Process Abstraction",
+      "prereqs": ["00-foundations/virtualization-overview"]
+    },
+    "01-processes/address-space-layout": {
+      "unit": "01-processes",
+      "title": "Address Space Layout: Text, Data, Heap, Stack",
+      "prereqs": ["01-processes/process-abstraction"]
+    },
+    "01-processes/fork-exec-wait": {
+      "unit": "01-processes",
+      "title": "fork(), exec(), wait(), and exit()",
+      "prereqs": ["01-processes/process-abstraction"]
+    },
+    "01-processes/zombies-orphans": {
+      "unit": "01-processes",
+      "title": "Zombies and Orphans",
+      "prereqs": ["01-processes/fork-exec-wait"]
+    },
+    "01-processes/shell-redirection": {
+      "unit": "01-processes",
+      "title": "Shell Redirection and File Descriptors",
+      "prereqs": ["01-processes/fork-exec-wait"]
+    },
+    "01-processes/context-switch": {
+      "unit": "01-processes",
+      "title": "Context Switching",
+      "prereqs": ["00-foundations/limited-direct-execution", "01-processes/process-abstraction"]
+    },
+    "02-scheduling/scheduling-metrics": {
+      "unit": "02-scheduling",
+      "title": "Scheduling Metrics: Turnaround, Response, Wait",
+      "prereqs": ["01-processes/context-switch"]
+    },
+    "02-scheduling/fifo": {
+      "unit": "02-scheduling",
+      "title": "FIFO (FCFS) Scheduling",
+      "prereqs": ["02-scheduling/scheduling-metrics"]
+    },
+    "02-scheduling/sjf": {
+      "unit": "02-scheduling",
+      "title": "Shortest Job First (SJF)",
+      "prereqs": ["02-scheduling/fifo"]
+    },
+    "02-scheduling/stcf": {
+      "unit": "02-scheduling",
+      "title": "Shortest Time-to-Completion First (STCF)",
+      "prereqs": ["02-scheduling/sjf"]
+    },
+    "02-scheduling/round-robin": {
+      "unit": "02-scheduling",
+      "title": "Round-Robin Scheduling",
+      "prereqs": ["02-scheduling/fifo"]
+    },
+    "02-scheduling/mlfq": {
+      "unit": "02-scheduling",
+      "title": "Multi-Level Feedback Queue (MLFQ)",
+      "prereqs": ["02-scheduling/stcf", "02-scheduling/round-robin"]
+    },
+    "02-scheduling/lottery-stride": {
+      "unit": "02-scheduling",
+      "title": "Lottery and Stride Scheduling",
+      "prereqs": ["02-scheduling/scheduling-metrics"]
+    },
+    "02-scheduling/cfs": {
+      "unit": "02-scheduling",
+      "title": "Completely Fair Scheduler (CFS)",
+      "prereqs": ["02-scheduling/mlfq"]
+    },
+    "03-memory/malloc-free-api": {
+      "unit": "03-memory",
+      "title": "malloc() and free() API",
+      "prereqs": ["01-processes/address-space-layout"]
+    },
+    "03-memory/memory-api-errors": {
+      "unit": "03-memory",
+      "title": "Memory API Errors: Leaks, Dangling Pointers, Double-Free",
+      "prereqs": ["03-memory/malloc-free-api"]
+    },
+    "03-memory/base-and-bounds": {
+      "unit": "03-memory",
+      "title": "Base-and-Bounds Memory Protection",
+      "prereqs": ["01-processes/address-space-layout"]
+    },
+    "03-memory/segmentation": {
+      "unit": "03-memory",
+      "title": "Segmentation: Internal and External Fragmentation",
+      "prereqs": ["03-memory/base-and-bounds"]
+    },
+    "03-memory/paging-basics": {
+      "unit": "03-memory",
+      "title": "Paging Basics",
+      "prereqs": ["01-processes/address-space-layout"]
+    },
+    "03-memory/paging-math": {
+      "unit": "03-memory",
+      "title": "Paging Math: VPN, PFN, Page Table Size",
+      "prereqs": ["03-memory/paging-basics"]
+    },
+    "03-memory/tlb": {
+      "unit": "03-memory",
+      "title": "Translation Lookaside Buffer (TLB)",
+      "prereqs": ["03-memory/paging-basics"]
+    },
+    "03-memory/multi-level-page-tables": {
+      "unit": "03-memory",
+      "title": "Multi-Level Page Tables",
+      "prereqs": ["03-memory/paging-math", "03-memory/tlb"]
+    },
+    "03-memory/inverted-page-tables": {
+      "unit": "03-memory",
+      "title": "Inverted Page Tables",
+      "prereqs": ["03-memory/paging-basics"]
+    },
+    "03-memory/swap-and-page-fault": {
+      "unit": "03-memory",
+      "title": "Swapping and Page Faults",
+      "prereqs": ["03-memory/multi-level-page-tables"]
+    },
+    "03-memory/page-replacement-policies": {
+      "unit": "03-memory",
+      "title": "Page Replacement Policies: FIFO, LRU, Optimal, Clock",
+      "prereqs": ["03-memory/swap-and-page-fault"]
+    },
+    "03-memory/thrashing": {
+      "unit": "03-memory",
+      "title": "Thrashing and Working Set",
+      "prereqs": ["03-memory/page-replacement-policies"]
+    },
+    "04-concurrency/threads-vs-processes": {
+      "unit": "04-concurrency",
+      "title": "Threads vs Processes",
+      "prereqs": ["01-processes/process-abstraction"]
+    },
+    "04-concurrency/race-conditions": {
+      "unit": "04-concurrency",
+      "title": "Race Conditions",
+      "prereqs": ["04-concurrency/threads-vs-processes"]
+    },
+    "04-concurrency/critical-section-requirements": {
+      "unit": "04-concurrency",
+      "title": "Critical Section Requirements: Atomicity, Mutual Exclusion",
+      "prereqs": ["04-concurrency/race-conditions"]
+    },
+    "04-concurrency/tas-cas-llsc-primitives": {
+      "unit": "04-concurrency",
+      "title": "Hardware Lock Primitives: TAS, CAS, LL/SC",
+      "prereqs": ["04-concurrency/critical-section-requirements"]
+    },
+    "04-concurrency/spinlocks-and-ticket-locks": {
+      "unit": "04-concurrency",
+      "title": "Spinlocks and Ticket Locks",
+      "prereqs": ["04-concurrency/tas-cas-llsc-primitives"]
+    },
+    "04-concurrency/ttas-and-backoff": {
+      "unit": "04-concurrency",
+      "title": "TTAS and Backoff Spinlocks",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/two-phase-lock": {
+      "unit": "04-concurrency",
+      "title": "Two-Phase Locking",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/futex-and-park-based-locks": {
+      "unit": "04-concurrency",
+      "title": "Futex and Park-Based Locks",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/sloppy-counter": {
+      "unit": "04-concurrency",
+      "title": "Sloppy Counter: Lock-Based Concurrent Data Structure",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/concurrent-linked-list": {
+      "unit": "04-concurrency",
+      "title": "Concurrent Linked List",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/concurrent-queue": {
+      "unit": "04-concurrency",
+      "title": "Concurrent Queue",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/condition-variables": {
+      "unit": "04-concurrency",
+      "title": "Condition Variables",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "04-concurrency/producer-consumer-cv": {
+      "unit": "04-concurrency",
+      "title": "Producer-Consumer Problem with Condition Variables",
+      "prereqs": ["04-concurrency/condition-variables"]
+    },
+    "04-concurrency/covering-conditions": {
+      "unit": "04-concurrency",
+      "title": "Covering Conditions",
+      "prereqs": ["04-concurrency/condition-variables"]
+    },
+    "04-concurrency/thread-ordering-with-cvs": {
+      "unit": "04-concurrency",
+      "title": "Thread Ordering with Condition Variables",
+      "prereqs": ["04-concurrency/condition-variables"]
+    },
+    "04-concurrency/semaphores": {
+      "unit": "04-concurrency",
+      "title": "Semaphores",
+      "prereqs": ["04-concurrency/condition-variables"]
+    },
+    "04-concurrency/producer-consumer-semaphores": {
+      "unit": "04-concurrency",
+      "title": "Producer-Consumer with Semaphores",
+      "prereqs": ["04-concurrency/semaphores"]
+    },
+    "04-concurrency/zemaphore-cv-backed-semaphore": {
+      "unit": "04-concurrency",
+      "title": "Zemaphore: Implementing Semaphores with Condition Variables",
+      "prereqs": ["04-concurrency/semaphores", "04-concurrency/condition-variables"]
+    },
+    "04-concurrency/reader-writer-locks": {
+      "unit": "04-concurrency",
+      "title": "Reader-Writer Locks",
+      "prereqs": ["04-concurrency/semaphores"]
+    },
+    "04-concurrency/reader-writer-preference": {
+      "unit": "04-concurrency",
+      "title": "Reader-Writer Lock Preference: Reader-Priority and Writer-Priority",
+      "prereqs": ["04-concurrency/reader-writer-locks"]
+    },
+    "05-deadlock/deadlock-four-conditions": {
+      "unit": "05-deadlock",
+      "title": "Deadlock: Four Conditions",
+      "prereqs": ["04-concurrency/spinlocks-and-ticket-locks"]
+    },
+    "05-deadlock/prevent-mutual-exclusion": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Prevention: Eliminating Mutual Exclusion",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/prevent-hold-and-wait": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Prevention: Preventing Hold-and-Wait",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/prevent-no-preemption": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Prevention: Enabling Preemption",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/prevent-circular-wait": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Prevention: Breaking Circular Wait via Lock Ordering",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/deadlock-avoidance": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Avoidance: Banker's Algorithm",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/deadlock-detection-recovery": {
+      "unit": "05-deadlock",
+      "title": "Deadlock Detection and Recovery",
+      "prereqs": ["05-deadlock/deadlock-four-conditions"]
+    },
+    "05-deadlock/dining-philosophers": {
+      "unit": "05-deadlock",
+      "title": "Dining Philosophers: Classic Deadlock Problem",
+      "prereqs": ["05-deadlock/deadlock-four-conditions", "04-concurrency/semaphores"]
+    },
+    "05-deadlock/atomicity-violations": {
+      "unit": "05-deadlock",
+      "title": "Atomicity Violations",
+      "prereqs": ["04-concurrency/race-conditions"]
+    },
+    "05-deadlock/order-violations": {
+      "unit": "05-deadlock",
+      "title": "Order Violations",
+      "prereqs": ["04-concurrency/race-conditions"]
+    },
+    "05-deadlock/livelock": {
+      "unit": "05-deadlock",
+      "title": "Livelock",
+      "prereqs": ["05-deadlock/prevent-no-preemption"]
+    },
+    "06-persistence/01-io-devices-pio-dma": {
+      "unit": "06-persistence",
+      "title": "I/O Devices: PIO and DMA",
+      "prereqs": ["00-foundations/limited-direct-execution"]
+    },
+    "06-persistence/02-ide-driver-register-protocol": {
+      "unit": "06-persistence",
+      "title": "IDE Driver and Register Protocol",
+      "prereqs": ["06-persistence/01-io-devices-pio-dma"]
+    },
+    "06-persistence/03-hdd-mechanics-io-time": {
+      "unit": "06-persistence",
+      "title": "HDD Mechanics and I/O Time: Seek, Rotation, Transfer",
+      "prereqs": ["06-persistence/01-io-devices-pio-dma"]
+    },
+    "06-persistence/04-disk-scheduling": {
+      "unit": "06-persistence",
+      "title": "Disk Scheduling: FCFS, SSTF, SCAN, C-SCAN",
+      "prereqs": ["06-persistence/03-hdd-mechanics-io-time"]
+    },
+    "06-persistence/05-raid-levels": {
+      "unit": "06-persistence",
+      "title": "RAID Levels: Mirroring, Striping, Parity",
+      "prereqs": ["06-persistence/03-hdd-mechanics-io-time"]
+    },
+    "06-persistence/06-files-and-directories": {
+      "unit": "06-persistence",
+      "title": "Files and Directories",
+      "prereqs": ["06-persistence/01-io-devices-pio-dma"]
+    },
+    "06-persistence/07-fd-openfile-inode-tables": {
+      "unit": "06-persistence",
+      "title": "File Descriptors, Open File Table, and Inode Table",
+      "prereqs": ["06-persistence/06-files-and-directories"]
+    },
+    "06-persistence/08-inodes": {
+      "unit": "06-persistence",
+      "title": "Inodes: On-Disk and In-Memory Structures",
+      "prereqs": ["06-persistence/07-fd-openfile-inode-tables"]
+    },
+    "06-persistence/09-inode-multi-level-index": {
+      "unit": "06-persistence",
+      "title": "Inode Multi-Level Index: Direct Pointers and Indirect Blocks",
+      "prereqs": ["06-persistence/08-inodes"]
+    },
+    "06-persistence/10-hard-vs-symbolic-links": {
+      "unit": "06-persistence",
+      "title": "Hard vs Symbolic Links",
+      "prereqs": ["06-persistence/08-inodes"]
+    },
+    "06-persistence/11-filesystem-implementation": {
+      "unit": "06-persistence",
+      "title": "Filesystem Implementation: Disk Layout and Data Structures",
+      "prereqs": ["06-persistence/08-inodes"]
+    },
+    "06-persistence/12-ffs-cylinder-groups": {
+      "unit": "06-persistence",
+      "title": "FFS: Cylinder Groups and Locality",
+      "prereqs": ["06-persistence/11-filesystem-implementation", "06-persistence/03-hdd-mechanics-io-time"]
+    },
+    "06-persistence/13-file-operations-io-counts": {
+      "unit": "06-persistence",
+      "title": "File Operations I/O Counts: open(), read(), write(), create()",
+      "prereqs": ["06-persistence/11-filesystem-implementation", "06-persistence/07-fd-openfile-inode-tables"]
+    },
+    "06-persistence/14-write-vs-fsync": {
+      "unit": "06-persistence",
+      "title": "write() vs fsync(): Buffering and Persistence Semantics",
+      "prereqs": ["06-persistence/13-file-operations-io-counts"]
+    },
+    "06-persistence/15-crash-consistency": {
+      "unit": "06-persistence",
+      "title": "Crash Consistency: The Consistency Challenge",
+      "prereqs": ["06-persistence/11-filesystem-implementation", "06-persistence/14-write-vs-fsync"]
+    },
+    "06-persistence/16-fsck": {
+      "unit": "06-persistence",
+      "title": "FSCK: Filesystem Recovery",
+      "prereqs": ["06-persistence/15-crash-consistency"]
+    },
+    "06-persistence/17-journaling-modes": {
+      "unit": "06-persistence",
+      "title": "Journaling Modes: Data, Metadata, and Ordered",
+      "prereqs": ["06-persistence/15-crash-consistency"]
+    },
+    "06-persistence/18-journal-transactions-recovery": {
+      "unit": "06-persistence",
+      "title": "Journal Transactions and Recovery",
+      "prereqs": ["06-persistence/17-journaling-modes"]
+    },
+    "06-persistence/19-revoke-records-and-block-reuse": {
+      "unit": "06-persistence",
+      "title": "Revoke Records and Block Reuse",
+      "prereqs": ["06-persistence/18-journal-transactions-recovery"]
+    },
+    "06-persistence/20-ssds-and-ftl": {
+      "unit": "06-persistence",
+      "title": "SSDs and Flash Translation Layer",
+      "prereqs": ["06-persistence/01-io-devices-pio-dma"]
+    }
+  }
+}
