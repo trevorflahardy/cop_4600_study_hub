@@ -9,6 +9,8 @@ The knowledge base is authored as markdown under `kb/` and compiled into JSON
 bundles the app reads at boot. Every topic has sections, pseudocode, traces,
 quiz questions, and rubrics pulled from the same source of truth.
 
+<img width="1269" height="758" alt="image" src="https://github.com/user-attachments/assets/48a720e9-7acd-41b3-8cb5-9c4dcd1da9b4" />
+
 ---
 
 ## Design philosophy
