@@ -124,13 +124,13 @@ export function ChapterQuizPage() {
   // --- Start screen ---
   if (!started) {
     return (
-      <div className="flex flex-col gap-6 max-w-[900px] mx-auto w-full">
-        <Frame className="!p-8">
+      <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
+        <Frame className="p-8!">
           <Eyebrow>chapter quiz · {unitLabel(moduleId)}</Eyebrow>
           <h1 className="mt-2">
             Let's see if {unitLabel(moduleId)} actually stuck.
           </h1>
-          <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+          <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
             A mixed set of questions drawn from every topic in this module. Unlike
             per-topic quizzes, the ordering and prompts won't match any one lesson — that's
             the point. If you forget which algorithm the question is about, you've hit a gap.
@@ -151,7 +151,7 @@ export function ChapterQuizPage() {
 
           <div className="mt-6">
             <MiniLabel>pick a length</MiniLabel>
-            <div className="mt-2 flex gap-3 flex-wrap">
+            <div className="mt-2 flex flex-wrap gap-3">
               {(["quick", "medium", "full"] as Length[]).map((l) => (
                 <button
                   key={l}
@@ -173,7 +173,7 @@ export function ChapterQuizPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3 flex-wrap">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button variant="pop" size="big" onClick={() => setStarted(true)}>
               Start chapter quiz <ArrowRight size={16} />
             </Button>
@@ -195,7 +195,7 @@ export function ChapterQuizPage() {
               return (
                 <div
                   key={t.slug}
-                  className="flex items-center gap-3 py-2 px-3"
+                  className="flex items-center gap-3 px-3 py-2"
                   style={{ borderBottom: "1px dashed var(--rule)" }}
                 >
                   <Link
@@ -225,10 +225,10 @@ export function ChapterQuizPage() {
     const passed = pct >= 0.7;
 
     return (
-      <div className="flex flex-col gap-6 max-w-[900px] mx-auto w-full">
-        <Frame className="!p-8">
+      <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6">
+        <Frame className="p-8!">
           <Eyebrow>chapter quiz · done</Eyebrow>
-          <div className="mt-2 flex items-center gap-3 flex-wrap">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
             <Trophy size={36} />
             <h1>
               {stats.correct} of {total} ({Math.round(pct * 100)}%)
@@ -244,7 +244,7 @@ export function ChapterQuizPage() {
             }}
           >
             <strong>{passed ? "Solid — this module is in your bones." : "Below 70% — worth another pass."}</strong>
-            <p className="serif text-[14px] mt-2 text-[var(--ink-2)]">
+            <p className="serif mt-2 text-[14px] text-(--ink-2)">
               {passed
                 ? `Consider spaced review via the review queue over the next few days, or roll into ${
                     nextModule ? unitLabel(nextModule) : "exam prep"
@@ -253,7 +253,7 @@ export function ChapterQuizPage() {
             </p>
           </div>
 
-          <div className="mt-6 flex gap-3 flex-wrap">
+          <div className="mt-6 flex flex-wrap gap-3">
             {!passed && (
               <Button
                 variant="pop"
@@ -303,19 +303,19 @@ export function ChapterQuizPage() {
 
   // --- Running the quiz ---
   return (
-    <div className="max-w-[900px] mx-auto w-full">
+    <div className="mx-auto w-full max-w-[900px]">
       <QuizRunner
         questions={questions}
         onComplete={(s) => setStats(s)}
         banner={
           <Frame>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-wrap items-center gap-3">
               <Eyebrow>chapter quiz · {unitLabel(moduleId)}</Eyebrow>
               <span className="flex-1" />
               <Chip tone="sky">{questions.length} Q</Chip>
               <MiniLabel>mixed topics</MiniLabel>
             </div>
-            <p className="serif italic text-[var(--ink-2)] text-[13px] mt-2">
+            <p className="serif mt-2 text-[13px] text-(--ink-2) italic">
               Take your time. Mastery for each topic updates as you answer.
             </p>
           </Frame>

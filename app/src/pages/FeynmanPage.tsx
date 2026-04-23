@@ -125,10 +125,10 @@ Stay kind, direct, and specific.`;
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>feynman workbench</Eyebrow>
         <h1 className="mt-2">Explain <Highlighter>{topic.title}</Highlighter> back.</h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+        <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
           Type it out as if teaching a friend. We grade with a rubric offline, and if Ollama is on,
           stream deeper feedback. Cross-check against the KB entry and revise — that's where understanding lives.
         </p>
@@ -145,7 +145,7 @@ Stay kind, direct, and specific.`;
             setLlmOutput("");
             navigate({ to: "/feynman", search: { topic: e.target.value } });
           }}
-          className="ask-box field mt-2 mono"
+          className="ask-box field mono mt-2"
           style={{ minHeight: 0 }}
         >
           {allTopics().map((t) => (
@@ -158,7 +158,7 @@ Stay kind, direct, and specific.`;
 
       <Frame>
         <Eyebrow>scaffolding questions</Eyebrow>
-        <div className="mt-2 flex gap-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-2">
           {SCAFFOLDS.map((q) => (
             <button
               key={q}
@@ -181,7 +181,7 @@ Stay kind, direct, and specific.`;
           value={explanation}
           onChange={(e) => setExplanation(e.target.value)}
         />
-        <div className="mt-3 flex items-center gap-3 flex-wrap">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <Button variant="pop" size="big" disabled={!explanation.trim()} onClick={grade}>
             Grade my explanation
           </Button>
@@ -192,7 +192,7 @@ Stay kind, direct, and specific.`;
       {score && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <Frame>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-wrap items-center gap-2">
               <Eyebrow>rubric result</Eyebrow>
               <span className="flex-1" />
               <Chip tone={score.pct >= 0.75 ? "mint" : score.pct >= 0.5 ? "hl" : "amber"}>
@@ -200,7 +200,7 @@ Stay kind, direct, and specific.`;
               </Chip>
             </div>
 
-            <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+            <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
               {score.items.map((i) => (
                 <div
                   key={i.id}
@@ -212,7 +212,7 @@ Stay kind, direct, and specific.`;
                   }}
                 >
                   <div className="flex items-start gap-2">
-                    {i.met ? <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> : <XCircle size={16} className="shrink-0 mt-0.5" />}
+                    {i.met ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <XCircle size={16} className="mt-0.5 shrink-0" />}
                     <span className="text-[13px]">{i.prompt}</span>
                   </div>
                 </div>
@@ -220,11 +220,11 @@ Stay kind, direct, and specific.`;
             </div>
 
             {(score.strengths.length > 0 || score.gaps.length > 0) && (
-              <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr" }}>
                 {score.strengths.length > 0 && (
                   <div>
                     <MiniLabel>strengths</MiniLabel>
-                    <ul className="list-disc pl-5 mt-1">
+                    <ul className="mt-1 list-disc pl-5">
                       {score.strengths.map((s, i) => <li key={i} className="serif text-[14px]">{s}</li>)}
                     </ul>
                   </div>
@@ -232,7 +232,7 @@ Stay kind, direct, and specific.`;
                 {score.gaps.length > 0 && (
                   <div>
                     <MiniLabel>gaps</MiniLabel>
-                    <ul className="list-disc pl-5 mt-1">
+                    <ul className="mt-1 list-disc pl-5">
                       {score.gaps.map((s, i) => <li key={i} className="serif text-[14px]">{s}</li>)}
                     </ul>
                   </div>
@@ -242,7 +242,7 @@ Stay kind, direct, and specific.`;
 
             {llmStatus === "disabled" && (
               <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "var(--paper-2)" }}>
-                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                 <div className="text-[13px]">
                   Ollama is disabled. Enable it in <Link to="/settings" className="underline decoration-dashed">settings</Link> for deeper feedback streamed in real time.
                 </div>
@@ -251,7 +251,7 @@ Stay kind, direct, and specific.`;
 
             {llmStatus === "error" && (
               <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "color-mix(in oklch, var(--wrong) 10%, var(--paper))" }}>
-                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                 <div className="text-[13px]">{llmError} Offline mode active — still got your rubric score above.</div>
               </div>
             )}
@@ -260,15 +260,15 @@ Stay kind, direct, and specific.`;
               <div className="mt-5">
                 <MiniLabel>{llmStatus === "running" ? "ollama · streaming…" : "ollama · done"}</MiniLabel>
                 <div
-                  className="serif mt-2 whitespace-pre-wrap text-[14px] leading-relaxed"
+                  className="serif mt-2 text-[14px] leading-relaxed whitespace-pre-wrap"
                   style={{ border: "1.5px solid var(--ink)", borderRadius: 8, padding: 14, background: "var(--paper)" }}
                 >
-                  {llmOutput || <span className="italic text-[var(--ink-3)]">thinking…</span>}
+                  {llmOutput || <span className="text-(--ink-3) italic">thinking…</span>}
                 </div>
               </div>
             )}
 
-            <div className="mt-6 flex gap-3 flex-wrap" style={{ borderTop: "1px dashed var(--rule)", paddingTop: 16 }}>
+            <div className="mt-6 flex flex-wrap gap-3" style={{ borderTop: "1px dashed var(--rule)", paddingTop: 16 }}>
               <MiniLabel>what's next</MiniLabel>
               <span className="flex-1" />
               <Link to="/learn/$" params={{ _splat: slug }} className="btn-sk pop">
@@ -285,7 +285,7 @@ Stay kind, direct, and specific.`;
       {history.length > 0 && (
         <Frame>
           <Eyebrow>your attempts on this topic</Eyebrow>
-          <div className="grid gap-3 mt-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+          <div className="mt-2 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
             {history.slice(0, 6).map((h) => (
               <StatCard
                 key={h.id}

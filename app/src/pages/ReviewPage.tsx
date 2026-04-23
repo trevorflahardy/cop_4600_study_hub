@@ -59,13 +59,13 @@ export function ReviewPage() {
         }
       />
 
-      <aside className="flex flex-col gap-4 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-4 self-start">
         <Frame>
           <h3>Up next in review</h3>
           <MiniLabel>weakest topics, based on mastery</MiniLabel>
           <div className="mt-3">
             {weakTopics.length === 0 ? (
-              <p className="serif italic text-[var(--ink-2)]">Nothing due yet — great. Keep going.</p>
+              <p className="serif text-(--ink-2) italic">Nothing due yet — great. Keep going.</p>
             ) : (
               weakTopics.map(({ t, lv }) => (
                 <div key={t.slug} className="queue-row">
@@ -82,7 +82,7 @@ export function ReviewPage() {
 
         <Frame>
           <h3>How spacing works</h3>
-          <p className="serif italic text-[var(--ink-2)] mt-2 text-[13px] leading-relaxed">
+          <p className="serif mt-2 text-[13px] leading-relaxed text-(--ink-2) italic">
             We default to 2357 — a topic comes back at days 1, 3, 7, and 14 after you first see it.
             Once mastery ≥ 4 and you've passed review twice, the card retires.
           </p>

@@ -114,7 +114,7 @@ ${kbSummary}`;
             <div style={{ padding: "16px 20px", borderBottom: "1.5px dashed var(--rule)", display: "flex", alignItems: "center", gap: 12 }}>
               <div>
                 <Eyebrow>tutor · {topic.title}</Eyebrow>
-                <div className="display text-xl mt-1">Ask anything about this concept.</div>
+                <div className="display mt-1 text-xl">Ask anything about this concept.</div>
               </div>
               <span className="flex-1" />
               <Button variant="ghost" onClick={onClose} aria-label="Close"><X size={14} /></Button>
@@ -140,7 +140,7 @@ ${kbSummary}`;
               }}
             >
               {messages.length === 0 && (
-                <div className="serif italic text-[var(--ink-3)] text-[14px] mt-3">
+                <div className="serif mt-3 text-[14px] text-(--ink-3) italic">
                   Try: "Why does the worst case happen?" — or — "Give me a trickier example."
                 </div>
               )}
@@ -160,16 +160,16 @@ ${kbSummary}`;
                     lineHeight: 1.5,
                   }}
                 >
-                  {m.content || (streaming ? <span className="italic text-[var(--ink-3)]">…</span> : "")}
+                  {m.content || (streaming ? <span className="text-(--ink-3) italic">…</span> : "")}
                 </div>
               ))}
               {error && (
-                <div className="mono text-[12px] text-[var(--wrong)]">error: {error}</div>
+                <div className="mono text-[12px] text-(--wrong)">error: {error}</div>
               )}
             </div>
 
             <div style={{ padding: "12px 20px", borderTop: "1.5px dashed var(--rule)" }}>
-              <div className="flex gap-2 items-end">
+              <div className="flex items-end gap-2">
                 <textarea
                   className="workspace"
                   rows={2}

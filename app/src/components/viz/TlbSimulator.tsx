@@ -62,7 +62,7 @@ export function TlbSimulator({ pageSize = 4096 }: { pageSize?: number }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>TLB simulator · {policy} · step {step + 1}/{stream.length}</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">hit rate: {hitRate}%</Chip>
@@ -71,7 +71,7 @@ export function TlbSimulator({ pageSize = 4096 }: { pageSize?: number }) {
       <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>TLB size</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={1} max={16} value={tlbSize} onChange={(e) => setTlbSize(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{tlbSize}</span>
           </div>
@@ -79,7 +79,7 @@ export function TlbSimulator({ pageSize = 4096 }: { pageSize?: number }) {
 
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>replacement</MiniLabel>
-          <div className="flex gap-2 mt-2">
+          <div className="mt-2 flex gap-2">
             {(["lru", "fifo"] as const).map(p => (
               <button
                 key={p}
@@ -142,14 +142,14 @@ export function TlbSimulator({ pageSize = 4096 }: { pageSize?: number }) {
 
       <Frame>
         <Eyebrow>statistics</Eyebrow>
-        <div className="grid gap-2 mt-2 text-sm font-mono">
+        <div className="mt-2 grid gap-2 font-mono text-sm">
           <div>Hits: {hits}</div>
           <div>Misses: {misses}</div>
           <div>Hit rate: {hitRate}%</div>
         </div>
       </Frame>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => setStep(Math.max(0, step - 1))} variant="ghost">←</Button>
         <Button onClick={() => setPlaying(!playing)} variant="pop">
           {playing ? <Pause size={16} /> : <Play size={16} />}

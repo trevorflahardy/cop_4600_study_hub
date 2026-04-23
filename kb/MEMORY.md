@@ -40,8 +40,8 @@ Four necessary conditions for deadlock, strategies to prevent each, avoidance an
 **Unit 06 — Persistence (20 topics)**
 Disk I/O (PIO/DMA), disk mechanics, disk scheduling, RAID, files/directories, filesystem layout, file operation costs, crash consistency, FSCK, journaling (data/metadata/ordered), SSDs. Heaviest unit (40% of core topics); heaviest exam weight post-MT2. Linear progression: I/O → HDD mechanics → disk scheduling → RAID → files → filesystem implementation → crash consistency → journaling. Mostly independent of Concurrency/Deadlock but intersects Memory (paging, swapping, TLB locality) and Scheduling (throughput, fairness in disk access).
 
-**Unit 07 — Exam Prep (6 topics)**
-Cumulative problem sets (scheduling, paging, concurrency, persistence) and two full mock finals. Not nodes in the prereq graph; treated as study guides. Depend on all prior units.
+**Unit 07 — Exam Prep (9 topics)**
+Cumulative problem sets (scheduling, paging, concurrency, persistence), two full mock finals, and three final-exam hint-driven drill files: fork-output enumeration (the confirmed 10-pt item), concurrency final drills (CV while-vs-if, spin/ticket locks, semaphore patterns — the 75-pt block), and persistence final drills (Ch 41–42 FS implementation + crash consistency — the 48-pt block including 16 pts on inconsistency/recovery). Not nodes in the prereq graph; treated as study guides. Depend on all prior units.
 
 ## Topic index
 
@@ -141,6 +141,18 @@ Cumulative problem sets (scheduling, paging, concurrency, persistence) and two f
 - `19-revoke-records-and-block-reuse` — If block freed, reallocated, and crash during replay, old metadata corrupts new data. Revoke records prevent replay of stale journal entries on freed blocks.
 - `20-ssds-and-ftl` — NAND flash: erase before write, high latency, wear leveling. FTL maps logical block to physical page/block, manages erase cycles, TRIM discards unused space.
 
+### 07-Exam Prep (study guides, not algorithm entries)
+- `cumulative-problems-scheduling` — Mixed Gantt-chart, MLFQ, CFS problems.
+- `cumulative-problems-paging` — Paging-math, TLB, multi-level, page replacement problems.
+- `cumulative-problems-concurrency` — Race decomposition, CV, semaphore, deadlock problems.
+- `cumulative-problems-persistence` — HDD I/O time, RAID, journaling, FSCK problems.
+- `mixed-mock-final-a` — Full 75-min mock final across all units.
+- `mixed-mock-final-b` — Alternative full mock final.
+- `final-exam-hints` — Professor's weightings (10+25+75+48), study order per block, cross-references to topic pages.
+- `fork-output-enumeration` — Ten "list all possible outputs" drills for the confirmed 10-pt fork/exec/wait problem, plus the systematic happens-before method.
+- `concurrency-final-drills` — Twenty drills targeting the 75-pt concurrency block: CV correctness (while vs. if, broadcast vs. signal), spin/ticket/TAS/CAS, semaphore patterns, deadlock fixes.
+- `persistence-final-drills` — Fourteen drills targeting the 48-pt persistence block: HDD I/O time, disk scheduling, path-walk I/O counts, inode math, crash consistency, journaling modes, revoke records, FSCK, short-answer checklist.
+
 ## Critical paths through the material
 
 **Path to scheduling mastery (5 core topics, 30 min):**
@@ -154,6 +166,9 @@ filesystem-implementation → crash-consistency → fsck → journaling-modes �
 
 **Path to concurrency mastery (8 core topics, 60 min):**
 race-conditions → critical-section-requirements → tas-cas-llsc-primitives → spinlocks-and-ticket-locks → condition-variables → producer-consumer-cv → semaphores → reader-writer-locks. Linear: each layer builds on prior synchronization mechanism. Include dining-philosophers and atomicity/order-violations for problem recognition.
+
+**Final-exam express path (per professor's 2026-04-23 review):**
+Start with `07-exam-prep/final-exam-hints` to see the weighted breakdown. Then, in order of exam value: (1) `07-exam-prep/concurrency-final-drills` (75 pts), (2) `07-exam-prep/persistence-final-drills` (48 pts, including the 16 pts on inconsistency/recovery), (3) `07-exam-prep/fork-output-enumeration` (10 pts, confirmed exact question shape), (4) quick sweep of the scheduling and memory-virtualization tracks for the 25-pt CPU-virt block and the 1–2 memory-virt select questions. Re-solve midterm 2 practice and exam problems cold before the final — the professor emphasized this explicitly for the concurrency block.
 
 ## Common exam patterns and what triggers them
 

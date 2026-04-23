@@ -68,17 +68,17 @@ function FinalHub({ counts, onGo }: {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame variant="wobble" shadow="card" className="!p-8">
+      <Frame variant="wobble" shadow="card" className="p-8!">
         <Eyebrow>final exam prep · COP 4600</Eyebrow>
         <h1 className="mt-3">
           Dry-run the final with <Highlighter>real exam shape</Highlighter>.
         </h1>
-        <p className="mt-3 serif italic text-[var(--ink-2)] max-w-[62ch]">
+        <p className="serif mt-3 max-w-[62ch] text-(--ink-2) italic">
           Built from your actual Exam 1 and Exam 2 patterns: 16 MCQ for 40 pts,
           then long-form work — pseudocode, runtime analysis, graph traces.
           Pick a drill, or run the full simulator end-to-end.
         </p>
-        <div className="mt-4 flex gap-2 flex-wrap">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Chip tone="sky">16 MCQ + 4 long-form</Chip>
           <Chip tone="hl">~75 min simulator</Chip>
           <Chip tone={ollamaEnabled ? "mint" : "soft"}>
@@ -127,12 +127,12 @@ function FinalHub({ counts, onGo }: {
       </div>
 
       <Frame>
-        <div className="flex items-baseline gap-3 flex-wrap">
+        <div className="flex flex-wrap items-baseline gap-3">
           <Eyebrow>full simulator</Eyebrow>
           <span className="flex-1" />
           <MiniLabel>pace like the real thing</MiniLabel>
         </div>
-        <div className="mt-2 flex items-baseline gap-6 flex-wrap">
+        <div className="mt-2 flex flex-wrap items-baseline gap-6">
           <div>
             <div className="display text-4xl">100</div>
             <div className="mini-label">total points</div>
@@ -154,7 +154,7 @@ function FinalHub({ counts, onGo }: {
             <Timer size={18} /> Start simulator
           </Button>
         </div>
-        <p className="serif italic text-[14px] text-[var(--ink-2)] mt-3 max-w-[62ch]">
+        <p className="serif mt-3 max-w-[62ch] text-[14px] text-(--ink-2) italic">
           Runs a randomized sample that mirrors the real exam structure (16 MCQ
           then 4 long-form covering graph trace, pseudocode, runtime analysis,
           and one integrative problem). Timer is visible but doesn't lock you
@@ -164,10 +164,10 @@ function FinalHub({ counts, onGo }: {
 
       <Frame variant="soft">
         <Eyebrow>what the final will probably look like</Eyebrow>
-        <div className="grid gap-4 mt-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           <div>
             <MiniLabel>part 1 · 16 MCQ · 40 pts</MiniLabel>
-            <p className="serif text-[14px] mt-2">
+            <p className="serif mt-2 text-[14px]">
               Mix of scheduling metrics, address translation, synchronization semantics,
               persistence trade-offs, and a fresh slice of OS traps
               (deadlock conditions, CFS fairness, journaling recovery rules).
@@ -175,7 +175,7 @@ function FinalHub({ counts, onGo }: {
           </div>
           <div>
             <MiniLabel>part 2 · long-form · ~60 pts</MiniLabel>
-            <ul className="serif text-[14px] mt-2 list-disc pl-5 space-y-1">
+            <ul className="serif mt-2 list-disc space-y-1 pl-5 text-[14px]">
               <li>Trace one scheduler (FIFO, SJF, STCF, RR, MLFQ, or CFS) over a mixed workload.</li>
               <li>Write pseudocode for a named kernel subsystem or algorithm.</li>
               <li>Analyze page replacement or synchronization behavior given code.</li>
@@ -185,7 +185,7 @@ function FinalHub({ counts, onGo }: {
         </div>
       </Frame>
 
-      <div className="flex flex-wrap gap-3 mt-2">
+      <div className="mt-2 flex flex-wrap gap-3">
         <Link to="/map" className="btn-sk ghost">← the map</Link>
         <Link to="/mastery" className="btn-sk ghost">mastery</Link>
         <Link to="/settings" className="btn-sk ghost">Ollama · settings</Link>
@@ -203,7 +203,7 @@ function DrillTile({ icon, kicker, title, blurb, count, onClick }: {
   onClick: () => void;
 }) {
   return (
-    <Frame className="!p-5" variant="default" style={{ cursor: "pointer" }} onClick={onClick}>
+    <Frame className="p-5!" variant="default" style={{ cursor: "pointer" }} onClick={onClick}>
       <div className="flex items-center gap-2">
         {icon}
         <MiniLabel>{kicker}</MiniLabel>
@@ -211,7 +211,7 @@ function DrillTile({ icon, kicker, title, blurb, count, onClick }: {
         <Chip tone="soft">{count}</Chip>
       </div>
       <h3 className="mt-2">{title}</h3>
-      <p className="serif italic text-[13.5px] text-[var(--ink-2)] mt-1">{blurb}</p>
+      <p className="serif mt-1 text-[13.5px] text-(--ink-2) italic">{blurb}</p>
       <div className="mt-3 flex justify-end">
         <span className="btn-sk pop small">
           start <ArrowRight size={14} />
@@ -274,7 +274,7 @@ function DrillRunner({ title, questions, onDone }: {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center gap-4">
         <button onClick={onDone} className="btn-sk ghost small">
           <ArrowLeft size={14} /> final-exam hub
         </button>
@@ -361,7 +361,7 @@ function McqCard({ question: q, onAnswered }: {
   }
 
   return (
-    <Frame className="!p-6">
+    <Frame className="p-6!">
       <Eyebrow>multiple choice · {q.points ?? "—"} pts</Eyebrow>
       <h3 className="mt-2">{q.prompt}</h3>
 
@@ -404,7 +404,7 @@ function McqCard({ question: q, onAnswered }: {
           <h4>{q.choices[picked!].correct ? "✓ Right." : "✗ Not quite."}</h4>
           <p className="mt-1"><strong>Why:</strong> {q.choices[picked!].why ?? q.explanation}</p>
           {!q.choices[picked!].correct && (
-            <p className="mt-2 text-[13.5px] text-[var(--ink-2)]">
+            <p className="mt-2 text-[13.5px] text-(--ink-2)">
               <strong>Correct choice:</strong> {q.choices.find((c) => c.correct)?.text}
             </p>
           )}
@@ -425,7 +425,7 @@ function DrillDebrief({ title, correct, total, onRestart, onDone }: {
 }) {
   const pct = total === 0 ? 0 : Math.round((correct / total) * 100);
   return (
-    <Frame className="!p-8">
+    <Frame className="p-8!">
       <Eyebrow>drill complete · {title}</Eyebrow>
       <h1 className="mt-2">
         {pct >= 85 ? "Solid pass — " : pct >= 70 ? "Passing — " : "Needs more reps — "}
@@ -436,7 +436,7 @@ function DrillDebrief({ title, correct, total, onRestart, onDone }: {
         <StatCard n={String(correct)} label="correct" />
         <StatCard n={String(total - correct)} label="to revisit" />
       </div>
-      <div className="mt-6 flex gap-3 flex-wrap">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Button variant="pop" onClick={onRestart}>
           <Sparkles size={16} /> Do it again
         </Button>
@@ -495,8 +495,8 @@ function Simulator({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <Frame className="!p-5">
-        <div className="flex items-center gap-3 flex-wrap">
+      <Frame className="p-5!">
+        <div className="flex flex-wrap items-center gap-3">
           <button onClick={onDone} className="btn-sk ghost small">
             <ArrowLeft size={14} /> exit simulator
           </button>
@@ -515,7 +515,7 @@ function Simulator({ onDone }: { onDone: () => void }) {
       {q.kind === "pseudocode" && <PseudocodeQuestion key={q.id} question={q} onAnswered={onAnswered} />}
       {q.kind === "runtime" && <RuntimeQuestion key={q.id} question={q} onAnswered={onAnswered} />}
 
-      <div className="flex gap-3 flex-wrap justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
         <Button variant="ghost" onClick={back} disabled={i === 0}>
           <ArrowLeft size={14} /> back
         </Button>
@@ -585,7 +585,7 @@ function SimulatorDebrief({ paper, scores, elapsedSec, onDone, onRestart }: {
 
   return (
     <div className="flex flex-col gap-5">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>simulator complete</Eyebrow>
         <h1 className="mt-2">
           <Trophy size={28} style={{ display: "inline", marginRight: 8, verticalAlign: "baseline" }} />
@@ -602,7 +602,7 @@ function SimulatorDebrief({ paper, scores, elapsedSec, onDone, onRestart }: {
       {weakest.length > 0 && (
         <Frame>
           <Eyebrow>circle back on</Eyebrow>
-          <p className="serif italic text-[14px] text-[var(--ink-2)] mt-2">
+          <p className="serif mt-2 text-[14px] text-(--ink-2) italic">
             You missed or skipped these topics — run the stepper on each before the real final.
           </p>
           <div className="mt-3 flex flex-col gap-2">
@@ -629,7 +629,7 @@ function SimulatorDebrief({ paper, scores, elapsedSec, onDone, onRestart }: {
         </Frame>
       )}
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex flex-wrap gap-3">
         <Button variant="pop" onClick={onRestart}>
           <Sparkles size={16} /> Run simulator again
         </Button>

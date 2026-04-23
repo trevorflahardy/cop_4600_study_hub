@@ -48,9 +48,9 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
   const slotsCorrect = graded ? Object.values(graded).filter(Boolean).length : 0;
 
   return (
-    <Frame className="!p-6">
+    <Frame className="p-6!">
       <Eyebrow>runtime drill · {question.points ?? "—"} pts</Eyebrow>
-      <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
         <h3 className="m-0">{question.prompt}</h3>
         <span className="flex-1" />
         {graded && (
@@ -59,7 +59,7 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
           </Chip>
         )}
       </div>
-      <p className="serif italic text-[13px] text-[var(--ink-3)] mt-2">
+      <p className="serif mt-2 text-[13px] text-(--ink-3) italic">
         Enter each bound in asymptotic notation (e.g. <code className="mono">Θ(n log n)</code>,
         <code className="mono"> O(1)</code>, <code className="mono">Θ(V+E)</code>). I'm flexible
         on glyphs — <code className="mono">theta</code>, <code className="mono">O</code>, and spaces all work.
@@ -105,7 +105,7 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
                 }}
               />
               {status === false && (
-                <div className="mono text-[11.5px] mt-2 text-[var(--ink-2)]">
+                <div className="mono mt-2 text-[11.5px] text-(--ink-2)">
                   answer: {slot.answer}
                 </div>
               )}
@@ -115,7 +115,7 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
       </div>
 
       {!graded ? (
-        <div className="mt-4 flex gap-2 flex-wrap">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="pop" size="big" onClick={grade}>
             Check answers
           </Button>
@@ -124,7 +124,7 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
           {rt.whyNote && (
             <div
-              className="mt-4 serif italic text-[14px] p-3"
+              className="serif mt-4 p-3 text-[14px] italic"
               style={{
                 background: "var(--paper-2)",
                 border: "1.5px dashed var(--rule)",
@@ -135,7 +135,7 @@ export function RuntimeQuestion({ question, onAnswered }: Props) {
               {rt.whyNote}
             </div>
           )}
-          <div className="mt-3 flex gap-2 flex-wrap">
+          <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="pop" onClick={reset}>Try again</Button>
           </div>
         </motion.div>

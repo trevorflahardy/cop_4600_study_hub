@@ -50,10 +50,10 @@ export function QuizPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>self-quiz · mixed</Eyebrow>
         <h1 className="mt-2">Pick what to drill.</h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[64ch]">
+        <p className="serif mt-3 max-w-[64ch] text-(--ink-2) italic">
           Filter by unit or question type, then start. Immediate feedback after every answer — no
           batch-grade-at-the-end anti-pattern.
         </p>
@@ -61,7 +61,7 @@ export function QuizPage() {
 
       <Frame>
         <Eyebrow>unit</Eyebrow>
-        <div className="mt-2 flex gap-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-2">
           <button onClick={() => setUnit("any")} className={unit === "any" ? "btn-sk primary" : "btn-sk ghost"}>
             any unit
           </button>
@@ -79,7 +79,7 @@ export function QuizPage() {
 
       <Frame>
         <Eyebrow>type</Eyebrow>
-        <div className="mt-2 flex gap-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-2">
           {(["any", "mcq", "short"] as const).map((k) => (
             <button
               key={k}
@@ -94,7 +94,7 @@ export function QuizPage() {
 
       <Frame>
         <Eyebrow>how many?</Eyebrow>
-        <div className="mt-2 flex gap-4 items-center">
+        <div className="mt-2 flex items-center gap-4">
           <input
             type="range"
             min={3}
@@ -108,7 +108,7 @@ export function QuizPage() {
         </div>
       </Frame>
 
-      <div className="flex gap-3 items-center">
+      <div className="flex items-center gap-3">
         <Button variant="pop" size="big" onClick={start} disabled={pool.length === 0}>
           Start · {Math.min(limit, pool.length)} questions
         </Button>

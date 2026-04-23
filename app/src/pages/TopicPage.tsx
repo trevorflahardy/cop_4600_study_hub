@@ -82,13 +82,13 @@ export function AlgorithmPage() {
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "minmax(0, 1fr) 320px" }}>
-      <div className="flex flex-col gap-6 min-w-0">
+      <div className="flex min-w-0 flex-col gap-6">
         <Frame
           variant="dashed"
-          className="!py-3 !px-4"
+          className="px-4! py-3!"
           style={{ background: "var(--paper-2)" }}
         >
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-3">
             <Eyebrow>reference view · everything at once</Eyebrow>
             <span className="flex-1" />
             <Link to="/learn/$" params={{ _splat: slug }} className="btn-sk pop">
@@ -97,16 +97,16 @@ export function AlgorithmPage() {
           </div>
         </Frame>
 
-        <Frame className="!p-8">
+        <Frame className="p-8!">
           <Eyebrow>{unitLabel(topic.unit)} · {topic.handle}</Eyebrow>
           <h1 className="mt-2">{topic.title}</h1>
           {topic.hook && (
-            <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[70ch] text-[17px]">
+            <p className="serif mt-3 max-w-[70ch] text-[17px] text-(--ink-2) italic">
               {topic.hook}
             </p>
           )}
 
-          <div className="mt-4 flex gap-2 flex-wrap items-center">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Chip tone="sky">{topic.unit}</Chip>
             <MasteryBar level={level} />
             {topic.warnings.map((w, i) => (
@@ -134,7 +134,7 @@ export function AlgorithmPage() {
           <Frame>
             <Eyebrow>crown-jewel visualization</Eyebrow>
             <h3 className="mt-1">{viz.title}</h3>
-            <p className="serif italic text-[var(--ink-2)] text-[14px] mt-1">{viz.description}</p>
+            <p className="serif mt-1 text-[14px] text-(--ink-2) italic">{viz.description}</p>
             <div className="mt-4">{viz.render()}</div>
           </Frame>
         )}
@@ -178,7 +178,7 @@ export function AlgorithmPage() {
           )
         )}
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-3">
           <Link to="/" className="btn-sk">← Hub</Link>
           <Link to="/map" className="btn-sk ghost">See on the map</Link>
           <Link to="/module/$moduleId" params={{ moduleId: topic.unit }} className="btn-sk ghost">
@@ -194,7 +194,7 @@ export function AlgorithmPage() {
         <TutorDrawer topicSlug={slug} open={tutorOpen} onClose={() => setTutorOpen(false)} />
       </div>
 
-      <aside className="flex flex-col gap-4 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-4 self-start">
         <Frame>
           <Eyebrow>prereqs</Eyebrow>
           {prereqs.length === 0 ? (
@@ -269,7 +269,7 @@ export function AlgorithmPage() {
         {topic.sources.length > 0 && (
           <Frame>
             <Eyebrow>sources</Eyebrow>
-            <ul className="mt-2 flex flex-col gap-1 mono text-[11px] text-[var(--ink-2)]">
+            <ul className="mono mt-2 flex flex-col gap-1 text-[11px] text-(--ink-2)">
               {topic.sources.map((s, i) => <li key={i}>· {s}</li>)}
             </ul>
           </Frame>

@@ -142,7 +142,7 @@ function Block({ node }: { node: Node }) {
     case "quote":
       return (
         <blockquote
-          className="my-3 border-l-2 border-dashed pl-3 italic serif text-[var(--ink-2)]"
+          className="serif my-3 border-l-2 border-dashed pl-3 text-(--ink-2) italic"
           style={{ borderColor: "var(--ink-2)" }}
         >
           <Inline text={node.text} />
@@ -150,13 +150,13 @@ function Block({ node }: { node: Node }) {
       );
     case "ul":
       return (
-        <ul className="list-disc pl-6 my-2 flex flex-col gap-1">
+        <ul className="my-2 flex list-disc flex-col gap-1 pl-6">
           {node.items.map((it, i) => <li key={i}><Inline text={it} /></li>)}
         </ul>
       );
     case "ol":
       return (
-        <ol className="list-decimal pl-6 my-2 flex flex-col gap-1">
+        <ol className="my-2 flex list-decimal flex-col gap-1 pl-6">
           {node.items.map((it, i) => <li key={i}><Inline text={it} /></li>)}
         </ol>
       );
@@ -170,14 +170,14 @@ function Block({ node }: { node: Node }) {
       );
     case "table":
       return (
-        <div className="overflow-auto my-3">
+        <div className="my-3 overflow-auto">
           <table className="w-full border-collapse" style={{ border: "1.5px solid var(--ink)" }}>
             <thead>
               <tr>
                 {node.headers.map((h, i) => (
                   <th
                     key={i}
-                    className="mono text-[11px] uppercase tracking-wider py-2 px-3 text-left"
+                    className="mono px-3 py-2 text-left text-[11px] tracking-wider uppercase"
                     style={{ background: "var(--paper-2)", borderBottom: "1.5px solid var(--ink)" }}
                   >
                     <Inline text={h} />
@@ -189,7 +189,7 @@ function Block({ node }: { node: Node }) {
               {node.rows.map((r, i) => (
                 <tr key={i} style={{ borderBottom: "1px dashed var(--rule)" }}>
                   {r.map((c, j) => (
-                    <td key={j} className="py-2 px-3 serif text-[13px] align-top">
+                    <td key={j} className="serif px-3 py-2 align-top text-[13px]">
                       <Inline text={c} />
                     </td>
                   ))}

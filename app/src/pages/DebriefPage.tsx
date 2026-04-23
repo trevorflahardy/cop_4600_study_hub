@@ -28,10 +28,10 @@ export function DebriefPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>session debrief · complete</Eyebrow>
         <h1 className="mt-2">Good session. Here's <Highlighter>what moved.</Highlighter></h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[64ch]">
+        <p className="serif mt-3 max-w-[64ch] text-(--ink-2) italic">
           No scores, no streaks — just movement. Mastery shifts for topics you touched, and a concrete
           plan for what comes back.
         </p>
@@ -50,12 +50,12 @@ export function DebriefPage() {
           <MiniLabel>mastery ladder shifts from this session</MiniLabel>
           <div className="mt-3 flex flex-col gap-3">
             {recentMastery.length === 0 ? (
-              <p className="serif italic text-[var(--ink-2)]">Nothing yet — do a practice or review round to see movement.</p>
+              <p className="serif text-(--ink-2) italic">Nothing yet — do a practice or review round to see movement.</p>
             ) : (
               recentMastery.map((m) => {
                 const t = getTopic(m.topicSlug);
                 return (
-                  <div key={m.topicSlug} className="flex items-center gap-3 py-2 border-b border-dashed" style={{ borderColor: "var(--rule)" }}>
+                  <div key={m.topicSlug} className="flex items-center gap-3 border-b border-dashed py-2" style={{ borderColor: "var(--rule)" }}>
                     <div className="flex-1">
                       <div className="display text-lg leading-none">{t?.title ?? m.topicSlug}</div>
                       <div className="mini-label mt-1">{unitLabel(t?.unit ?? "")} · streak {m.correctStreak}</div>
@@ -76,7 +76,7 @@ export function DebriefPage() {
             rows={5}
             placeholder="what clicked? what didn't?"
           />
-          <div className="mt-3 flex gap-2 flex-wrap">
+          <div className="mt-3 flex flex-wrap gap-2">
             <Chip tone="hl">case 2 finally clicks</Chip>
             <Chip tone="amber">struggled: unrolling</Chip>
             <Chip tone="soft">want a second pass</Chip>
@@ -85,7 +85,7 @@ export function DebriefPage() {
           {weakest && (
             <div className="mt-5">
               <h4>The weak spot, explicitly</h4>
-              <p className="serif italic mt-2">
+              <p className="serif mt-2 italic">
                 <strong>{weakest.t.title}</strong> is sitting at mastery {weakest.lv}/5.{" "}
                 We'll schedule a 3-question booster for your next session.
               </p>
@@ -110,16 +110,16 @@ export function DebriefPage() {
             { when: "in 2 days", kind: "practice", t: "Fresh problems in this module", tone: "sky" as const },
             { when: "in ~5 days", kind: "review", t: "Spaced review across the whole unit", tone: "mint" as const },
           ].map((row, i) => (
-            <div key={i} className="flex items-center gap-4 py-3 border-b border-dashed last:border-0" style={{ borderColor: "var(--rule)" }}>
-              <span className="mono text-[11px] uppercase tracking-wider text-[var(--ink-3)] w-24">{row.when}</span>
+            <div key={i} className="flex items-center gap-4 border-b border-dashed py-3 last:border-0" style={{ borderColor: "var(--rule)" }}>
+              <span className="mono w-24 text-[11px] tracking-wider text-(--ink-3) uppercase">{row.when}</span>
               <Chip tone={row.tone}>{row.kind}</Chip>
-              <span className="flex-1 serif">{row.t}</span>
+              <span className="serif flex-1">{row.t}</span>
             </div>
           ))}
         </div>
       </Frame>
 
-      <div className="flex gap-3 flex-wrap items-center">
+      <div className="flex flex-wrap items-center gap-3">
         <Link to="/" className="btn-sk pop big">Done for the day</Link>
         <Link to="/review" className="btn-sk">Keep going — one more round</Link>
         <Link to="/map" className="btn-sk ghost">Back to the map</Link>

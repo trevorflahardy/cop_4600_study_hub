@@ -214,7 +214,7 @@ export function LearnPage() {
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "minmax(0, 1fr) 300px" }}>
-      <div className="flex flex-col gap-6 min-w-0">
+      <div className="flex min-w-0 flex-col gap-6">
         <StepperHeader
           topic={topic}
           level={level}
@@ -284,11 +284,11 @@ export function LearnPage() {
         )}
       </div>
 
-      <aside className="flex flex-col gap-4 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-4 self-start">
         <Frame>
           <Eyebrow>you are here</Eyebrow>
           <h3 className="mt-1 leading-tight">{topic.title}</h3>
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Chip tone="sky">{unitLabel(topic.unit)}</Chip>
             <MasteryBar level={level} />
           </div>
@@ -308,13 +308,13 @@ export function LearnPage() {
                 key={i}
                 onClick={() => setCursor(i)}
                 className={clsx(
-                  "text-left px-2 py-1 rounded transition-colors",
-                  i === cursor && "bg-[var(--hl)]",
-                  i < cursor && "text-[var(--ink-2)]"
+                  "rounded-sm px-2 py-1 text-left transition-colors",
+                  i === cursor && "bg-(--hl)",
+                  i < cursor && "text-(--ink-2)"
                 )}
                 style={{ border: "1px dashed transparent" }}
               >
-                <span className="mono text-[10px] mr-2 text-[var(--ink-3)]">
+                <span className="mono mr-2 text-[10px] text-(--ink-3)">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 {labelForStep(s)}
@@ -325,7 +325,7 @@ export function LearnPage() {
 
         <Frame variant="dashed">
           <Eyebrow>need the whole thing?</Eyebrow>
-          <p className="serif italic text-[13px] text-[var(--ink-2)] mt-2">
+          <p className="serif mt-2 text-[13px] text-(--ink-2) italic">
             Reading stepper too slow? Jump to the reference page with every section on one canvas.
           </p>
           <Link
@@ -364,7 +364,7 @@ function StepperHeader({
 
   return (
     <Frame>
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center gap-4">
         <div>
           <Eyebrow>learning · {unitLabel(topic.unit)}</Eyebrow>
           <h2 className="mt-1 leading-tight">{topic.title}</h2>
@@ -372,7 +372,7 @@ function StepperHeader({
         <span className="flex-1" />
         <MasteryBar level={level} />
       </div>
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <MiniLabel>
           step {cursor + 1} of {steps.length}
         </MiniLabel>
@@ -389,11 +389,11 @@ function StepperHeader({
 
 function IntroStep({ topic, onBegin }: { topic: KbTopic; onBegin: () => void }) {
   return (
-    <Frame className="!p-8">
+    <Frame className="p-8!">
       <Eyebrow>about to learn</Eyebrow>
       <h1 className="mt-2">{topic.title}</h1>
       {topic.hook && (
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[70ch] text-[17px]">
+        <p className="serif mt-3 max-w-[70ch] text-[17px] text-(--ink-2) italic">
           {topic.hook}
         </p>
       )}
@@ -424,7 +424,7 @@ function IntroStep({ topic, onBegin }: { topic: KbTopic; onBegin: () => void }) 
         </div>
       )}
 
-      <div className="mt-6 flex gap-3 flex-wrap">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Button variant="pop" size="big" onClick={onBegin}>
           <BookOpen size={16} /> Begin
         </Button>
@@ -453,8 +453,8 @@ function TeachStepView({
   const viz = vizFor(topic.slug);
 
   return (
-    <Frame className="!p-8">
-      <div className="flex items-center gap-3 flex-wrap">
+    <Frame className="p-8!">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>
           section {step.number} of {step.total} · {step.section.heading}
         </Eyebrow>
@@ -466,7 +466,7 @@ function TeachStepView({
 
       {step.decoration === "exam-quiz" ? (
         <div className="mt-4 flex flex-col gap-4">
-          <p className="serif italic text-[var(--ink-2)] max-w-[66ch]">
+          <p className="serif max-w-[66ch] text-(--ink-2) italic">
             Time to spar with the question bank for this topic. No penalty for wrong —
             correct answers nudge your mastery, missed ones just bank for later.
           </p>
@@ -507,12 +507,12 @@ function TeachStepView({
       {step.decoration === "viz" && viz && (
         <div className="mt-5" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 10, padding: 16 }}>
           <Eyebrow>visualization · {viz.title}</Eyebrow>
-          <p className="serif italic text-[13px] text-[var(--ink-2)] mt-1">{viz.description}</p>
+          <p className="serif mt-1 text-[13px] text-(--ink-2) italic">{viz.description}</p>
           <div className="mt-3">{viz.render()}</div>
         </div>
       )}
 
-      <div className="mt-6 flex gap-3 flex-wrap">
+      <div className="mt-6 flex flex-wrap gap-3">
         {canGoBack && (
           <Button variant="ghost" onClick={onBack}>
             ← Back
@@ -591,7 +591,7 @@ function MiniQuizStep({
     return (
       <Frame>
         <Eyebrow>{label}</Eyebrow>
-        <p className="serif italic text-[var(--ink-2)] mt-2">
+        <p className="serif mt-2 text-(--ink-2) italic">
           No quiz questions available for this section yet. Moving on.
         </p>
         <Button variant="pop" className="mt-3" onClick={onComplete}>
@@ -605,8 +605,8 @@ function MiniQuizStep({
     q.kind === "mcq" && q.choices && picked !== null && q.choices[picked].correct;
 
   return (
-    <Frame className="!p-8">
-      <div className="flex items-center gap-3 flex-wrap">
+    <Frame className="p-8!">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>
           {label} · {i + 1} of {questions.length}
         </Eyebrow>
@@ -672,7 +672,7 @@ function MiniQuizStep({
       )}
 
       {!revealed ? (
-        <div className="mt-6 flex gap-3 flex-wrap">
+        <div className="mt-6 flex flex-wrap gap-3">
           {i === 0 && (
             <Button variant="ghost" onClick={onBack}>
               ← Back to lesson
@@ -746,7 +746,7 @@ function MiniQuizStep({
             )}
           </div>
           {q.kind === "mcq" && (
-            <div className="mt-4 flex gap-3 flex-wrap">
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button
                 variant="pop"
                 onClick={() => advance(isRight ? "right" : "wrong")}
@@ -775,13 +775,13 @@ function MiniFeynmanStep({
   const enough = wordCount >= 15;
 
   return (
-    <Frame className="!p-8">
+    <Frame className="p-8!">
       <Eyebrow>
-        <Sparkles size={12} className="inline mr-1" />
+        <Sparkles size={12} className="mr-1 inline" />
         quick explain-back
       </Eyebrow>
       <h2 className="mt-2">{prompt}</h2>
-      <p className="serif italic text-[var(--ink-2)] mt-2 text-[14px]">
+      <p className="serif mt-2 text-[14px] text-(--ink-2) italic">
         No grade — just type it out. Writing forces the gap in your understanding to surface.
         One or two sentences is fine.
       </p>
@@ -792,7 +792,7 @@ function MiniFeynmanStep({
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <MiniLabel>{wordCount} words</MiniLabel>
         <span className="flex-1" />
         <Button variant="ghost" onClick={onBack}>
@@ -842,15 +842,15 @@ function TopicFeynmanStep({
   };
 
   return (
-    <Frame className="!p-8">
+    <Frame className="p-8!">
       <Eyebrow>
-        <MessageSquare size={12} className="inline mr-1" />
+        <MessageSquare size={12} className="mr-1 inline" />
         teach it back
       </Eyebrow>
       <h2 className="mt-2">
         Explain <em>{topic.title}</em> from scratch.
       </h2>
-      <p className="serif italic text-[var(--ink-2)] mt-2 max-w-[66ch]">
+      <p className="serif mt-2 max-w-[66ch] text-(--ink-2) italic">
         Pretend you're teaching a classmate who missed the lecture. Cover: the problem it solves,
         the mechanism, a small worked example, and why it's correct. If you want deep rubric-plus-LLM
         feedback, the dedicated Feynman workbench has that — here, we just want to lock in the big
@@ -860,7 +860,7 @@ function TopicFeynmanStep({
       {rubric && (
         <div className="mt-4">
           <MiniLabel>aim for</MiniLabel>
-          <ul className="mt-2 list-disc pl-5 text-[13px] serif text-[var(--ink-2)]">
+          <ul className="serif mt-2 list-disc pl-5 text-[13px] text-(--ink-2)">
             {rubric.items.map((it) => (
               <li key={it.id}>{it.prompt}</li>
             ))}
@@ -904,7 +904,7 @@ function TopicFeynmanStep({
             )}
           </div>
           {score.gaps.length > 0 && (
-            <ul className="mt-2 list-disc pl-5 text-[13px] serif text-[var(--ink-2)]">
+            <ul className="serif mt-2 list-disc pl-5 text-[13px] text-(--ink-2)">
               {score.gaps.map((g, i) => (
                 <li key={i}>{g}</li>
               ))}
@@ -913,7 +913,7 @@ function TopicFeynmanStep({
         </div>
       )}
 
-      <div className="mt-6 flex gap-3 flex-wrap">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Button variant="ghost" onClick={onBack}>
           ← Back
         </Button>
@@ -957,12 +957,12 @@ function DoneStep({
   onRestart: () => void;
 }) {
   return (
-    <Frame className="!p-8">
+    <Frame className="p-8!">
       <Eyebrow>done · for now</Eyebrow>
       <h1 className="mt-2">
         You walked through <em>{topic.title}</em>.
       </h1>
-      <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+      <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
         Mastery got a nudge where you answered correctly. Come back for spaced review
         before it fades — the review page keeps a queue of what's due.
       </p>
@@ -970,7 +970,7 @@ function DoneStep({
       <div className="mt-6 flex flex-col gap-3">
         {nextTopic && !moduleComplete && (
           <div
-            className="p-4 flex items-center gap-3 flex-wrap"
+            className="flex flex-wrap items-center gap-3 p-4"
             style={{
               border: "2px solid var(--ink)",
               borderRadius: 10,
@@ -978,7 +978,7 @@ function DoneStep({
             }}
           >
             <Sparkles size={18} />
-            <div className="flex-1 min-w-[200px]">
+            <div className="min-w-[200px] flex-1">
               <MiniLabel>next up in {unitLabel(topic.unit)}</MiniLabel>
               <div className="display text-[20px] leading-tight">{nextTopic.title}</div>
             </div>
@@ -1003,7 +1003,7 @@ function DoneStep({
           >
             <MiniLabel>module complete</MiniLabel>
             <h3 className="mt-1">You finished every topic in {unitLabel(topic.unit)}.</h3>
-            <p className="serif italic text-[var(--ink-2)] text-[14px] mt-1">
+            <p className="serif mt-1 text-[14px] text-(--ink-2) italic">
               Time for the chapter quiz — a mixed set that cuts across the whole module.
             </p>
             <Link
@@ -1016,7 +1016,7 @@ function DoneStep({
           </div>
         )}
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-3">
           <Link
             to="/module/$moduleId"
             params={{ moduleId: topic.unit }}

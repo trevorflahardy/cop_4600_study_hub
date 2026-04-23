@@ -22,7 +22,7 @@ export function Pseudocode({ blocks, highlightLine, onLineHover }: PseudocodePro
   return (
     <div>
       {blocks.length > 1 && (
-        <div className="flex gap-2 mb-2">
+        <div className="mb-2 flex gap-2">
           {blocks.map((b, i) => (
             <button
               key={i}
@@ -50,7 +50,7 @@ export function Pseudocode({ blocks, highlightLine, onLineHover }: PseudocodePro
               minHeight: 20,
             }}
           >
-            <span className="text-[10px] text-[var(--ink-3)] w-6 text-right pr-1 select-none">{idx + 1}</span>
+            <span className="w-6 pr-1 text-right text-[10px] select-none" style={{ color: "var(--ink-3)" }}>{idx + 1}</span>
             <span>{line || " "}</span>
           </div>
         ))}

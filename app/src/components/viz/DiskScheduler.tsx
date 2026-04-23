@@ -85,7 +85,7 @@ export function DiskScheduler({ algorithm = "fcfs" }: { algorithm?: ScheduleAlgo
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>{algorithm} · step {step + 1}/{schedule.length}</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">total seek: {totalSeek}</Chip>
@@ -94,7 +94,7 @@ export function DiskScheduler({ algorithm = "fcfs" }: { algorithm?: ScheduleAlgo
       <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>disk size</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={100} max={400} value={diskSize} onChange={(e) => setDiskSize(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{diskSize}</span>
           </div>
@@ -102,7 +102,7 @@ export function DiskScheduler({ algorithm = "fcfs" }: { algorithm?: ScheduleAlgo
 
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>head start</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={0} max={diskSize} value={headPos} onChange={(e) => setHeadPos(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{headPos}</span>
           </div>
@@ -168,17 +168,17 @@ export function DiskScheduler({ algorithm = "fcfs" }: { algorithm?: ScheduleAlgo
       <Frame>
         <Eyebrow>schedule</Eyebrow>
         <div className="mt-3 flex flex-wrap gap-2 font-mono text-sm">
-          <span className="px-2 py-1 rounded bg-[var(--pop)] text-white">{headPos}</span>
+          <span className="rounded-sm bg-(--pop) px-2 py-1 text-white">{headPos}</span>
           {schedule.slice(0, step + 1).map((pos, i) => (
-            <span key={i} className="px-2 py-1 rounded bg-[var(--hl)]">{pos}</span>
+            <span key={i} className="rounded-sm bg-(--hl) px-2 py-1">{pos}</span>
           ))}
           {schedule.slice(step + 1).map((pos, i) => (
-            <span key={i} className="px-2 py-1 rounded bg-[var(--ink-3)]">{pos}</span>
+            <span key={i} className="rounded-sm bg-(--ink-3) px-2 py-1">{pos}</span>
           ))}
         </div>
       </Frame>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => setStep(Math.max(0, step - 1))} variant="ghost">←</Button>
         <Button onClick={() => setStep(Math.min(schedule.length - 1, step + 1))} variant="pop">→</Button>
         <Button onClick={() => setStep(0)} variant="ghost"><RotateCcw size={14} /> reset</Button>

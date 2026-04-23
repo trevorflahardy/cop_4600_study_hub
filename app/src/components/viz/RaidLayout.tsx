@@ -36,7 +36,7 @@ export function RaidLayout({ level = 5 }: { level?: RAIDLevel }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>RAID-{level} layout</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">{numDisks} disks, {blockCount} blocks</Chip>
@@ -45,7 +45,7 @@ export function RaidLayout({ level = 5 }: { level?: RAIDLevel }) {
       <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>number of disks</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={2} max={12} value={numDisks} onChange={(e) => setNumDisks(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{numDisks}</span>
           </div>
@@ -53,7 +53,7 @@ export function RaidLayout({ level = 5 }: { level?: RAIDLevel }) {
 
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>blocks</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={4} max={32} step={4} value={blockCount} onChange={(e) => setBlockCount(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{blockCount}</span>
           </div>
@@ -124,7 +124,7 @@ export function RaidLayout({ level = 5 }: { level?: RAIDLevel }) {
 
       <Frame>
         <Eyebrow>RAID-{level} characteristics</Eyebrow>
-        <div className="mt-3 grid gap-2 text-sm font-mono">
+        <div className="mt-3 grid gap-2 font-mono text-sm">
           <div>Usable capacity: {capacity.toFixed(1)}x (of {numDisks})</div>
           <div>Read bandwidth: {readBW.toFixed(1)}x (parallel reads)</div>
           <div>Write bandwidth: {writeBW.toFixed(1)}x (parity overhead)</div>
@@ -132,8 +132,8 @@ export function RaidLayout({ level = 5 }: { level?: RAIDLevel }) {
         </div>
       </Frame>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-[var(--ink-2)]">Colors: </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-(--ink-2)">Colors: </span>
         <span style={{ width: 12, height: 12, background: "var(--hl)", borderRadius: 2 }} />
         <span className="text-xs">data</span>
         <span style={{ width: 12, height: 12, background: "var(--hl-2)", borderRadius: 2 }} />

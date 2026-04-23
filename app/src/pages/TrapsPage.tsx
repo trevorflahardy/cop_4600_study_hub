@@ -134,7 +134,7 @@ export function TrapsPage() {
       <Frame>
         <Eyebrow>traps · empty</Eyebrow>
         <h2 className="mt-2">No traps parsed.</h2>
-        <p className="serif italic text-[var(--ink-2)] mt-2">
+        <p className="serif mt-2 text-(--ink-2) italic">
           Expected <code>**Trap**: …</code> / <code>**Reality**: …</code> pairs under each
           <code> ### N. Title</code>.
         </p>
@@ -181,12 +181,12 @@ export function TrapsPage() {
   if (finished) {
     return (
       <div className="flex flex-col gap-6">
-        <Frame className="!p-8">
+        <Frame className="p-8!">
           <Eyebrow>traps · session complete</Eyebrow>
           <h1 className="mt-2">
             You sparred with <Highlighter color="amber">{total}</Highlighter> misconceptions.
           </h1>
-          <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+          <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
             Pushing back on a false claim is the skill. The traps you agreed with are the
             ones to re-visit — not because you failed, but because the misconception felt
             plausible, which is exactly when the exam will catch you.
@@ -207,7 +207,7 @@ export function TrapsPage() {
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3 flex-wrap">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button variant="pop" size="big" onClick={restart}>
               <RotateCcw size={16} /> Shuffle & go again
             </Button>
@@ -237,17 +237,17 @@ export function TrapsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>spar with misconceptions · {total} traps loaded</Eyebrow>
         <h1 className="mt-2">
           Catch the <Highlighter color="amber">gotcha</Highlighter> before it catches you.
         </h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+        <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
           Each card is a plausible-sounding claim a classmate might make. Your job is to
           decide whether to push back. No penalty for being wrong — the misses just get
           logged so you can come back to them.
         </p>
-        <div className="mt-4 flex gap-2 flex-wrap">
+        <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={() => {
               setCategoryFilter("all");
@@ -276,7 +276,7 @@ export function TrapsPage() {
         </div>
       </Frame>
 
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center gap-4">
         <MiniLabel>
           trap {cursor + 1} of {total}
         </MiniLabel>
@@ -294,8 +294,8 @@ export function TrapsPage() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
         >
-          <Frame className="!p-8">
-            <div className="flex items-center gap-3 flex-wrap">
+          <Frame className="p-8!">
+            <div className="flex flex-wrap items-center gap-3">
               <Eyebrow>{current.category}</Eyebrow>
               <span className="flex-1" />
               <MiniLabel>#{currentIdx + 1} · {current.title}</MiniLabel>
@@ -310,7 +310,7 @@ export function TrapsPage() {
               }}
             >
               <MiniLabel>imagine a classmate says:</MiniLabel>
-              <p className="serif text-[17px] italic mt-1">&ldquo;{current.claim}&rdquo;</p>
+              <p className="serif mt-1 text-[17px] italic">&ldquo;{current.claim}&rdquo;</p>
             </div>
 
             {!revealed ? (
@@ -367,7 +367,7 @@ export function TrapsPage() {
                     }}
                   >
                     <MiniLabel>why it matters</MiniLabel>
-                    <p className="serif italic mt-1 text-[14px]">{current.whyItMatters}</p>
+                    <p className="serif mt-1 text-[14px] italic">{current.whyItMatters}</p>
                   </div>
                 )}
 
@@ -380,7 +380,7 @@ export function TrapsPage() {
                   </details>
                 )}
 
-                <div className="mt-6 flex gap-3 flex-wrap">
+                <div className="mt-6 flex flex-wrap gap-3">
                   <Button variant="pop" size="big" onClick={advance}>
                     {cursor + 1 >= total ? "Wrap up →" : "Next trap"} <ArrowRight size={16} />
                   </Button>
@@ -421,7 +421,7 @@ function VerdictButton({
   return (
     <button
       onClick={onClick}
-      className="text-left p-4 transition-colors hover:bg-[var(--hl)]"
+      className="p-4 text-left transition-colors hover:bg-(--hl)"
       style={{
         border: "2px solid var(--ink)",
         borderRadius: 10,
@@ -430,7 +430,7 @@ function VerdictButton({
       }}
     >
       <div className="display text-[18px] leading-none">{label}</div>
-      <div className="serif italic text-[13px] text-[var(--ink-2)] mt-1">{helper}</div>
+      <div className="serif mt-1 text-[13px] text-(--ink-2) italic">{helper}</div>
     </button>
   );
 }
@@ -441,7 +441,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
-        className="p-4 flex items-center gap-3"
+        className="flex items-center gap-3 p-4"
         style={{
           border: "2px solid var(--ink)",
           borderRadius: 10,
@@ -451,7 +451,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
         <Sparkles size={20} />
         <div>
           <div className="display text-[18px] leading-none">Nice — push-back was right.</div>
-          <div className="serif italic text-[13px] text-[var(--ink-2)] mt-1">
+          <div className="serif mt-1 text-[13px] text-(--ink-2) italic">
             The claim misses the nuance spelled out below.
           </div>
         </div>
@@ -464,7 +464,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
   if (verdict === "agree") {
     return (
       <div
-        className="p-4 flex items-center gap-3"
+        className="flex items-center gap-3 p-4"
         style={{
           border: "2px solid var(--ink)",
           borderRadius: 10,
@@ -474,7 +474,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
         <HeartCrack size={20} />
         <div>
           <div className="display text-[18px] leading-none">No problem — we'll come back to this one.</div>
-          <div className="serif italic text-[13px] text-[var(--ink-2)] mt-1">
+          <div className="serif mt-1 text-[13px] text-(--ink-2) italic">
             The claim feels plausible, which is exactly why it traps half the class. Read the
             reality below and re-shuffle later.
           </div>
@@ -485,7 +485,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
 
   return (
     <div
-      className="p-4 flex items-center gap-3"
+      className="flex items-center gap-3 p-4"
       style={{
         border: "1.5px dashed var(--ink-2)",
         borderRadius: 10,
@@ -494,7 +494,7 @@ function VerdictBanner({ verdict, wasRight }: { verdict: Verdict; wasRight: bool
     >
       <div>
         <div className="display text-[18px] leading-none">Fair — bank it.</div>
-        <div className="serif italic text-[13px] text-[var(--ink-2)] mt-1">
+        <div className="serif mt-1 text-[13px] text-(--ink-2) italic">
           Here's what's actually going on.
         </div>
       </div>

@@ -64,7 +64,7 @@ export function InodeLayout({ fileSize = 0, blockSize = 4096 }: { fileSize?: num
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>inode multi-level index</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">block size: {formatBytes(bs)}</Chip>
@@ -72,7 +72,7 @@ export function InodeLayout({ fileSize = 0, blockSize = 4096 }: { fileSize?: num
 
       <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
         <MiniLabel>file size (log scale)</MiniLabel>
-        <div className="flex items-center gap-3 mt-2">
+        <div className="mt-2 flex items-center gap-3">
           <input
             type="range"
             min={0}
@@ -86,7 +86,7 @@ export function InodeLayout({ fileSize = 0, blockSize = 4096 }: { fileSize?: num
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         {blockSizes.map((bs, i) => (
           <button
             key={i}
@@ -142,7 +142,7 @@ export function InodeLayout({ fileSize = 0, blockSize = 4096 }: { fileSize?: num
 
       <Frame>
         <Eyebrow>coverage summary</Eyebrow>
-        <div className="mt-3 grid gap-2 text-sm font-mono">
+        <div className="mt-3 grid gap-2 font-mono text-sm">
           <div>File size: {formatBytes(fileSize64)} / {formatBytes(totalMax)} max</div>
           <div>Direct: {coverage.direct}/{DIRECT_POINTERS} pointers active ({formatBytes(coverage.direct * bs)})</div>
           <div>Single-indirect: {coverage.single} pointers active ({formatBytes(coverage.single * bs)})</div>

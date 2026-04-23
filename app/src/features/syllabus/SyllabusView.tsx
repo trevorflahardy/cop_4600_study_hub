@@ -23,11 +23,11 @@ export function SyllabusView() {
       <Frame>
         <div className="eyebrow">birds-eye · {allTopics().length} topics · {units.length} units</div>
         <h2 className="mt-2">Your whole semester, on one page.</h2>
-        <p className="serif italic text-[var(--ink-2)] mt-2 max-w-[64ch]">
+        <p className="serif mt-2 max-w-[64ch] text-(--ink-2) italic">
           Every topic you need for the cumulative final, grouped the way the lectures ran. Status
           dots show where you are. Click any row to jump in.
         </p>
-        <div className="mt-3 flex gap-3 items-center">
+        <div className="mt-3 flex items-center gap-3">
           <Chip tone="pop">{(overallProgress * 100).toFixed(0)}% touched</Chip>
           <Chip tone="mint">{mastery.filter((m) => m.level >= 4).length} near-mastery</Chip>
           <Chip tone="amber">{allTopics().length - mastery.filter((m) => m.level > 0).length} untouched</Chip>
@@ -40,7 +40,7 @@ export function SyllabusView() {
           const covered = unitTopics.filter((t) => (mLookup.get(t.slug) ?? 0) > 0).length;
           return (
             <Frame key={u}>
-              <div className="flex justify-between items-baseline mb-3">
+              <div className="mb-3 flex items-baseline justify-between">
                 <div>
                   <div className="eyebrow">{u}</div>
                   <h3 className="mt-1">{unitLabel(u)}</h3>
@@ -61,10 +61,10 @@ export function SyllabusView() {
                         color: "inherit",
                       }}
                     >
-                      <span className="mono text-[10px] text-[var(--ink-3)] w-6">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="display text-[20px] leading-none flex-1">{t.title}</span>
+                      <span className="mono w-6 text-[10px] text-(--ink-3)">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="display flex-1 text-[20px] leading-none">{t.title}</span>
                       <MasteryBar level={lv} />
-                      <ChevronRight size={16} className="text-[var(--ink-3)]" />
+                      <ChevronRight size={16} className="text-(--ink-3)" />
                     </Link>
                   );
                 })}

@@ -30,17 +30,17 @@ export function LecturePage() {
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "1.7fr 1fr" }}>
-      <div className="flex flex-col gap-6 min-w-0">
+      <div className="flex min-w-0 flex-col gap-6">
         <div>
           <Eyebrow>lesson · {unitLabel(moduleId)} · ~12 min</Eyebrow>
           <h1 className="mt-2">{topic.title}</h1>
-          {topic.hook && <p className="serif italic text-[var(--ink-2)] mt-2">{topic.hook}</p>}
+          {topic.hook && <p className="serif mt-2 text-(--ink-2) italic">{topic.hook}</p>}
         </div>
 
         <div className="stage">
-          <div className="mono text-[10px] uppercase tracking-wider text-[var(--ink-3)]">▶ animated derivation</div>
-          <div className="display text-4xl mt-3">{topic.title}</div>
-          <p className="serif italic mt-3 max-w-[56ch]">
+          <div className="mono text-[10px] tracking-wider text-(--ink-3) uppercase">▶ animated derivation</div>
+          <div className="display mt-3 text-4xl">{topic.title}</div>
+          <p className="serif mt-3 max-w-[56ch] italic">
             {definition
               ? definition.body.replace(/```[\s\S]*?```/g, "").split(/\.\s+/)[0] + "."
               : "Play to walk through the concept step-by-step. (Visualization in Phase 4.)"}
@@ -73,7 +73,7 @@ export function LecturePage() {
           </Frame>
         ))}
 
-        <div className="flex gap-3 items-center flex-wrap">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/module/$moduleId/lesson/$lessonId/practice"
             params={{ moduleId, lessonId }}
@@ -87,7 +87,7 @@ export function LecturePage() {
         </div>
       </div>
 
-      <aside className="flex flex-col gap-3 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-3 self-start">
         <div>
           <h3>Notes</h3>
           <MiniLabel>auto-captured key points · click to jump</MiniLabel>
@@ -103,7 +103,7 @@ export function LecturePage() {
         <div className={"note " + (note.trim() ? "user" : "")}>
           <span className="time">yours · unsaved</span>
           <textarea
-            className="w-full mt-1 serif text-[14px]"
+            className="serif mt-1 w-full text-[14px]"
             style={{ background: "transparent", outline: "none", border: "none", resize: "vertical", minHeight: 60 }}
             placeholder="your own notes here…"
             value={note}

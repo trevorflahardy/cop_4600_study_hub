@@ -113,7 +113,7 @@ export function LockSimulator({ primitive = "ticket" }: { primitive?: LockPrimit
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>{primitive} · step {step + 1}/{simulation.length}</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">3 threads</Chip>
@@ -121,24 +121,24 @@ export function LockSimulator({ primitive = "ticket" }: { primitive?: LockPrimit
 
       <Frame>
         <Eyebrow>lock state</Eyebrow>
-        <div className="mt-3 p-4 rounded-lg border border-[var(--ink-2)] bg-[var(--paper-2)]" style={{ fontFamily: "var(--ff-mono)", fontSize: 13 }}>
+        <div className="mt-3 rounded-lg border border-(--ink-2) bg-(--paper-2) p-4" style={{ fontFamily: "var(--ff-mono)", fontSize: 13 }}>
           {primitive === "tas" && (
             <div>
               <div>Lock word = {currentEvent.lockState.word === 0 ? "UNLOCKED (0)" : "LOCKED (1)"}</div>
-              {currentEvent.lockState.thread !== undefined && <div className="text-[var(--pop)]">Thread {currentEvent.lockState.thread} in CS</div>}
+              {currentEvent.lockState.thread !== undefined && <div className="text-(--pop)">Thread {currentEvent.lockState.thread} in CS</div>}
             </div>
           )}
           {primitive === "cas" && (
             <div>
               <div>Value = {currentEvent.lockState.value === 0 ? "UNLOCKED (0)" : "LOCKED (1)"}</div>
-              {currentEvent.lockState.thread !== undefined && <div className="text-[var(--pop)]">Thread {currentEvent.lockState.thread} in CS</div>}
+              {currentEvent.lockState.thread !== undefined && <div className="text-(--pop)">Thread {currentEvent.lockState.thread} in CS</div>}
             </div>
           )}
           {primitive === "ticket" && (
             <div>
               <div>Next ticket: {currentEvent.lockState.next}</div>
               <div>Queue: {currentEvent.lockState.queue.join(", ") || "empty"}</div>
-              {currentEvent.lockState.thread !== undefined && <div className="text-[var(--pop)]">Thread {currentEvent.lockState.thread} in CS</div>}
+              {currentEvent.lockState.thread !== undefined && <div className="text-(--pop)">Thread {currentEvent.lockState.thread} in CS</div>}
             </div>
           )}
         </div>
@@ -186,7 +186,7 @@ export function LockSimulator({ primitive = "ticket" }: { primitive?: LockPrimit
         </div>
       </Frame>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => setStep(Math.max(0, step - 1))} variant="ghost">←</Button>
         <Button onClick={() => setStep(Math.min(simulation.length - 1, step + 1))} variant="pop">→</Button>
         <Button onClick={() => setStep(0)} variant="ghost"><RotateCcw size={14} /> reset</Button>

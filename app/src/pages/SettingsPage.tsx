@@ -27,7 +27,7 @@ export function SettingsPage() {
       <Frame>
         <div className="eyebrow">theme</div>
         <h2 className="mt-2">How do you want the paper to look?</h2>
-        <div className="flex gap-2 mt-3">
+        <div className="mt-3 flex gap-2">
           {(["light", "dark", "system"] as const).map((t) => (
             <Button
               key={t}
@@ -43,12 +43,12 @@ export function SettingsPage() {
       <Frame>
         <div className="eyebrow">typography</div>
         <h2 className="mt-2">Which typeface should we use?</h2>
-        <p className="serif italic mt-2 text-[var(--ink-2)]">
+        <p className="serif mt-2 text-(--ink-2) italic">
           <b>Notebook</b> keeps the hand-lettered look (Caveat, Nunito, Fraunces, JetBrains Mono).
           <br />
           <b>Apple</b> switches everything to the system stack — SF Pro Display, SF Pro Text, New York, and SF Mono on Apple devices.
         </p>
-        <div className="flex gap-2 mt-3">
+        <div className="mt-3 flex gap-2">
           {(["notebook", "apple"] as const).map((f) => (
             <Button
               key={f}
@@ -64,7 +64,7 @@ export function SettingsPage() {
       <Frame>
         <div className="eyebrow">local LLM · ollama</div>
         <h2 className="mt-2">Optional: give the Feynman workbench a brain.</h2>
-        <p className="serif italic mt-2 text-[var(--ink-2)]">
+        <p className="serif mt-2 text-(--ink-2) italic">
           The rubric grader always works offline. Enabling Ollama adds streamed-in deep feedback,
           per-concept tutor chat, and free-form hints.
         </p>
@@ -101,14 +101,14 @@ export function SettingsPage() {
 
         <div className="mt-4 flex items-center gap-3">
           <Button onClick={testOllama}>Ping endpoint</Button>
-          {testResult && <span className="mono text-[12px] text-[var(--ink-2)]">{testResult}</span>}
+          {testResult && <span className="mono text-[12px] text-(--ink-2)">{testResult}</span>}
         </div>
       </Frame>
 
       <Frame>
         <Eyebrow>backup · local JSON</Eyebrow>
         <h2 className="mt-2">Export / import your progress.</h2>
-        <p className="serif italic mt-2 text-[var(--ink-2)] text-[14px]">
+        <p className="serif mt-2 text-[14px] text-(--ink-2) italic">
           Export as JSON for safekeeping. Import to restore on another machine — it replaces all local state.
         </p>
         <BackupControls />
@@ -117,7 +117,7 @@ export function SettingsPage() {
       <Frame>
         <Eyebrow>danger zone</Eyebrow>
         <h2 className="mt-2">Wipe all local progress</h2>
-        <p className="serif italic mt-2 text-[var(--ink-2)]">
+        <p className="serif mt-2 text-(--ink-2) italic">
           Clears mastery, SRS, sessions, Feynman entries, and flags. Settings are kept.
         </p>
         <Button
@@ -161,7 +161,7 @@ function BackupControls() {
   }
 
   return (
-    <div className="mt-3 flex items-center gap-3 flex-wrap">
+    <div className="mt-3 flex flex-wrap items-center gap-3">
       <Button onClick={doExport}>Download backup.json</Button>
       <label className="btn-sk ghost cursor-pointer">
         <input type="file" accept="application/json" ref={inputRef} onChange={doImport} className="hidden" />

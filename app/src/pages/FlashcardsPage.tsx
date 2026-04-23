@@ -99,7 +99,7 @@ export function FlashcardsPage() {
 
     return (
       <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex flex-wrap items-center gap-4">
           <MiniLabel>card {idx + 1} of {session.length} · streak {streak}</MiniLabel>
           <PipRow states={pipStates} />
           <span className="flex-1" />
@@ -118,7 +118,7 @@ export function FlashcardsPage() {
           transition={{ duration: 0.25 }}
         >
           <Frame
-            className="!p-10 cursor-pointer"
+            className="cursor-pointer p-10!"
             shadow="canvas"
             onClick={() => setFlipped((f) => !f)}
             style={{ minHeight: 320, background: flipped ? "var(--paper-2)" : "var(--paper)" }}
@@ -134,12 +134,12 @@ export function FlashcardsPage() {
               >
                 <MarkdownBlock
                   source={flipped ? card.back : card.front}
-                  className="mt-4 serif text-[18px] leading-relaxed max-w-[64ch]"
+                  className="serif mt-4 max-w-[64ch] text-[18px] leading-relaxed"
                 />
                 {flipped && topic?.hook && (
-                  <div className="mt-6 pt-4 border-t border-dashed" style={{ borderColor: "var(--rule)" }}>
+                  <div className="mt-6 border-t border-dashed pt-4" style={{ borderColor: "var(--rule)" }}>
                     <MiniLabel>from the KB</MiniLabel>
-                    <p className="serif italic mt-1 text-[var(--ink-2)] text-[14px]">{topic.hook}</p>
+                    <p className="serif mt-1 text-[14px] text-(--ink-2) italic">{topic.hook}</p>
                   </div>
                 )}
               </motion.div>
@@ -148,7 +148,7 @@ export function FlashcardsPage() {
         </motion.div>
 
         {flipped ? (
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <Button variant="default" onClick={() => rate(0)}>1 · again</Button>
             <Button variant="default" onClick={() => rate(1)}>2 · hard</Button>
             <Button variant="primary" onClick={() => rate(2)}>3 · good</Button>
@@ -159,7 +159,7 @@ export function FlashcardsPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <Button variant="pop" size="big" onClick={() => setFlipped(true)}>
               <RotateCcw size={16} /> Reveal the back
             </Button>
@@ -167,13 +167,13 @@ export function FlashcardsPage() {
           </div>
         )}
 
-        <Frame padded={false} className="!p-4">
+        <Frame padded={false} className="p-4!">
           <MiniLabel>related topic</MiniLabel>
           {topic && (
             <Link
               to="/learn/$"
               params={{ _splat: topic.slug }}
-              className="display text-[18px] underline decoration-dashed mt-1 inline-block"
+              className="display mt-1 inline-block text-[18px] underline decoration-dashed"
             >
               {topic.title}
             </Link>
@@ -186,10 +186,10 @@ export function FlashcardsPage() {
   // Picker screen
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>active recall deck</Eyebrow>
         <h1 className="mt-2">Flip, rate, stretch the interval.</h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+        <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
           Seven card types per topic — term ↔ def, code → name, complexity, a gotcha
           consequence, and a Feynman prompt. The 2357 scheduler stretches intervals as you
           get things right (day 1 → 3 → 7 → 14). Keyboard: <code className="code-block inline">space</code> flips,
@@ -206,7 +206,7 @@ export function FlashcardsPage() {
 
       <Frame>
         <Eyebrow>filter by unit</Eyebrow>
-        <div className="mt-2 flex gap-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-2">
           <button className={unitFilter === "any" ? "btn-sk primary" : "btn-sk ghost"} onClick={() => setUnitFilter("any")}>
             any
           </button>
@@ -222,7 +222,7 @@ export function FlashcardsPage() {
         </div>
       </Frame>
 
-      <div className="flex gap-3 items-center flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button variant="pop" size="big" onClick={() => startSession(10)} disabled={dueCards.length === 0}>
           Start · {Math.min(10, dueCards.length)} cards
         </Button>

@@ -24,10 +24,10 @@ export function MasteryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>mastery · status across {totals.all} topics</Eyebrow>
         <h1 className="mt-2">Where you actually <Highlighter color="mint">stand</Highlighter>.</h1>
-        <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[66ch]">
+        <p className="serif mt-3 max-w-[66ch] text-(--ink-2) italic">
           No scores. No streaks. Just a pip ladder per topic — 0 (fresh) through 5 (mastered). A topic
           reaches 4 after you explain it back; 5 after you pass review twice in a row.
         </p>
@@ -60,7 +60,7 @@ export function MasteryPage() {
                 className="block no-underline"
                 style={{ color: "inherit" }}
               >
-                <Frame className="!p-5" shadow="card">
+                <Frame className="p-5!" shadow="card">
                   <div className="flex items-center gap-2">
                     <MasteryBar level={lv} />
                     <Chip tone={lv >= 3 ? "hl" : "amber"}>{masteryLabel(lv)}</Chip>
@@ -79,7 +79,7 @@ export function MasteryPage() {
         const covered = topics.filter((t) => (mLookup.get(t.slug) ?? 0) > 0).length;
         return (
           <Frame key={u}>
-            <div className="flex justify-between items-baseline mb-2">
+            <div className="mb-2 flex items-baseline justify-between">
               <div>
                 <Eyebrow>{u}</Eyebrow>
                 <h3 className="mt-1">{unitLabel(u)}</h3>
@@ -94,14 +94,14 @@ export function MasteryPage() {
                     key={t.slug}
                     to="/learn/$"
                     params={{ _splat: t.slug }}
-                    className="flex items-center gap-2 py-2 px-3 rounded no-underline"
+                    className="flex items-center gap-2 rounded-sm px-3 py-2 no-underline"
                     style={{
                       border: "1.5px solid var(--ink)",
                       background: lv >= 4 ? "var(--hl-2)" : lv > 0 ? "var(--hl)" : "var(--paper)",
                       color: "inherit",
                     }}
                   >
-                    <span className="flex-1 serif text-[14px] leading-tight">{t.title}</span>
+                    <span className="serif flex-1 text-[14px] leading-tight">{t.title}</span>
                     <MasteryBar level={lv} />
                   </Link>
                 );

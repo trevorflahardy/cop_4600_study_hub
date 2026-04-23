@@ -55,12 +55,12 @@ function Shell() {
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <AppTop />
-      <main className="flex-1 px-6 py-8 max-w-[1400px] w-full mx-auto">
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-6 py-8">
         <Outlet />
       </main>
-      <footer className="px-6 py-4 mono text-[11px] text-[var(--ink-3)] text-center border-t border-dashed border-[var(--rule)] flex items-center justify-center gap-3">
+      <footer className="mono flex items-center justify-center gap-3 border-t border-dashed border-(--rule) px-6 py-4 text-center text-[11px] text-(--ink-3)">
         <span>COP 4600 · Spring 2026 · Local-only · press <button onClick={() => setHelpOpen(true)} className="underline decoration-dashed">?</button> for shortcuts</span>
       </footer>
       <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />

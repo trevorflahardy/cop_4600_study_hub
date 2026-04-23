@@ -90,9 +90,9 @@ export function ExamQuestionsQuiz({
 
   if (questions.length === 0) {
     return (
-      <Frame variant="dashed" className="!p-6">
+      <Frame variant="dashed" className="p-6!">
         <Eyebrow>common exam questions</Eyebrow>
-        <p className="serif italic text-[var(--ink-2)] mt-2 text-[14px]">
+        <p className="serif mt-2 text-[14px] text-(--ink-2) italic">
           No questions authored for this topic yet. Add them under "Common exam questions"
           in the KB markdown, then run <code>bun kb</code>.
         </p>
@@ -105,7 +105,7 @@ export function ExamQuestionsQuiz({
   if (mode === "idle") {
     return (
       <Frame
-        className={clsx("!p-6 relative overflow-hidden", variant === "compact" && "!p-5")}
+        className={clsx("relative overflow-hidden p-6!", variant === "compact" && "p-5!")}
         style={{ background: "var(--paper-2)" }}
       >
         <div
@@ -124,12 +124,12 @@ export function ExamQuestionsQuiz({
             {questions.length} question{questions.length > 1 ? "s" : ""} loaded
             {topicTitle ? ` for ${topicTitle}` : ""}.
           </h3>
-          <p className="serif italic text-[var(--ink-2)] mt-2 max-w-[60ch] text-[14px]">
+          <p className="serif mt-2 max-w-[60ch] text-[14px] text-(--ink-2) italic">
             Low-stakes. Right answers light up — wrong ones just get banked so we can come
             back to them. This is about <em>iterating</em>, not being graded.
           </p>
 
-          <div className="mt-4 flex gap-2 flex-wrap">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Chip tone="sky">{questions.filter((q) => q.kind === "mcq").length} multiple choice</Chip>
             {questions.filter((q) => q.kind !== "mcq").length > 0 && (
               <Chip tone="soft">
@@ -139,7 +139,7 @@ export function ExamQuestionsQuiz({
             <Chip tone="amber">shuffled each run</Chip>
           </div>
 
-          <div className="mt-5 flex gap-3 items-center flex-wrap">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button variant="pop" size="big" onClick={launch}>
               <Play size={16} /> Throw me in
             </Button>
@@ -157,12 +157,12 @@ export function ExamQuestionsQuiz({
     const parks = results.filter((r) => r === "park").length;
 
     return (
-      <Frame className="!p-6">
+      <Frame className="p-6!">
         <Eyebrow>mini-quiz · wrapped</Eyebrow>
         <h3 className="mt-2">
           {wins} clicked. {parks > 0 ? `${parks} to come back to.` : "Nothing to re-queue."}
         </h3>
-        <p className="serif italic text-[var(--ink-2)] mt-2 max-w-[60ch] text-[14px]">
+        <p className="serif mt-2 max-w-[60ch] text-[14px] text-(--ink-2) italic">
           {wins === order.length
             ? "Clean sweep. Read the rest of the topic, then take the full quiz at the end of the stepper."
             : wins > order.length / 2
@@ -170,7 +170,7 @@ export function ExamQuestionsQuiz({
             : "You found the sharp edges. Re-read the section above and try again — that's the loop."}
         </p>
 
-        <div className="mt-4 flex gap-3 items-center flex-wrap">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button variant="pop" onClick={launch}>
             <RotateCcw size={16} /> Re-shuffle & go again
           </Button>
@@ -198,8 +198,8 @@ export function ExamQuestionsQuiz({
     currentQ.choices[picked].correct;
 
   return (
-    <Frame className="!p-6">
-      <div className="flex items-center gap-3 flex-wrap">
+    <Frame className="p-6!">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>
           mini-quiz · {cursor + 1} of {order.length}
         </Eyebrow>
@@ -259,7 +259,7 @@ export function ExamQuestionsQuiz({
           )}
 
           {!revealed ? (
-            <div className="mt-5 flex gap-3 flex-wrap items-center">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <Button
                 variant="pop"
                 onClick={submit}
@@ -274,7 +274,7 @@ export function ExamQuestionsQuiz({
                 Skip · bank it
               </Button>
               <MiniLabel>
-                <Heart size={10} className="inline mr-1" /> no penalty · iterate freely
+                <Heart size={10} className="mr-1 inline" /> no penalty · iterate freely
               </MiniLabel>
             </div>
           ) : currentQ.kind === "mcq" ? (
@@ -326,7 +326,7 @@ function CorrectReward({
     <motion.div
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="mt-5 p-4 relative overflow-hidden"
+      className="relative mt-5 overflow-hidden p-4"
       style={{
         border: "2px solid var(--ink)",
         borderRadius: 10,
@@ -348,10 +348,10 @@ function CorrectReward({
         <h4 className="display text-[18px]">Locked in.</h4>
         <Chip tone="mint">+1 mastery nudge</Chip>
       </div>
-      <p className="serif text-[14px] mt-2">
+      <p className="serif mt-2 text-[14px]">
         <strong>Why:</strong> {why}
       </p>
-      <div className="mt-4 flex gap-3 flex-wrap">
+      <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="pop" onClick={onNext}>
           {isLast ? "Wrap up →" : "Next question"} <ArrowRight size={14} />
         </Button>
@@ -388,27 +388,27 @@ function GentleMiss({
         <Heart size={18} />
         <h4 className="display text-[18px]">No problem — we'll come back to this one.</h4>
       </div>
-      <p className="serif italic text-[13px] text-[var(--ink-2)] mt-1">
+      <p className="serif mt-1 text-[13px] text-(--ink-2) italic">
         That answer feels right when you first read it — it's exactly the kind of thing the
         exam builds a question around. Here's what's actually going on:
       </p>
       <div className="mt-3">
         <MiniLabel>correct</MiniLabel>
-        <div className="serif text-[14px] mt-1">{correctText}</div>
+        <div className="serif mt-1 text-[14px]">{correctText}</div>
       </div>
       {pickedWhy && (
         <div className="mt-3">
           <MiniLabel>where that trap comes from</MiniLabel>
-          <p className="serif text-[13px] mt-1">{pickedWhy}</p>
+          <p className="serif mt-1 text-[13px]">{pickedWhy}</p>
         </div>
       )}
       {explanation && (
         <div className="mt-3">
           <MiniLabel>big picture</MiniLabel>
-          <p className="serif text-[13px] mt-1">{explanation}</p>
+          <p className="serif mt-1 text-[13px]">{explanation}</p>
         </div>
       )}
-      <div className="mt-4 flex gap-3 flex-wrap">
+      <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="pop" onClick={onNext}>
           {isLast ? "Wrap up →" : "Next question"} <ArrowRight size={14} />
         </Button>
@@ -438,8 +438,8 @@ function SelfRateShort({
       }}
     >
       <MiniLabel>what to check for</MiniLabel>
-      <p className="serif text-[14px] mt-1">{expected}</p>
-      <div className="mt-4 flex gap-3 flex-wrap">
+      <p className="serif mt-1 text-[14px]">{expected}</p>
+      <div className="mt-4 flex flex-wrap gap-3">
         <Button variant="pop" onClick={onWin}>
           I hit the key points · {isLast ? "wrap up" : "next"}
         </Button>

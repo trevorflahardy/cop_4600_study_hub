@@ -21,7 +21,7 @@ export function PracticePage() {
       <Frame>
         <Eyebrow>practice · no questions yet</Eyebrow>
         <h2 className="mt-2">This lesson doesn't have generated quiz questions yet.</h2>
-        <p className="serif italic text-[var(--ink-2)] mt-2">
+        <p className="serif mt-2 text-(--ink-2) italic">
           The KB's "Common exam questions" section was either empty or not parsed.
           Add questions to <code>kb/{slug}.md</code> and run <code>bun kb</code>.
         </p>
@@ -34,7 +34,7 @@ export function PracticePage() {
       <div>
         <Eyebrow>practice · {topic.unit}</Eyebrow>
         <h1 className="mt-2">{topic.title}</h1>
-        <div className="mt-2 flex gap-2 items-center">
+        <div className="mt-2 flex items-center gap-2">
           <Chip tone="sky">{allQs.length} questions</Chip>
           <MiniLabel>autosaves · come back anytime</MiniLabel>
         </div>

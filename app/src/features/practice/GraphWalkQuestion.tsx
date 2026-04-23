@@ -130,15 +130,15 @@ export function GraphWalkQuestion({ question, onAnswered }: Props) {
     : "visit order";
 
   return (
-    <Frame className="!p-6">
+    <Frame className="p-6!">
       <Eyebrow>graph walk · {algorithm.toUpperCase()} {source ? `from ${source}` : ""}</Eyebrow>
-      <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
         <h3 className="m-0">{question.prompt}</h3>
         <span className="flex-1" />
         <Chip tone="sky">{stepLabel}</Chip>
       </div>
       {tieBreak && (
-        <p className="mt-2 serif italic text-[13px] text-[var(--ink-3)]">
+        <p className="serif mt-2 text-[13px] text-(--ink-3) italic">
           Tie-break: {tieBreak}
         </p>
       )}
@@ -246,10 +246,10 @@ export function GraphWalkQuestion({ question, onAnswered }: Props) {
         })}
       </svg>
 
-      <div className="mt-4 flex items-center gap-3 flex-wrap">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <MiniLabel>your picks:</MiniLabel>
         <code className="mono text-[13px]">
-          {picked.length === 0 ? <span className="text-[var(--ink-3)]">(none)</span> : picked.join(" → ")}
+          {picked.length === 0 ? <span className="text-(--ink-3)">(none)</span> : picked.join(" → ")}
         </code>
         <span className="flex-1" />
         <MiniLabel>progress:</MiniLabel>
@@ -259,7 +259,7 @@ export function GraphWalkQuestion({ question, onAnswered }: Props) {
       </div>
 
       {!done ? (
-        <div className="mt-4 flex gap-2 flex-wrap">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="ghost" onClick={undo} disabled={picked.length === 0 && pendingEdgeFirst === null}>
             <Undo2 size={14} /> undo
           </Button>
@@ -288,15 +288,15 @@ export function GraphWalkQuestion({ question, onAnswered }: Props) {
               {done === "correct" ? "Nailed the order." : "Expected order:"}
             </strong>
           </div>
-          <div className="mono text-[13px] mt-2">
+          <div className="mono mt-2 text-[13px]">
             {expectedOrder.join(" → ")}
           </div>
           {question.explanation && (
-            <div className="serif italic text-[14px] mt-2 text-[var(--ink-2)]">
+            <div className="serif mt-2 text-[14px] text-(--ink-2) italic">
               {question.explanation}
             </div>
           )}
-          <div className="mt-4 flex gap-2 flex-wrap">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="pop" onClick={reset}>Try again</Button>
           </div>
         </motion.div>

@@ -70,14 +70,14 @@ export function QuizRunner({ questions, onComplete, banner }: QuizRunnerProps) {
     <div className="flex flex-col gap-6">
       {banner}
 
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center gap-4">
         <MiniLabel>question {i + 1} of {questions.length} · {q.difficulty}</MiniLabel>
         <PipRow states={pips} />
         <span className="flex-1" />
         <Chip tone={q.kind === "mcq" ? "sky" : "soft"}>{q.kind.toUpperCase()}</Chip>
       </div>
 
-      <Frame className="!p-8">
+      <Frame className="p-8!">
         <Eyebrow>{q.topicSlug}</Eyebrow>
         <h2 className="mt-2">{q.prompt}</h2>
 
@@ -127,7 +127,7 @@ export function QuizRunner({ questions, onComplete, banner }: QuizRunnerProps) {
         </div>
 
         {!revealed ? (
-          <div className="mt-6 flex gap-3 flex-wrap">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button variant="pop" size="big" onClick={submit} disabled={q.kind === "mcq" && picked === null}>
               Submit answer
             </Button>
@@ -157,7 +157,7 @@ export function QuizRunner({ questions, onComplete, banner }: QuizRunnerProps) {
                 <p>{q.explanation}</p>
               )}
             </div>
-            <div className="mt-4 flex gap-3 flex-wrap">
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button variant="pop" onClick={() => advance(q.kind === "mcq" && q.choices && picked !== null && q.choices[picked].correct ? "right" : "wrong")}>
                 Next →
               </Button>

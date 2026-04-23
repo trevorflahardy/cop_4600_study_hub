@@ -18,21 +18,21 @@ export function StudySessionView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame variant="wobble" shadow="card" className="!p-8">
-        <div className="flex gap-8 items-start flex-wrap">
-          <div className="flex-1 min-w-[340px]">
+      <Frame variant="wobble" shadow="card" className="p-8!">
+        <div className="flex flex-wrap items-start gap-8">
+          <div className="min-w-[340px] flex-1">
             <Eyebrow>Next session · ~45 min · sit somewhere quiet</Eyebrow>
             <h1 className="mt-3">
               Tonight you'll actually <Highlighter>understand</Highlighter> CFS scheduling
             </h1>
-            <p className="mt-3 serif italic text-[var(--ink-2)] max-w-[58ch]">
+            <p className="serif mt-3 max-w-[58ch] text-(--ink-2) italic">
               We'll cold-open with the scheduling trace that burned you last time, unroll two
               worked examples, then hit you with a spaced review of CFS vruntime questions from
               module 02. Four steps, forty-five minutes, and a lower-stakes feeling than reading.
             </p>
           </div>
 
-          <Frame variant="soft" padded={false} className="!p-5 w-[280px]">
+          <Frame variant="soft" padded={false} className="w-[280px] p-5!">
             <div className="flex flex-col gap-3">
               <div className="flex items-baseline gap-2">
                 <span className="display text-4xl">04</span>
@@ -54,31 +54,31 @@ export function StudySessionView() {
       <div className="session-arc">
         <div className="step done">
           <div className="dotnum">1</div>
-          <div className="mono text-[10px] uppercase text-[var(--ink-3)] tracking-wider">warm up · 3 min</div>
+          <div className="mono text-[10px] tracking-wider text-(--ink-3) uppercase">warm up · 3 min</div>
           <h4>Growth hierarchy recall</h4>
           <div className="mini-label">3 questions · done ✓</div>
         </div>
         <div className="step now">
           <div className="dotnum">2</div>
-          <div className="mono text-[10px] uppercase tracking-wider" style={{ color: "var(--pop-ink)" }}>mini-lecture · ~12 min</div>
+          <div className="mono text-[10px] tracking-wider uppercase" style={{ color: "var(--pop-ink)" }}>mini-lecture · ~12 min</div>
           <h4>CFS scheduling, vruntime & fairness</h4>
           <div className="mini-label">next up</div>
         </div>
         <div className="step">
           <div className="dotnum">3</div>
-          <div className="mono text-[10px] uppercase text-[var(--ink-3)] tracking-wider">practice · 5 Q</div>
+          <div className="mono text-[10px] tracking-wider text-(--ink-3) uppercase">practice · 5 Q</div>
           <h4>Classify these scheduling outcomes</h4>
           <div className="mini-label">~15 min</div>
         </div>
         <div className="step">
           <div className="dotnum">4</div>
-          <div className="mono text-[10px] uppercase text-[var(--ink-3)] tracking-wider">review · mixed</div>
+          <div className="mono text-[10px] tracking-wider text-(--ink-3) uppercase">review · mixed</div>
           <h4>From module 02 · scheduling</h4>
           <div className="mini-label">~10 min</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="flex flex-wrap items-center gap-3">
         <Link
           to="/learn/$"
           params={{ _splat: reviewQueue[0]?.slug ?? "02-scheduling/fifo" }}
@@ -122,7 +122,7 @@ export function StudySessionView() {
               </div>
               <div className="flex-1">
                 <div className="display text-xl leading-none">{row.title}</div>
-                <div className="text-[13px] text-[var(--ink-2)] mt-1">Scoped and timed so you don't wander.</div>
+                <div className="mt-1 text-[13px] text-(--ink-2)">Scoped and timed so you don't wander.</div>
               </div>
               <Chip tone={row.tone}>{row.time}</Chip>
             </div>

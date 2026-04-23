@@ -46,7 +46,7 @@ export function PageTableWalk({ mode = "single" }: PageTableWalkProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>{mode} mode · step {step + 1}/4</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">VA bits={vaBits}, page={pageSize}B</Chip>
@@ -72,55 +72,55 @@ export function PageTableWalk({ mode = "single" }: PageTableWalkProps) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <Frame className={step >= 0 ? "border-[var(--pop)] border-2" : ""}>
+        <Frame className={step >= 0 ? "border-2 border-(--pop)" : ""}>
           <Eyebrow>step 1: extract VPN and offset</Eyebrow>
-          <div className="mt-3 space-y-2 text-sm font-mono">
+          <div className="mt-3 space-y-2 font-mono text-sm">
             <div>VA = {toHex(va)}</div>
             <div>offset mask = {toHex((1 << offsetBits) - 1)}</div>
-            <div className="text-[var(--pop)]">VPN = {toHex(vpn, vpnBits)}, offset = {toHex(offset, offsetBits)}</div>
+            <div className="text-(--pop)">VPN = {toHex(vpn, vpnBits)}, offset = {toHex(offset, offsetBits)}</div>
           </div>
         </Frame>
 
         <div className="flex justify-center">
-          <ChevronRight size={20} className="text-[var(--ink-2)]" />
+          <ChevronRight size={20} className="text-(--ink-2)" />
         </div>
 
-        <Frame className={step >= 1 ? "border-[var(--pop)] border-2" : ""}>
+        <Frame className={step >= 1 ? "border-2 border-(--pop)" : ""}>
           <Eyebrow>step 2: page table lookup</Eyebrow>
-          <div className="mt-3 space-y-2 text-sm font-mono">
+          <div className="mt-3 space-y-2 font-mono text-sm">
             <div>PT[{toHex(vpn)}] = {toHex(pfn)}</div>
-            <div className="text-[var(--pop)]">PFN = {toHex(pfn)}</div>
+            <div className="text-(--pop)">PFN = {toHex(pfn)}</div>
           </div>
         </Frame>
 
         <div className="flex justify-center">
-          <ChevronRight size={20} className="text-[var(--ink-2)]" />
+          <ChevronRight size={20} className="text-(--ink-2)" />
         </div>
 
-        <Frame className={step >= 2 ? "border-[var(--pop)] border-2" : ""}>
+        <Frame className={step >= 2 ? "border-2 border-(--pop)" : ""}>
           <Eyebrow>step 3: combine PFN and offset</Eyebrow>
-          <div className="mt-3 space-y-2 text-sm font-mono">
+          <div className="mt-3 space-y-2 font-mono text-sm">
             <div>PA = (PFN {'<<'} {offsetBits}) | offset</div>
             <div>PA = ({toHex(pfn)} {'<<'} {offsetBits}) | {toHex(offset)}</div>
-            <div className="text-[var(--pop)]">PA = {toHex(pa)}</div>
+            <div className="text-(--pop)">PA = {toHex(pa)}</div>
           </div>
         </Frame>
 
         <div className="flex justify-center">
-          <ChevronRight size={20} className="text-[var(--ink-2)]" />
+          <ChevronRight size={20} className="text-(--ink-2)" />
         </div>
 
-        <Frame className={step >= 3 ? "border-[var(--pop)] border-2" : ""}>
+        <Frame className={step >= 3 ? "border-2 border-(--pop)" : ""}>
           <Eyebrow>result</Eyebrow>
-          <div className="mt-3 space-y-2 text-sm font-mono">
+          <div className="mt-3 space-y-2 font-mono text-sm">
             <div>Virtual address: {toHex(va)}</div>
             <div>Physical address: {toHex(pa)}</div>
-            <div className="text-[var(--ink-2)]">Page offset unchanged: {toHex(offset)}</div>
+            <div className="text-(--ink-2)">Page offset unchanged: {toHex(offset)}</div>
           </div>
         </Frame>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => setStep(Math.max(0, step - 1))} variant="ghost">
           {"<"}
         </Button>

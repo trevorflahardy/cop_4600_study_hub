@@ -50,7 +50,7 @@ export function ShortcutsHelp({ open, onClose }: ShortcutsHelpProps) {
               width: "min(520px, 92vw)",
             }}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div>
                 <Eyebrow>keyboard shortcuts</Eyebrow>
                 <h2 className="mt-1">Go fast.</h2>
@@ -65,7 +65,7 @@ export function ShortcutsHelp({ open, onClose }: ShortcutsHelpProps) {
                 </div>
               ))}
             </div>
-            <p className="serif italic text-[var(--ink-3)] text-[12px] mt-4">
+            <p className="serif mt-4 text-[12px] text-(--ink-3) italic">
               Shortcuts are ignored while typing in text fields. Flashcards have their own keys (space/1-4).
             </p>
           </motion.div>

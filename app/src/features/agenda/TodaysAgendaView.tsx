@@ -21,10 +21,10 @@ const RECIPE: { time: string; kind: Kind; title: string; desc: string; cta: stri
 export function TodaysAgendaView() {
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 300px" }}>
-      <Frame className="!px-9 !py-8">
+      <Frame className="px-9! py-8!">
         <Eyebrow>Wednesday · 45 min budgeted</Eyebrow>
         <h1 className="mt-3">Today, you'll really <span className="highlighter">get</span> MLFQ scheduling.</h1>
-        <p className="serif italic mt-3 text-[var(--ink-2)] max-w-[60ch]">
+        <p className="serif mt-3 max-w-[60ch] text-(--ink-2) italic">
           Less "read more, somehow retain it"; more "prove it to yourself five times in five ways."
         </p>
 
@@ -35,9 +35,9 @@ export function TodaysAgendaView() {
               className="flex items-center gap-4 py-3"
               style={{ borderBottom: i < arr.length - 1 ? "1px dashed var(--rule)" : "none" }}
             >
-              <span className="mono text-[12px] text-[var(--ink-3)] w-16">{row.time}</span>
+              <span className="mono w-16 text-[12px] text-(--ink-3)">{row.time}</span>
               <span
-                className="px-2 py-[2px] rounded mono text-[10px] uppercase tracking-wider font-semibold"
+                className="mono rounded-sm px-2 py-[2px] text-[10px] font-semibold tracking-wider uppercase"
                 style={{
                   border: "1.5px solid var(--ink)",
                   background: KIND_STYLES[row.kind].bg,
@@ -48,14 +48,14 @@ export function TodaysAgendaView() {
               </span>
               <div className="flex-1">
                 <h4 className="mb-1">{row.title}</h4>
-                <div className="text-[13px] text-[var(--ink-2)]">{row.desc}</div>
+                <div className="text-[13px] text-(--ink-2)">{row.desc}</div>
               </div>
               <Button>{row.cta}</Button>
             </div>
           ))}
         </div>
 
-        <div className="mt-6 flex gap-3 items-center">
+        <div className="mt-6 flex items-center gap-3">
           <Button variant="pop" size="big"><Play size={18} /> Start at step 1</Button>
           <Button variant="ghost">Shorten to 20 min</Button>
           <Button variant="ghost">Lengthen to 90 min</Button>
@@ -73,7 +73,7 @@ export function TodaysAgendaView() {
               { t: "scheduling metrics",    f: "mod 02 · seen 4× · hit 75%",   m: 3 },
               { t: "deadlock recovery",     f: "mod 05 · seen 1× · hit 0%",    m: 1 },
             ].map((row, i) => (
-              <div key={i} className="flex justify-between items-center py-2" style={{ borderBottom: "1px dashed var(--rule)" }}>
+              <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: "1px dashed var(--rule)" }}>
                 <div>
                   <div className="display text-lg leading-none">{row.t}</div>
                   <div className="mini-label">{row.f}</div>

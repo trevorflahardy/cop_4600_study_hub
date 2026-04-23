@@ -205,7 +205,7 @@ export function SchedulerAnimator({ algorithm }: { algorithm: SchedulerKind }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Eyebrow>{algorithm} · step {state.step + 1}/{events.length}</Eyebrow>
         <span className="flex-1" />
         <Chip tone="sky">n = {processes.length}</Chip>
@@ -214,7 +214,7 @@ export function SchedulerAnimator({ algorithm }: { algorithm: SchedulerKind }) {
       {algorithm === "rr" && (
         <div style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 14px", background: "var(--paper-2)" }}>
           <MiniLabel>quantum</MiniLabel>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input type="range" min={1} max={6} value={state.quantum} onChange={(e) => dispatch({ type: "setQuantum", payload: Number(e.target.value) })} style={{ flex: 1, accentColor: "var(--pop)" }} />
             <span className="display text-lg">{state.quantum}</span>
           </div>
@@ -239,18 +239,18 @@ export function SchedulerAnimator({ algorithm }: { algorithm: SchedulerKind }) {
             );
           })}
         </svg>
-        <div className="text-xs text-[var(--ink-2)] mt-2">{current?.note || "—"}</div>
+        <div className="mt-2 text-xs text-(--ink-2)">{current?.note || "—"}</div>
       </div>
 
       <Frame>
         <Eyebrow>metrics</Eyebrow>
-        <div className="grid gap-2 mt-2 text-sm">
+        <div className="mt-2 grid gap-2 text-sm">
           <div>Avg turnaround: {metrics.avgTurnaround}</div>
           <div>Avg response: {metrics.avgResponse}</div>
         </div>
       </Frame>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => dispatch({ type: "prev" })} variant="ghost">←</Button>
         <Button onClick={() => dispatch({ type: "toggle" })} variant="pop">
           {state.playing ? <Pause size={16} /> : <Play size={16} />}

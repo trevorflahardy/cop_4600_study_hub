@@ -155,7 +155,7 @@ export function MapPage() {
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "minmax(0, 1fr) 360px", minHeight: 720 }}>
-      <Frame className="!p-0 overflow-hidden" style={{ minHeight: 720 }}>
+      <Frame className="overflow-hidden p-0!" style={{ minHeight: 720 }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -176,7 +176,7 @@ export function MapPage() {
         </ReactFlow>
       </Frame>
 
-      <aside className="flex flex-col gap-4 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-4 self-start">
         <Frame>
           <Eyebrow>legend</Eyebrow>
           <div className="mt-2 flex flex-col gap-2">
@@ -193,7 +193,7 @@ export function MapPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 flex gap-2 flex-wrap">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Chip tone="hl">in progress</Chip>
             <Chip tone="mint">mastered</Chip>
             <Chip tone="pop">recommended next</Chip>
@@ -208,7 +208,7 @@ export function MapPage() {
               <MasteryBar level={(mLookup.get(selectedTopic.slug) ?? 0) as MasteryLevel} />
             </div>
             {selectedTopic.hook && (
-              <p className="serif italic text-[var(--ink-2)] mt-3 text-[13px]">{selectedTopic.hook}</p>
+              <p className="serif mt-3 text-[13px] text-(--ink-2) italic">{selectedTopic.hook}</p>
             )}
             {selectedTopic.complexity?.worst && (
               <div className="mt-3">
@@ -219,7 +219,7 @@ export function MapPage() {
             {selectedTopic.sections[0] && (
               <MarkdownBlock source={selectedTopic.sections[0].body.slice(0, 280) + "…"} className="mt-3 text-[13px]" />
             )}
-            <div className="mt-4 flex gap-2 flex-wrap">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Link to="/learn/$" params={{ _splat: selectedTopic.slug }} className="btn-sk pop">
                 Start learning →
               </Link>
@@ -233,7 +233,7 @@ export function MapPage() {
           <Frame>
             <Eyebrow>click a node</Eyebrow>
             <h3 className="mt-1">The whole course, on one canvas.</h3>
-            <p className="serif italic text-[var(--ink-2)] mt-2 text-[13px]">
+            <p className="serif mt-2 text-[13px] text-(--ink-2) italic">
               Nodes are topics. Solid lines are prerequisite edges — the thing at the tail must be understood
               before the thing at the head. Dashed lines are "also related to". Pan with drag, zoom with scroll.
             </p>
@@ -245,7 +245,7 @@ export function MapPage() {
                     {getTopic(recommended)?.title} →
                   </Link>
                 </div>
-                <p className="serif italic text-[var(--ink-2)] text-[12px] mt-1">
+                <p className="serif mt-1 text-[12px] text-(--ink-2) italic">
                   Lowest-mastery topic whose prereqs you've at least been exposed to.
                 </p>
               </div>

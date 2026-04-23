@@ -39,11 +39,11 @@ export function ModulePage() {
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "minmax(0, 1fr) 320px" }}>
-      <div className="flex flex-col gap-6 min-w-0">
-        <Frame className="!p-8">
+      <div className="flex min-w-0 flex-col gap-6">
+        <Frame className="p-8!">
           <Eyebrow>module {moduleId} · {topics.length} lessons</Eyebrow>
           <h1 className="mt-2">{unitLabel(moduleId)}</h1>
-          <p className="serif italic text-[var(--ink-2)] mt-3 max-w-[64ch]">
+          <p className="serif mt-3 max-w-[64ch] text-(--ink-2) italic">
             Start at the top, or jump to wherever feels right. Everything here chains back to something
             in "prereqs" on the topic page if you get lost.
           </p>
@@ -55,7 +55,7 @@ export function ModulePage() {
             <StatCard n={weakest.length} label="weak spots flagged" />
           </div>
 
-          <div className="mt-5 flex gap-3 items-center flex-wrap">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link to="/learn/$" params={{ _splat: nextUp.slug }} className="btn-sk pop big">
               <Play size={18} /> Continue: {nextUp.title}
             </Link>
@@ -112,7 +112,7 @@ export function ModulePage() {
         </Frame>
       </div>
 
-      <aside className="flex flex-col gap-4 sticky top-4 self-start">
+      <aside className="sticky top-4 flex flex-col gap-4 self-start">
         <Frame>
           <h3>Coming back</h3>
           <MiniLabel>weakest topics in this module</MiniLabel>

@@ -143,22 +143,22 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
   const pct = totalWeight === 0 ? 0 : metWeight / totalWeight;
 
   return (
-    <Frame className="!p-6">
+    <Frame className="p-6!">
       <Eyebrow>pseudocode · {question.points ?? "—"} pts</Eyebrow>
-      <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
         <h3 className="m-0">{question.prompt}</h3>
         <span className="flex-1" />
         <Chip tone="soft">target · {pc.complexityHint?.split("⇒")[1]?.trim() ?? pc.complexityHint ?? "—"}</Chip>
       </div>
 
-      <p className="serif italic text-[13px] text-[var(--ink-3)] mt-2">
+      <p className="serif mt-2 text-[13px] text-(--ink-3) italic">
         Write it as you would on the exam: indented pseudocode with loop bounds,
         returns, and any auxiliary structures. Offline rubric always runs; if
         you've got Ollama on, you'll get streamed tutor feedback too.
       </p>
 
       <textarea
-        className="workspace mt-3 mono"
+        className="workspace mono mt-3"
         rows={10}
         placeholder="PSEUDOCODE(args)
   if base-case
@@ -170,7 +170,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
         style={{ fontSize: 13, fontFamily: "var(--ff-mono)" }}
       />
 
-      <div className="mt-3 flex items-center gap-3 flex-wrap">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <Button variant="pop" size="big" disabled={!text.trim()} onClick={grade}>
           Grade my pseudocode
         </Button>
@@ -187,7 +187,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
 
       {showReference && (
         <div
-          className="mt-3 mono text-[12.5px] whitespace-pre-wrap"
+          className="mono mt-3 text-[12.5px] whitespace-pre-wrap"
           style={{
             border: "1.5px dashed var(--rule)",
             borderRadius: 8,
@@ -201,7 +201,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
 
       {rubricState && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-5">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <Eyebrow>rubric result</Eyebrow>
             <span className="flex-1" />
             <Chip tone={pct >= 0.75 ? "mint" : pct >= 0.5 ? "hl" : "amber"}>
@@ -210,7 +210,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
           </div>
 
           <div
-            className="grid gap-2 mt-3"
+            className="mt-3 grid gap-2"
             style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
           >
             {rubricState.map((item) => (
@@ -227,13 +227,13 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
               >
                 <div className="flex items-start gap-2">
                   {item.met ? (
-                    <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
+                    <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
                   ) : (
-                    <XCircle size={15} className="shrink-0 mt-0.5" />
+                    <XCircle size={15} className="mt-0.5 shrink-0" />
                   )}
                   <div>
                     <div className="text-[12.5px] leading-snug">{item.prompt}</div>
-                    <div className="mono text-[10.5px] text-[var(--ink-3)] mt-1">
+                    <div className="mono mt-1 text-[10.5px] text-(--ink-3)">
                       weight {item.weight}
                     </div>
                   </div>
@@ -243,14 +243,14 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
           </div>
 
           {pc.complexityHint && (
-            <div className="mt-3 serif italic text-[14px] text-[var(--ink-2)]">
+            <div className="serif mt-3 text-[14px] text-(--ink-2) italic">
               complexity: {pc.complexityHint}
             </div>
           )}
 
           {llmStatus === "disabled" && (
             <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "var(--paper-2)" }}>
-              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <div className="text-[13px]">
                 Ollama is disabled. Enable it in <Link to="/settings" className="underline decoration-dashed">settings</Link> for line-by-line tutor feedback.
               </div>
@@ -258,7 +258,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
           )}
           {llmStatus === "error" && (
             <div className="mt-4 flex items-start gap-2 p-3" style={{ border: "1.5px dashed var(--ink-2)", borderRadius: 8, background: "color-mix(in oklch, var(--wrong) 10%, var(--paper))" }}>
-              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <div className="text-[13px]">{llmError} Offline rubric above is still valid.</div>
             </div>
           )}
@@ -266,7 +266,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
             <div className="mt-5">
               <MiniLabel>{llmStatus === "running" ? "ollama · streaming tutor feedback…" : "ollama · done"}</MiniLabel>
               <div
-                className="serif mt-2 whitespace-pre-wrap text-[14px] leading-relaxed"
+                className="serif mt-2 text-[14px] leading-relaxed whitespace-pre-wrap"
                 style={{
                   border: "1.5px solid var(--ink)",
                   borderRadius: 8,
@@ -274,7 +274,7 @@ Do not re-explain the whole algorithm. Stay direct and specific.`;
                   background: "var(--paper)",
                 }}
               >
-                {llmOutput || <span className="italic text-[var(--ink-3)]">thinking…</span>}
+                {llmOutput || <span className="text-(--ink-3) italic">thinking…</span>}
               </div>
             </div>
           )}

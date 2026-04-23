@@ -43,17 +43,17 @@ function FinalExamTeaser() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Frame variant="wobble" shadow="card" className="!p-8">
+      <Frame variant="wobble" shadow="card" className="p-8!">
         <Eyebrow>final exam · prep mode</Eyebrow>
         <h1 className="mt-3">
           Dry-run the final in the <Highlighter>exact shape</Highlighter> of your past exams.
         </h1>
-        <p className="mt-3 serif italic text-[var(--ink-2)] max-w-[62ch]">
+        <p className="serif mt-3 max-w-[62ch] text-(--ink-2) italic">
           Practice problems covering the full OS curriculum: scheduling, memory management,
           process/thread synchronization, file systems, and more. Each topic has interactive
           traces and pseudocode analysis.
         </p>
-        <div className="mt-4 flex gap-3 flex-wrap">
+        <div className="mt-4 flex flex-wrap gap-3">
           <Link to="/final" search={{ mode: "simulator" }} className="btn-sk pop big">
             <Timer size={18} /> Start simulator
           </Link>
@@ -72,17 +72,17 @@ function FinalExamTeaser() {
 
       <Frame variant="soft">
         <Eyebrow>what's in the final (predicted)</Eyebrow>
-        <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        <div className="mt-3 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           <div>
             <MiniLabel>part 1 · 16 MCQ · 40 pts</MiniLabel>
-            <p className="serif text-[14px] mt-2">
+            <p className="serif mt-2 text-[14px]">
               Cumulative: CPU scheduling, memory management & paging,
               synchronization, deadlock, and file systems.
             </p>
           </div>
           <div>
             <MiniLabel>part 2 · long-form · ~60 pts</MiniLabel>
-            <p className="serif text-[14px] mt-2">
+            <p className="serif mt-2 text-[14px]">
               Trace a scheduler over a mixed workload, analyze a page replacement strategy, solve a deadlock
               scenario, and tackle one integrative problem spanning multiple OS topics.
             </p>
@@ -119,7 +119,7 @@ function TeaserTile({ kicker, title, count, href }: {
         <Chip tone="soft">{count}</Chip>
       </div>
       <h4 className="mt-2">{title}</h4>
-      <div className="mt-3 flex justify-end text-[13px] mono">
+      <div className="mono mt-3 flex justify-end text-[13px]">
         start <ArrowRight size={14} />
       </div>
     </Link>

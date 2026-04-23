@@ -42,12 +42,12 @@ export function TracePlayer({ table, autoplay = false }: TracePlayerProps) {
             style={{ border: "1.5px solid var(--ink)", borderRadius: 10, padding: "10px 12px", background: i === 0 ? "var(--paper-2)" : "var(--paper)" }}
           >
             <MiniLabel>{h}</MiniLabel>
-            <div className="serif text-[14px] mt-1">{current?.[i] ?? "—"}</div>
+            <div className="serif mt-1 text-[14px]">{current?.[i] ?? "—"}</div>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => setStep(0)} variant="ghost"><SkipBack size={14} /></Button>
         <Button onClick={() => setStep((s) => Math.max(0, s - 1))} variant="ghost">←</Button>
         <Button onClick={() => setPlaying((p) => !p)} variant="pop">
