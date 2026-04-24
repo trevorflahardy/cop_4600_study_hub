@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Link } from "@tanstack/react-router";
 import {
   Frame,
   Chip,
@@ -11,8 +12,22 @@ import {
 } from "@/components/notebook";
 import { quizzesFor, type KbQuizQuestion } from "@/lib/kb-loader";
 import { recordAnswer } from "@/lib/mastery";
+import { useSettings } from "@/stores/settings";
+import {
+  buildShortReference,
+  checkAvailability,
+  gradeShortAnswer,
+  type ShortVerdict,
+} from "@/lib/short-grade";
 import { Sparkles, ArrowRight, RotateCcw, Play, Heart } from "lucide-react";
 import clsx from "clsx";
+
+type ShortGradeState =
+  | { phase: "idle" }
+  | { phase: "running"; output: string }
+  | { phase: "done"; output: string; verdict: ShortVerdict }
+  | { phase: "unavailable"; reason: string }
+  | { phase: "error"; message: string };
 
 /**
  * ExamQuestionsQuiz — a forgiving, launchable mini-quiz designed for the
@@ -40,7 +55,9 @@ export function ExamQuestionsQuiz({
   const [picked, setPicked] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [shortText, setShortText] = useState("");
+  const [shortGrade, setShortGrade] = useState<ShortGradeState>({ phase: "idle" });
   const [results, setResults] = useState<("win" | "park")[]>([]);
+  const { ollamaEnabled, ollamaEndpoint, ollamaModel } = useSettings();
 
   const launch = () => {
     const shuffled = [...Array(questions.length).keys()].sort(() => Math.random() - 0.5);
@@ -49,6 +66,7 @@ export function ExamQuestionsQuiz({
     setPicked(null);
     setRevealed(false);
     setShortText("");
+    setShortGrade({ phase: "idle" });
     setResults([]);
     setMode("running");
   };
@@ -65,10 +83,46 @@ export function ExamQuestionsQuiz({
         // the whole point is iterative learning, not a graded test.
         await recordAnswer(currentQ.topicSlug, "correct");
       }
-    } else {
-      setRevealed(true);
+      return;
     }
-  }, [currentQ, picked]);
+
+    if (currentQ.kind === "short" || currentQ.kind === "scenario") {
+      setRevealed(true);
+      if (!shortText.trim()) return;
+      if (!ollamaEnabled) {
+        setShortGrade({ phase: "unavailable", reason: "Ollama is disabled in settings." });
+        return;
+      }
+      const availability = await checkAvailability(ollamaEndpoint);
+      if (!availability.ok) {
+        setShortGrade({
+          phase: "unavailable",
+          reason: "Ollama unreachable — " + (availability.error ?? "no response"),
+        });
+        return;
+      }
+      setShortGrade({ phase: "running", output: "" });
+      try {
+        const { feedback, verdict } = await gradeShortAnswer({
+          question: currentQ,
+          studentAnswer: shortText,
+          endpoint: ollamaEndpoint,
+          model: ollamaModel,
+          onToken: (_tok, acc) => setShortGrade({ phase: "running", output: acc }),
+        });
+        setShortGrade({ phase: "done", output: feedback, verdict });
+        // Mini-quiz remains gentle: bump on correct only, no penalty for misses.
+        if (verdict === "correct") {
+          await recordAnswer(currentQ.topicSlug, "correct");
+        }
+      } catch (err) {
+        setShortGrade({ phase: "error", message: (err as Error).message });
+      }
+      return;
+    }
+
+    setRevealed(true);
+  }, [currentQ, picked, shortText, ollamaEnabled, ollamaEndpoint, ollamaModel]);
 
   const advance = useCallback(
     (result: "win" | "park") => {
@@ -77,6 +131,7 @@ export function ExamQuestionsQuiz({
       setPicked(null);
       setRevealed(false);
       setShortText("");
+      setShortGrade({ phase: "idle" });
       if (cursor + 1 >= order.length) {
         setMode("done");
         return;

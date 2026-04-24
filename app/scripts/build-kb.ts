@@ -303,6 +303,33 @@ function deriveWarnings(body: string, slug: string): string[] {
   return w;
 }
 
+/**
+ * Deterministic PRNG seeded from a string so MCQ choice order is stable
+ * across builds but different per question (no "always A is correct" bias).
+ * Uses a simple xmur3 hash into a mulberry32 generator — plenty for shuffling.
+ */
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let a = (h ^ (h >>> 16)) >>> 0;
+  const rand = () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 function extractBullets(section: Section | undefined): string[] {
   if (!section) return [];
   return section.body
@@ -491,21 +518,27 @@ function cardsFor(t: Topic): Flashcard[] {
 function quizzesFor(t: Topic): QuizQuestion[] {
   const out: QuizQuestion[] = [];
 
-  // KB-authored MCQs (from `**MCQ:**` bullets under ## Common exam questions)
+  // KB-authored MCQs (from `**MCQ:**` bullets under ## Common exam questions).
+  // Choices are shuffled deterministically per question so the correct answer
+  // isn't always in the position the author wrote it.
   t.mcqs.forEach((m, i) => {
+    const id = t.slug + "::mcq-" + i;
+    const shuffled = seededShuffle(m.choices, id);
     out.push({
-      id: t.slug + "::mcq-" + i,
+      id,
       topicSlug: t.slug,
       kind: "mcq",
       prompt: m.prompt,
-      choices: m.choices,
+      choices: shuffled,
       difficulty: m.difficulty,
       source: "kb",
-      explanation: m.explanation ?? "See the " + t.title + " KB entry.",
+      explanation: m.explanation,
     });
   });
 
-  // Remaining plain bullets become short-answer (Ollama-graded in the app).
+  // Remaining plain bullets become short-answer (Ollama-graded in the app;
+  // no explanation field — the app looks up the topic's Definition + Key
+  // ideas sections at runtime as the reference).
   t.examQuestions.forEach((q, i) => {
     out.push({
       id: t.slug + "::q-" + i,
@@ -514,7 +547,6 @@ function quizzesFor(t: Topic): QuizQuestion[] {
       prompt: q,
       difficulty: "firm",
       source: "kb",
-      explanation: "See the " + t.title + " KB entry.",
     });
   });
 
@@ -522,14 +554,17 @@ function quizzesFor(t: Topic): QuizQuestion[] {
     const wrong = ["O(n log n)", "O(n)", "O(n²)", "O(1)", "O(log n)"].filter(
       (c) => !t.complexity!.worst!.includes(c.replace(/[O()]/g, ""))
     );
-    const choices = [
-      { text: t.complexity.worst, correct: true, why: "Matches the worst-case analysis in the KB." },
-      ...wrong.slice(0, 3).map((w) => ({
-        text: w,
-        correct: false,
-        why: "Doesn't match the worst-case bound derived in " + t.title + ".",
-      })),
-    ].sort(() => Math.random() - 0.5);
+    const choices = seededShuffle(
+      [
+        { text: t.complexity.worst, correct: true, why: "Matches the worst-case analysis in the KB." },
+        ...wrong.slice(0, 3).map((w) => ({
+          text: w,
+          correct: false,
+          why: "Doesn't match the worst-case bound derived in " + t.title + ".",
+        })),
+      ],
+      t.slug + "::mcq-complexity",
+    );
     out.push({
       id: t.slug + "::mcq-complexity",
       topicSlug: t.slug,

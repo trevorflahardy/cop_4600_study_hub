@@ -1,11 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Frame, Button, Chip, Eyebrow, MiniLabel, PipRow, type PipState } from "@/components/notebook";
 import type { KbQuizQuestion } from "@/lib/kb-loader";
-import { getTopic } from "@/lib/kb-loader";
 import { recordAnswer } from "@/lib/mastery";
 import { useSettings } from "@/stores/settings";
-import { streamChat, checkAvailability } from "@/lib/ollama";
+import { buildShortReference, checkAvailability, gradeShortAnswer } from "@/lib/short-grade";
 import clsx from "clsx";
 
 interface QuizRunnerProps {
@@ -52,31 +51,6 @@ export function QuizRunner({ questions, onComplete, banner }: QuizRunnerProps) {
     });
   }, [questions, results, i]);
 
-  const buildShortReference = useCallback((question: KbQuizQuestion): string => {
-    const topic = getTopic(question.topicSlug);
-    if (!topic) return question.explanation ?? "";
-    const keep = topic.sections.filter((s) => /definition|key ideas|mechanism|gotcha|when to use/i.test(s.heading));
-    const parts: string[] = [];
-    parts.push("Topic: " + topic.title);
-    for (const s of keep) {
-      parts.push("## " + s.heading + "\n" + s.body);
-    }
-    if (question.explanation && !/^see the .+ kb entry\.?$/i.test(question.explanation)) {
-      parts.push("Question-level note: " + question.explanation);
-    }
-    return parts.join("\n\n").slice(0, 3500);
-  }, []);
-
-  const parseVerdict = (raw: string): "correct" | "partial" | "incorrect" => {
-    const m = raw.match(/VERDICT\s*:\s*(correct|partial|incorrect)/i);
-    if (m) return m[1].toLowerCase() as "correct" | "partial" | "incorrect";
-    // Heuristic fallback if the model forgot the header.
-    const lower = raw.toLowerCase();
-    if (/\b(correct|right|well done|accurate)\b/.test(lower) && !/\bnot (correct|right)\b/.test(lower)) return "correct";
-    if (/\b(partial|partly|mostly|close)\b/.test(lower)) return "partial";
-    return "incorrect";
-  };
-
   const submit = async () => {
     if (q.kind === "mcq" && picked !== null && q.choices) {
       const isRight = q.choices[picked].correct;
@@ -105,53 +79,17 @@ export function QuizRunner({ questions, onComplete, banner }: QuizRunnerProps) {
         return;
       }
 
-      const reference = buildShortReference(q);
-      const sys =
-`You are grading a student's free-response answer on a COP 4600 Operating Systems exam.
-
-Question:
-${q.prompt}
-
-Reference material (authoritative — the student's answer should align with this):
-${reference}
-
-Grading rules:
-- Focus on conceptual correctness, not prose polish.
-- Partial credit ("partial") is appropriate when the student gets the core idea but misses a key detail or edge case.
-- "correct" means the answer would earn full or near-full credit on an exam.
-- "incorrect" means the core idea is wrong or missing.
-
-Your response MUST be under 140 words and MUST follow this shape exactly:
-
-VERDICT: correct|partial|incorrect
-
-Strengths: one or two short bullets citing what the student got right (quote if helpful).
-Gaps: one or two short bullets naming the concrete missing concepts.
-Best fix: one sentence describing the single most important correction.
-
-Do not restate the question. Do not write more than 140 words.`;
-
       setShortGrade({ phase: "running", output: "" });
       try {
-        let acc = "";
-        await streamChat({
+        const { feedback, verdict } = await gradeShortAnswer({
+          question: q,
+          studentAnswer: shortText,
           endpoint: ollamaEndpoint,
           model: ollamaModel,
-          messages: [
-            { role: "system", content: sys },
-            { role: "user", content: "Student answer:\n" + shortText },
-          ],
-          onToken: (tok) => {
-            acc += tok;
-            setShortGrade({ phase: "running", output: acc });
-          },
+          onToken: (_tok, acc) => setShortGrade({ phase: "running", output: acc }),
         });
-        const verdict = parseVerdict(acc);
-        setShortGrade({ phase: "done", output: acc, verdict });
-        await recordAnswer(
-          q.topicSlug,
-          verdict === "correct" ? "correct" : verdict === "partial" ? "incorrect" : "incorrect",
-        );
+        setShortGrade({ phase: "done", output: feedback, verdict });
+        await recordAnswer(q.topicSlug, verdict === "correct" ? "correct" : "incorrect");
       } catch (err) {
         setShortGrade({ phase: "error", message: (err as Error).message });
       }
@@ -354,9 +292,25 @@ Do not restate the question. Do not write more than 140 words.`;
                   <p className="mt-3 text-[13px]">Ollama error: {shortGrade.message}. Self-grade below.</p>
                 )}
 
-                {/* Reference / explanation when we have one worth showing */}
-                {q.explanation && !/^see the .+ kb entry\.?$/i.test(q.explanation) && (
-                  <p className="mt-3 text-[13px]"><strong>Reference:</strong> {q.explanation}</p>
+                {/* Ollama-off / -error fallback: show the topic's Definition +
+                    Key ideas as the reference the student can check against. */}
+                {(shortGrade.phase === "unavailable" || shortGrade.phase === "error") && (
+                  <div className="mt-3">
+                    <MiniLabel>what to check for — from the KB</MiniLabel>
+                    <div
+                      className="serif mt-1 text-[13.5px] leading-relaxed whitespace-pre-wrap"
+                      style={{
+                        border: "1.5px solid var(--ink)",
+                        borderRadius: 8,
+                        padding: 12,
+                        background: "var(--paper-2)",
+                        maxHeight: 280,
+                        overflow: "auto",
+                      }}
+                    >
+                      {buildShortReference(q) || "No reference material available for this topic."}
+                    </div>
+                  </div>
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-3">

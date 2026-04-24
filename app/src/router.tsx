@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   createRootRoute,
   createRoute,
@@ -6,12 +5,8 @@ import {
   Outlet,
   Link,
   ScrollRestoration,
-  useNavigate,
 } from "@tanstack/react-router";
 import { AppTop } from "./components/chrome/AppTop";
-import { ShortcutsHelp } from "./components/chrome/ShortcutsHelp";
-import { useGlobalShortcuts } from "./lib/keyboard";
-import { useSettings } from "./stores/settings";
 
 import { HubPage } from "./pages/HubPage";
 import { MapPage } from "./pages/MapPage";
@@ -33,27 +28,6 @@ import { ChapterQuizPage } from "./pages/ChapterQuizPage";
 import { FinalExamPage } from "./pages/FinalExamPage";
 
 function Shell() {
-  const [helpOpen, setHelpOpen] = useState(false);
-  const navigate = useNavigate();
-  const { theme, setTheme } = useSettings();
-
-  useGlobalShortcuts([
-    { keys: "h", label: "Home", action: () => navigate({ to: "/" }) },
-    { keys: "m", label: "Map", action: () => navigate({ to: "/map" }) },
-    { keys: "l", label: "Learn next", action: () => navigate({ to: "/map" }) },
-    { keys: "v", label: "Viz", action: () => navigate({ to: "/viz" }) },
-    { keys: "c", label: "Cards", action: () => navigate({ to: "/flashcards" }) },
-    { keys: "q", label: "Quiz", action: () => navigate({ to: "/quiz" }) },
-    { keys: "f", label: "Feynman", action: () => navigate({ to: "/feynman" }) },
-    { keys: "t", label: "Traps", action: () => navigate({ to: "/traps" }) },
-    { keys: "r", label: "Review", action: () => navigate({ to: "/review" }) },
-    { keys: "g", label: "Mastery", action: () => navigate({ to: "/mastery" }) },
-    { keys: "e", label: "Final exam prep", action: () => navigate({ to: "/final" }) },
-    { keys: "s", label: "Settings", action: () => navigate({ to: "/settings" }) },
-    { keys: "?", label: "Help", action: () => setHelpOpen((o) => !o) },
-    { keys: "d", label: "Theme", action: () => setTheme(theme === "dark" ? "light" : "dark") },
-  ]);
-
   return (
     <div className="flex min-h-screen flex-col">
       <AppTop />
@@ -61,9 +35,8 @@ function Shell() {
         <Outlet />
       </main>
       <footer className="mono flex items-center justify-center gap-3 border-t border-dashed border-(--rule) px-6 py-4 text-center text-[11px] text-(--ink-3)">
-        <span>COP 4600 · Spring 2026 · Local-only · press <button onClick={() => setHelpOpen(true)} className="underline decoration-dashed">?</button> for shortcuts</span>
+        <span>COP 4600 · Spring 2026 · Local-only</span>
       </footer>
-      <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       <ScrollRestoration />
     </div>
   );
