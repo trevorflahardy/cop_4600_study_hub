@@ -353,8 +353,10 @@ export function ExamQuestionsQuiz({
               />
             )
           ) : (
-            <SelfRateShort
-              expected={currentQ.answer ?? currentQ.explanation ?? "See the KB entry."}
+            <GradedShort
+              question={currentQ}
+              grade={shortGrade}
+              modelName={ollamaModel}
               onWin={() => advance("win")}
               onPark={() => advance("park")}
               isLast={cursor + 1 >= order.length}
@@ -472,17 +474,39 @@ function GentleMiss({
   );
 }
 
-function SelfRateShort({
-  expected,
+function GradedShort({
+  question,
+  grade,
+  modelName,
   onWin,
   onPark,
   isLast,
 }: {
-  expected: string;
+  question: KbQuizQuestion;
+  grade: ShortGradeState;
+  modelName: string;
   onWin: () => void;
   onPark: () => void;
   isLast: boolean;
 }) {
+  const header =
+    grade.phase === "done"
+      ? grade.verdict === "correct"
+        ? "Locked in."
+        : grade.verdict === "partial"
+        ? "Close — partial credit."
+        : "Not quite yet."
+      : grade.phase === "running"
+      ? "Grading…"
+      : grade.phase === "unavailable"
+      ? "Ollama is off — here's what to check for."
+      : grade.phase === "error"
+      ? "Grader errored — here's what to check for."
+      : "";
+
+  const canAutoAdvance = grade.phase === "done";
+  const reference = grade.phase === "unavailable" || grade.phase === "error" ? buildShortReference(question) : "";
+
   return (
     <div
       className="mt-5 p-4"
@@ -492,15 +516,74 @@ function SelfRateShort({
         background: "var(--paper-2)",
       }}
     >
-      <MiniLabel>what to check for</MiniLabel>
-      <p className="serif mt-1 text-[14px]">{expected}</p>
+      <div className="flex flex-wrap items-baseline gap-3">
+        <h4 className="display text-[17px] m-0">{header}</h4>
+        <span className="flex-1" />
+        {grade.phase === "running" && <MiniLabel>ollama · streaming…</MiniLabel>}
+        {grade.phase === "done" && <MiniLabel>ollama · {modelName}</MiniLabel>}
+      </div>
+
+      {(grade.phase === "running" || grade.phase === "done") && (
+        <div
+          className="serif mt-3 text-[14px] leading-relaxed whitespace-pre-wrap"
+          style={{
+            border: "1.5px solid var(--ink)",
+            borderRadius: 8,
+            padding: 12,
+            background: "var(--paper)",
+          }}
+        >
+          {grade.output || <span className="text-(--ink-3) italic">thinking…</span>}
+        </div>
+      )}
+
+      {grade.phase === "unavailable" && (
+        <p className="serif mt-2 text-[13px] text-(--ink-2) italic">
+          {grade.reason} Turn it on in <Link to="/settings" className="underline decoration-dashed">settings</Link> for
+          automatic grading.
+        </p>
+      )}
+
+      {grade.phase === "error" && (
+        <p className="serif mt-2 text-[13px] text-(--ink-2) italic">Grader error: {grade.message}</p>
+      )}
+
+      {reference && (
+        <div className="mt-3">
+          <MiniLabel>what to check for — from the KB</MiniLabel>
+          <div
+            className="serif mt-1 text-[13.5px] leading-relaxed whitespace-pre-wrap"
+            style={{
+              border: "1.5px solid var(--ink)",
+              borderRadius: 8,
+              padding: 12,
+              background: "var(--paper)",
+              maxHeight: 260,
+              overflow: "auto",
+            }}
+          >
+            {reference}
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap gap-3">
-        <Button variant="pop" onClick={onWin}>
-          I hit the key points · {isLast ? "wrap up" : "next"}
-        </Button>
-        <Button variant="ghost" onClick={onPark}>
-          Needs work · bank it
-        </Button>
+        {canAutoAdvance ? (
+          <Button variant="pop" onClick={grade.verdict === "correct" ? onWin : onPark}>
+            {isLast ? "Wrap up →" : "Next question"} <ArrowRight size={14} />
+          </Button>
+        ) : grade.phase === "running" ? (
+          <Button variant="pop" disabled>Grading…</Button>
+        ) : (
+          <>
+            <Button variant="pop" onClick={onWin}>
+              I hit the key points · {isLast ? "wrap up" : "next"}
+            </Button>
+            <Button variant="ghost" onClick={onPark}>
+              Needs work · bank it
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
