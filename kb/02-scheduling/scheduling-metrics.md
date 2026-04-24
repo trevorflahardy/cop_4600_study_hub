@@ -29,10 +29,47 @@ Trade-off example: With FIFO, if a 100-second job arrives before two 10-second j
 
 ## Common exam questions
 
-- Given a process set (arrival times, burst times) and a scheduling algorithm, compute average turnaround and response times.
-- Explain why turnaround and response time are often at odds.
-- Which metric would you prioritize for a time-sharing OS? Why?
-- How do the convoy effect and response time constraints interact?
+- **MCQ:** How is turnaround time defined?
+  - [x] T_completion - T_arrival
+  - [ ] T_firstrun - T_arrival
+  - [ ] T_completion - T_firstrun
+  - [ ] Total time spent in the ready queue
+  - why: Turnaround measures end-to-end latency from arrival to completion; first-run-based formulas describe response time instead.
+
+- **MCQ:** How is response time defined?
+  - [x] T_firstrun - T_arrival
+  - [ ] T_completion - T_arrival
+  - [ ] T_completion - T_firstrun
+  - [ ] Time spent executing on the CPU
+  - why: Response time captures only the delay until a job first gets the CPU, which is what interactive users perceive.
+
+- **MCQ:** A 100-second job arrives before two 10-second jobs, all at t=0 in FIFO order. What is the average turnaround time under FIFO?
+  - [x] 110 seconds
+  - [ ] 50 seconds
+  - [ ] 100 seconds
+  - [ ] 40 seconds
+  - why: Completion times are 100, 110, 120; average = (100+110+120)/3 = 110. Running shortest first instead would cut this to 50.
+
+- **MCQ:** Which scheduler goal typically favors minimizing turnaround time?
+  - [x] Batch throughput
+  - [ ] Interactive responsiveness
+  - [ ] Fairness among equal-priority jobs
+  - [ ] Low context-switch overhead
+  - why: Batch systems care about finishing jobs quickly end-to-end, not how soon each one begins running.
+
+- **MCQ:** Which component is excluded from wait time?
+  - [x] Time the process is blocked on I/O
+  - [ ] Time waiting in the ready queue before first run
+  - [ ] Time waiting in the ready queue between time slices
+  - [ ] Time queued after a preemption
+  - why: Wait time counts only ready-queue time; blocked-on-I/O intervals are not "waiting for the CPU."
+
+- **MCQ:** Why are turnaround time and response time often in tension?
+  - [x] Running shortest job to completion helps turnaround but delays later arrivals' first run
+  - [ ] They measure the same quantity in different units
+  - [ ] Response time always equals twice turnaround time
+  - [ ] Both improve monotonically with a smaller quantum
+  - why: Policies that minimize turnaround (SJF/STCF) can leave newly arrived jobs waiting, whereas RR with small quanta cuts response time but lengthens turnaround due to switching.
 
 ## Gotchas
 

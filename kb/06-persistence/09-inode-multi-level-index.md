@@ -243,13 +243,54 @@ Pointers per block: 4 KB / 4 B = 1024 pointers per block.
 
 ## Common exam questions
 
-1. A file is 10 MB. Which block pointers (direct/indirect/double) are in use in the inode?
-2. How many disk I/Os are needed to read a byte at offset 100 KB? 100 MB? 1 GB?
-3. Why is the design 12 direct + 1 indirect + 1 double-indirect instead of, say, 1 direct + 10 indirect?
-4. If an inode has i_block[13] allocated (double-indirect), does that mean the file is > 4 MB?
-5. How many pointers fit in a 4 KB indirect block (assuming 4-byte pointers)?
-6. A double-indirect block points to 1024 indirect blocks. How many pointers can be accessed through one double-indirect block?
-7. Explain why allocating a new block for a 10 MB file requires at most 4 disk reads + 4 writes (including indirect blocks).
+- **MCQ:** With 12 direct pointers, one single indirect, and one double indirect, 4 KB blocks, and 4-byte pointers, what is the maximum file size?
+  - [x] About 4 GB (12*4 KB + 1024*4 KB + 1024*1024*4 KB)
+  - [ ] About 4 MB
+  - [ ] About 48 KB
+  - [ ] About 4 TB
+  - why: Pointers per block = 1024; double indirect dominates with 1024*1024*4 KB = 4 GB, plus a few MB from the rest.
+
+- **MCQ:** A 10 MB file uses which inode pointers?
+  - [x] All 12 direct + single indirect + some of the double indirect
+  - [ ] Just the 12 direct
+  - [ ] Just single indirect
+  - [ ] Triple indirect
+  - why: 12 direct covers 48 KB; single indirect covers ~4 MB; 10 MB exceeds 4 MB so the double indirect must be used.
+
+- **MCQ:** To read one byte at offset 100 MB in a large file, how many disk I/Os are needed (no caching) to reach the data block?
+  - [x] 4 (inode, double-indirect block, indirect block, data block)
+  - [ ] 2
+  - [ ] 3
+  - [ ] 1
+  - why: Double indirect dereferencing is two extra block reads on top of the inode and data block.
+
+- **MCQ:** How many 4-byte pointers fit in a single 4 KB indirect block?
+  - [x] 1024
+  - [ ] 512
+  - [ ] 4096
+  - [ ] 256
+  - why: 4096 B / 4 B per pointer = 1024 pointers per indirect block.
+
+- **MCQ:** An inode has i_block[13] (double-indirect) set. What does that imply about the file size?
+  - [x] The file is large enough to need more than ~4 MB of data
+  - [ ] The file is exactly 4 MB
+  - [ ] The file is under 48 KB
+  - [ ] The file has been corrupted
+  - why: Double indirect is allocated only when direct and single-indirect capacities are exhausted, so the file exceeds ~4 MB.
+
+- **MCQ:** Why is the design "12 direct + 1 indirect + 1 double" preferred over "1 direct + 10 indirect"?
+  - [x] Small files (the common case) are accessed with zero extra indirection
+  - [ ] Double indirect pointers are free to allocate
+  - [ ] It always produces fewer total disk blocks
+  - [ ] Indirect blocks cannot be cached
+  - why: Most files are small; giving them a dozen direct pointers avoids an extra block read per access while still allowing huge files via indirection.
+
+- **MCQ:** Reading a byte at offset ~1 MB in a file typically requires how many block reads to reach the data?
+  - [x] 3 (inode, single-indirect block, data block)
+  - [ ] 1
+  - [ ] 2
+  - [ ] 4
+  - why: 1 MB / 4 KB = 256 logical blocks, beyond the 12 direct pointers but within single-indirect range.
 
 ## Gotchas
 

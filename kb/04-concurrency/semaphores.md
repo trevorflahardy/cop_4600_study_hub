@@ -113,11 +113,54 @@ Counting semaphore (producer-consumer, MAX=2):
 
 ## Common exam questions
 
-- Explain the difference between binary and counting semaphores.
-- How can a semaphore be used for both mutual exclusion and signaling?
-- Trace a semaphore-based producer-consumer with multiple producers/consumers.
-- Why is a semaphore initialized to 0 for parent-child signaling?
-- What is the relationship between semaphore value and sleeping threads?
+- **MCQ:** To use a semaphore as a mutex (lock), what is the correct initial value?
+  - [x] 1
+  - [ ] 0
+  - [ ] MAX
+  - [ ] -1
+  - why: A binary semaphore starts at 1 so the first `sem_wait` succeeds (decrement to 0) and subsequent waiters block.
+
+- **MCQ:** To use a semaphore as a one-shot signal from child to parent (parent waits until child posts), what is the correct initial value?
+  - [x] 0
+  - [ ] 1
+  - [ ] MAX
+  - [ ] The number of threads
+  - why: Starting at 0 means the parent's `sem_wait` blocks until the child's `sem_post` increments it to 1.
+
+- **MCQ:** To use a semaphore for "N available resources," what is the correct initial value?
+  - [x] N
+  - [ ] 0
+  - [ ] 1
+  - [ ] 2N
+  - why: A counting semaphore initialized to N allows N simultaneous successful waits before further waiters block.
+
+- **MCQ:** Under the classic interpretation, what does a negative semaphore value represent?
+  - [x] The magnitude equals the number of threads currently blocked on sem_wait
+  - [ ] An invalid state that must be clamped to 0
+  - [ ] The number of pending sem_post calls
+  - [ ] The index of the next thread to wake
+  - why: Each blocked thread drives the counter further negative; posting increments and wakes a waiter.
+
+- **MCQ:** Which of the following is NOT true of semaphores (compared to condition variables)?
+  - [x] Consumers must re-check a predicate after sem_wait returns
+  - [ ] sem_wait and sem_post are atomic
+  - [ ] No explicit mutex is required for basic counting
+  - [ ] Initial value encodes available resources
+  - why: Unlike CV wait (Mesa semantics forces a while-loop), sem_wait returns only after successfully decrementing, so no predicate re-check is needed.
+
+- **MCQ:** A thread calls `sem_wait(&s)` with s == 0. What occurs?
+  - [x] The value becomes negative (or the thread is enqueued) and the thread sleeps until a sem_post
+  - [ ] sem_wait spins until another thread posts
+  - [ ] sem_wait returns an error
+  - [ ] sem_wait yields the CPU once and then returns
+  - why: With no resources, sem_wait blocks the caller; sem_post later increments the value (or wakes directly) allowing the waiter to proceed.
+
+- **MCQ:** Which statement about semaphore deadlock is accurate?
+  - [x] Acquiring semaphores in inconsistent orders (e.g., mutex before empty in producer) can still deadlock
+  - [ ] Semaphores are deadlock-free by construction
+  - [ ] Deadlock only occurs with binary semaphores
+  - [ ] Deadlock is impossible when initial values are correct
+  - why: Semaphores don't magically avoid deadlock; ordering matters just as with locks, as in the broken producer that waits on empty while holding mutex.
 
 ## Gotchas
 

@@ -151,11 +151,42 @@ clock_replacement(frames, hand):
 
 ## Common exam questions
 
-- Compare FIFO and LRU on a given page access trace. Count misses for each.
-- Why is optimal replacement impractical?
-- What is Belady's Anomaly? Can it occur with LRU?
-- Explain the clock algorithm and why it is faster than LRU.
-- Given a 4-frame memory and sequence [1, 2, 3, 4, 5, 1, 6, 7, 1, 8], compute misses for (a) FIFO, (b) LRU, (c) Optimal.
+- **MCQ:** For the 18-access trace 8,7,4,2,5,4,7,3,4,5,9,5,2,7,6,2,9,9 with 4 frames, how many FIFO misses occur (per the exam_1 answer key)?
+  - [x] 10
+  - [ ] 9
+  - [ ] 11
+  - [ ] 12
+  - why: The FIFO trace in the hand-trace counts 4 compulsory misses plus 6 replacement misses = 10, matching the exam_1 answer key.
+- **MCQ:** For the same 18-access trace with 4 frames, how many Optimal (Belady) misses occur?
+  - [x] 9
+  - [ ] 10
+  - [ ] 11
+  - [ ] 8
+  - why: Per the exam_1 answer key: optimal = 9, FIFO = 10, LRU = 11. Optimal always evicts the page used furthest in the future.
+- **MCQ:** Why is Belady's optimal page replacement impractical in a real OS?
+  - [x] It requires knowledge of future page references.
+  - [ ] It requires hardware support that does not exist.
+  - [ ] Its per-reference cost is O(n^2) in page count.
+  - [ ] It performs worse than FIFO in practice.
+  - why: Optimal picks the page used furthest in the future; the OS cannot see the future, so it is used only as a benchmark.
+- **MCQ:** What is Belady's Anomaly, and which policies suffer from it?
+  - [x] Adding frames can increase faults under FIFO; LRU and Optimal are immune because they are stack algorithms.
+  - [ ] Adding frames always reduces faults; the anomaly is theoretical only.
+  - [ ] Any replacement policy can show more faults with more frames.
+  - [ ] It affects LRU but not FIFO.
+  - why: FIFO is not a stack algorithm, so enlarging memory can counter-intuitively increase faults. LRU and Optimal maintain the stack property and never exhibit the anomaly.
+- **MCQ:** Why is the Clock algorithm faster than true LRU while approximating it?
+  - [x] It uses a single use-bit per frame plus a rotating hand, avoiding per-access timestamp or list updates.
+  - [ ] It flushes the TLB less often than LRU.
+  - [ ] It evicts pages in FIFO order without any recency tracking.
+  - [ ] It requires no hardware support at all.
+  - why: True LRU needs to update a timestamp or move a list node on every memory access; Clock only sets the use bit on access and sweeps lazily at eviction time.
+- **MCQ:** Clock has swept all frames once and all use bits were initially 1. What is the state after the first full sweep, before any eviction?
+  - [x] All use bits are cleared to 0; the next frame with use=0 is evicted.
+  - [ ] The frame with the oldest load time is evicted.
+  - [ ] The hand wraps and a page fault is raised.
+  - [ ] All frames are evicted because they all had use=1.
+  - why: The sweep clears use bits as it passes. After one full revolution, all are 0 and the hand can pick a victim on the next step; this is why Clock degenerates toward FIFO when everything is hot.
 
 ## Gotchas
 

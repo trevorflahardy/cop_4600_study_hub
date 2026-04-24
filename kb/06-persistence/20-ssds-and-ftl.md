@@ -259,13 +259,54 @@ Write amplification: ~2× (much better!)
 
 ## Common exam questions
 
-1. Why must SSDs erase entire blocks before overwriting a page?
-2. Explain wear leveling. Why is it needed?
-3. What does the TRIM command do, and when should the OS use it?
-4. Compare random I/O performance: HDD (6 ms) vs. SSD (0.1 ms) for a 4 KB read.
-5. Why is write amplification on SSDs significant? How does it relate to SSD lifespan?
-6. What is garbage collection? Why is it necessary?
-7. If an SSD receives many random writes, which blocks are erased most frequently?
+- **MCQ:** Why can NAND flash not simply overwrite a single page in place?
+  - [x] Flash cells can only flip from 1 to 0 on write; flipping 0 to 1 requires erasing the whole block first
+  - [ ] Pages are hardwired to read-only
+  - [ ] The FTL forbids same-page writes for security
+  - [ ] Page sizes change dynamically
+  - why: NAND physics require block-level erase to restore 1 bits, which is why the FTL redirects writes to fresh pages.
+
+- **MCQ:** What is wear leveling?
+  - [x] Distributing erase/program cycles evenly across all flash blocks to prevent premature cell failure
+  - [ ] Compressing files to save writes
+  - [ ] Overclocking the SSD controller
+  - [ ] Buying extra spare blocks for cold data
+  - why: NAND cells have a limited erase count; wear leveling is the FTL policy that spreads wear so no block burns out well before others.
+
+- **MCQ:** What does the TRIM command tell the SSD?
+  - [x] These logical blocks no longer contain valid data, so they can be ignored during garbage collection
+  - [ ] To perform a full disk erase
+  - [ ] To re-read a specific block
+  - [ ] To switch into slow mode
+  - why: TRIM lets the FTL skip copying stale data during GC, reducing write amplification and extending SSD lifespan.
+
+- **MCQ:** 4 KB random read: HDD (~6 ms) vs. modern NVMe SSD (~0.1 ms). The SSD is roughly how much faster?
+  - [x] About 60x
+  - [ ] About 2x
+  - [ ] About 600x
+  - [ ] About the same
+  - why: HDD random reads pay seek + rotation; SSDs have neither, so each access is ~60x faster for the same 4 KB request.
+
+- **MCQ:** Write amplification measures:
+  - [x] The ratio of physical flash writes to logical writes issued by the OS
+  - [ ] The number of times an SSD has been powered on
+  - [ ] The compression factor of stored files
+  - [ ] The size of the FTL mapping table
+  - why: GC and block-level rewrites can cause several times more bytes to be written to flash than the OS requested; high amplification shortens life.
+
+- **MCQ:** Why is garbage collection necessary on an SSD?
+  - [x] To reclaim blocks full of invalid pages so the FTL has fresh blocks to program
+  - [ ] To defragment files for faster sequential reads
+  - [ ] To erase the operating system
+  - [ ] To delete old files automatically
+  - why: Without GC, the SSD eventually runs out of clean pages to write; GC reads valid pages into a new block and erases the old one.
+
+- **MCQ:** Without TRIM, what happens to the FTL's picture of free space?
+  - [x] It assumes every logical block that has ever been written still contains valid data, so GC copies stale pages unnecessarily
+  - [ ] The FTL gets smaller and faster
+  - [ ] The drive automatically reformats itself
+  - [ ] The OS cannot issue any writes
+  - why: The SSD cannot know the OS has deleted a file unless told; without TRIM, GC preserves dead data, inflating write amplification.
 
 ## Gotchas
 

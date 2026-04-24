@@ -118,11 +118,49 @@ O(n) per scheduling decision in the worst case (depends on queue implementation)
 
 ## Common exam questions
 
-- Explain Rules 1-5 in MLFQ and their purposes.
-- What problem does Rule 4 fix (gaming prevention)?
-- Why is Rule 5 (priority boost) necessary?
-- Given a process set, trace MLFQ execution and show queue transitions.
-- How does MLFQ approximate SJF without prior knowledge of job lengths?
+- **MCQ:** Where does a newly arriving job enter an MLFQ by default?
+  - [x] At the highest-priority queue
+  - [ ] At the lowest-priority queue
+  - [ ] At a middle queue based on estimated burst time
+  - [ ] Wherever the current minimum allotment is
+  - why: Rule 3 places every new job at the top queue so interactive jobs get a fast first response.
+
+- **MCQ:** What problem does the revised Rule 4 (count total allotment used at a level) solve?
+  - [x] Gaming: a job yielding just before its slice expires to stay high-priority
+  - [ ] Starvation of low-priority jobs
+  - [ ] Excessive context-switch overhead in the top queue
+  - [ ] Priority inversion between threads
+  - why: Tracking cumulative CPU time at a level — not just a single slice — prevents a job from repeatedly yielding and resetting its demotion counter.
+
+- **MCQ:** Why is Rule 5 (periodic priority boost) necessary?
+  - [x] To prevent starvation of jobs that have been demoted to low-priority queues
+  - [ ] To charge jobs for CPU time used
+  - [ ] To discover each job's true burst length
+  - [ ] To disable preemption at the top queue
+  - why: Without periodic boost, a steady stream of short interactive jobs at the top queue starves demoted CPU-bound jobs forever.
+
+- **MCQ:** In an MLFQ with Q1 quantum=8, Q1 allotment=8, how long does a CPU-bound job run in Q1 before being demoted?
+  - [x] 8ms
+  - [ ] 1ms
+  - [ ] 16ms
+  - [ ] Until it yields
+  - why: Allotment caps total CPU time at that level. After using 8ms (one full quantum here), the job drops to Q2.
+
+- **MCQ:** How does MLFQ approximate SJF without knowing burst lengths?
+  - [x] It learns from behavior: short/interactive jobs stay high, CPU-bound jobs demote
+  - [ ] It samples each job's burst and sorts queues by estimated length
+  - [ ] It preempts whenever a new job has a smaller PID
+  - [ ] It runs every job for 1ms and measures completion
+  - why: Jobs that yield before exhausting their allotment keep high priority, so short jobs finish first; long jobs fall to lower queues.
+
+- **MCQ:** Which statement about MLFQ Rules 1 and 2 is correct?
+  - [x] Higher-priority queues always run first; jobs at the same priority run round-robin
+  - [ ] All queues run simultaneously, time-shared equally
+  - [ ] The lowest-priority queue runs when no job has arrived in the last second
+  - [ ] Jobs at the same priority run FIFO until they finish
+  - why: Rule 1 enforces strict priority between queues; Rule 2 uses round-robin within a queue so jobs at the same level share CPU fairly.
+
+- Design an MLFQ configuration (queue count, quanta, allotments, boost period S) for a mixed interactive-and-batch workload and justify each parameter.
 
 ## Gotchas
 

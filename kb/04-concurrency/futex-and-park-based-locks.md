@@ -115,11 +115,47 @@ Park-based lock acquisition and release (2 threads):
 
 ## Common exam questions
 
-- What is the wakeup/waiting race and how does futex prevent it?
-- Why does a park-based lock need a guard spinlock?
-- Explain the fast path vs. slow path in futex_lock.
-- How does futex reduce the number of system calls compared to basic park/unpark?
-- Describe the atomicity requirements for flag updates in park-based locks.
+- **MCQ:** What is the wakeup/waiting race in naive park/unpark locks?
+  - [x] A thread is unparked between deciding to park and actually calling park, and then sleeps forever
+  - [ ] Two threads park on the same address and block each other
+  - [ ] The CPU reorders park() past unpark(), losing a wake
+  - [ ] park() returns before the lock is actually released
+  - why: Without a guard, a thread can read "lock held" and plan to park, then the holder releases and unparks before the park call actually runs — the wakeup is lost.
+
+- **MCQ:** Why does a park-based lock include a guard spinlock?
+  - [x] To atomically check the flag and enqueue/park without losing a wakeup
+  - [ ] To spin until the OS scheduler becomes available
+  - [ ] To guarantee FIFO ordering of the waiter queue
+  - [ ] To bypass the kernel during contention
+  - why: The guard serializes the "check flag, add to queue, park" sequence so no unpark can slip in between adding to the queue and parking.
+
+- **MCQ:** What characterizes the futex "fast path" when the lock is uncontended?
+  - [x] A single atomic operation in user space, with no system call
+  - [ ] A system call that is marked fast by the kernel scheduler
+  - [ ] A spin loop followed by a futex_wait
+  - [ ] A call into libpthread that holds a global lock
+  - why: Uncontended acquisition is just an atomic bit-set; the kernel is only involved when the lock is already held.
+
+- **MCQ:** When does futex_wait actually enter the kernel?
+  - [x] Only when the lock is detected as contended and the thread must sleep
+  - [ ] On every lock acquisition
+  - [ ] Only on lock release
+  - [ ] Only when an interrupt fires
+  - why: The whole design of futex is to stay in user space unless the thread genuinely needs the kernel to put it to sleep.
+
+- **MCQ:** In the park-based unlock, if the wait queue is non-empty, what is the correct action?
+  - [x] Dequeue a waiter and unpark it, leaving the lock effectively handed off
+  - [ ] Set flag to 0 and unpark the next waiter
+  - [ ] Broadcast unpark to all waiters
+  - [ ] Clear the guard and yield the CPU
+  - why: Handing the lock directly to a dequeued waiter avoids a race where another thread acquires the lock before the waiter runs.
+
+- **MCQ:** Compared to a pure spinlock, what is the main benefit of a futex-based lock?
+  - [x] Contended waiters sleep in the kernel instead of burning CPU
+  - [ ] It guarantees strict FIFO fairness
+  - [ ] It avoids atomic instructions entirely
+  - [ ] It requires no memory barriers on any architecture
+  - why: Under contention, futex parks threads in the kernel, saving CPU cycles; spinlocks would keep every waiter spinning.
 
 ## Gotchas
 

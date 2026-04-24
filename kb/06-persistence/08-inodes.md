@@ -226,13 +226,54 @@ Note: `i_blocks` counts 512-byte blocks, not filesystem blocks (4 KB).
 
 ## Common exam questions
 
-1. If an inode is 256 bytes and a block is 4 KB, how many inodes fit in one block?
-2. Inode 100, block size 4 KB, inode table starts at block 10. Where on disk is inode 100?
-3. The i_block array has 15 entries. Which are direct pointers, which are indirect, which are double-indirect?
-4. A file has i_size = 10,000 bytes. How many entries in i_block[0-11] are needed?
-5. What does i_links_count represent? When is it decremented?
-6. If i_links_count = 2, can the file be deleted with one `unlink()` call?
-7. A file has i_blocks = 16. What is its approximate size?
+- **MCQ:** With 256-byte inodes and 4 KB blocks, how many inodes fit in one block?
+  - [x] 16
+  - [ ] 8
+  - [ ] 32
+  - [ ] 256
+  - why: 4096 / 256 = 16 inodes per block; this is why the inode table takes up several contiguous blocks.
+
+- **MCQ:** Inode 100 lives in a filesystem with 4 KB blocks, 256-byte inodes, and the inode table starting at block 10. Which block contains it?
+  - [x] Block 16 at offset 1024
+  - [ ] Block 10 at offset 100
+  - [ ] Block 100 at offset 0
+  - [ ] Block 26 at offset 0
+  - why: 16 inodes per block -> 100/16 = 6 (block offset), 100%16 = 4 (within-block idx), absolute = 10 + 6 = block 16, byte offset = 4*256 = 1024.
+
+- **MCQ:** A file has i_size = 10,000 bytes with 4 KB blocks. How many of the 12 direct pointers does it need?
+  - [x] 3
+  - [ ] 2
+  - [ ] 4
+  - [ ] 12
+  - why: ceil(10000 / 4096) = 3 blocks; only i_block[0..2] are used, no indirect pointer required.
+
+- **MCQ:** In a standard 15-entry i_block array, which indices are direct vs. indirect?
+  - [x] [0..11] direct, [12] single indirect, [13] double indirect, [14] triple indirect
+  - [ ] [0..9] direct, [10..14] indirect
+  - [ ] [0] direct, [1..14] indirect
+  - [ ] [0..11] indirect, [12..14] direct
+  - why: The classic Unix/EXT2 layout reserves 12 direct entries, then one each of single, double, and triple indirect at positions 12, 13, 14.
+
+- **MCQ:** A file has i_blocks = 16. Approximately how large is it?
+  - [x] About 8 KB
+  - [ ] About 16 KB
+  - [ ] About 64 KB
+  - [ ] About 4 KB
+  - why: i_blocks counts 512-byte sectors, so 16 * 512 B = 8 KB allocated (actual i_size may be slightly smaller within the last block).
+
+- **MCQ:** A file has i_links_count = 2. How many `unlink()` calls are required before the inode is freed?
+  - [x] 2 (and no process may still have the file open)
+  - [ ] 1
+  - [ ] 0 (it is already orphaned)
+  - [ ] 3
+  - why: Each unlink removes one directory entry and decrements nlink; the inode is freed only when nlink hits 0 with no open FDs.
+
+- **MCQ:** Which field in the inode encodes both file type and permission bits?
+  - [x] i_mode
+  - [ ] i_flags
+  - [ ] i_uid
+  - [ ] i_file_acl
+  - why: The high bits of i_mode indicate type (regular, directory, symlink, ...), and the low 12 bits store rwx permissions for user/group/other.
 
 ## Gotchas
 

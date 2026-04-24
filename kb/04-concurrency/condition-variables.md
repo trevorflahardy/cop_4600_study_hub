@@ -105,11 +105,47 @@ Correct version (use while):
 
 ## Common exam questions
 
-- Explain why using `while` is preferable to `if` with condition variables.
-- What is the race condition that can occur between checking a condition and calling wait()?
-- Why must condition variables be paired with a mutex?
-- Describe the atomicity guarantee of pthread_cond_wait().
-- Compare signal() vs. broadcast() in terms of efficiency and correctness.
+- **MCQ:** Why must the predicate surrounding `pthread_cond_wait` be a `while` loop, not an `if`?
+  - [x] Under Mesa semantics and spurious wakeups, the condition may be false when the thread finally reacquires the mutex
+  - [ ] `if` is syntactically invalid with condition variables in POSIX
+  - [ ] `while` is required so the thread never sleeps
+  - [ ] `while` automatically retries the `cond_signal` call
+  - why: Mesa semantics plus spurious wakeups mean a woken thread must re-check the predicate; `if` would proceed on stale state.
+
+- **MCQ:** What atomic operation does `pthread_cond_wait(&c, &m)` perform when entered?
+  - [x] Release `m` and put the thread to sleep on `c`, atomically
+  - [ ] Acquire `m` and signal `c` atomically
+  - [ ] Spin on `c` without releasing `m`
+  - [ ] Broadcast on `c` and then acquire `m`
+  - why: The whole point of `cond_wait` is that releasing the mutex and sleeping happen as one step so no signal can be missed between them.
+
+- **MCQ:** Why must a condition variable be paired with a mutex?
+  - [x] The mutex protects the shared state the predicate tests and prevents lost wakeups
+  - [ ] The mutex stores the actual condition value
+  - [ ] pthread implementation requires a mutex for memory allocation
+  - [ ] The mutex is what puts the thread to sleep
+  - why: Without the mutex, one thread could evaluate the predicate, then lose a signal issued before it blocks — the classic lost-wakeup race.
+
+- **MCQ:** What is the key difference between `pthread_cond_signal` and `pthread_cond_broadcast`?
+  - [x] signal wakes at most one waiter; broadcast wakes all waiters
+  - [ ] signal is synchronous; broadcast is asynchronous
+  - [ ] signal guarantees the woken thread sees the condition; broadcast does not
+  - [ ] signal requires the mutex held; broadcast does not
+  - why: Signal picks one waiter (implementation-chosen); broadcast wakes every waiter, each of which then re-acquires the mutex in turn.
+
+- **MCQ:** A signaler sets `value = 5` then calls `pthread_cond_signal` without holding the mutex. What can go wrong?
+  - [x] A waiter can check the predicate, miss the signal, then sleep forever (lost wakeup)
+  - [ ] pthread_cond_signal will crash when called outside a critical section
+  - [ ] The signal always reaches the waiter, but 5 is lost
+  - [ ] Broadcast becomes required in place of signal
+  - why: If the signaler does not hold the mutex, its store and signal can be interleaved so a waiter evaluates the predicate (false), and then the signal arrives with no one waiting.
+
+- **MCQ:** Why might a thread wake from `pthread_cond_wait` even though no other thread called `signal` or `broadcast`?
+  - [x] Spurious wakeups are permitted by the standard; the loop re-checks and sleeps again
+  - [ ] Timer expiration always wakes threads
+  - [ ] The mutex automatically signals the CV on release
+  - [ ] The OS guarantees no spurious wakeups — this cannot happen
+  - why: POSIX explicitly allows spurious wakeups, which is another reason the predicate must sit inside a `while` loop.
 
 ## Gotchas
 

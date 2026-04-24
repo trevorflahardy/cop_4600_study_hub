@@ -151,11 +151,54 @@ Scenario: 2 readers reading, writer arrives, another reader arrives
 
 ## Common exam questions
 
-- Compare reader preference vs. writer preference in terms of fairness and starvation.
-- Trace the state of all semaphores during a scenario with multiple readers and a writer.
-- Can both readers and writers be in the critical section simultaneously? Why or why not?
-- Explain how readTry prevents reader starvation in writer-preference locks.
-- Design a scenario where reader-preference locks fail (writer starvation) but writer-preference succeeds.
+- **MCQ:** What is the purpose of the `readTry` semaphore in a writer-preference RW lock?
+  - [x] Block new readers from entering once a writer is waiting
+  - [ ] Protect the `readcount` variable from concurrent updates
+  - [ ] Grant mutual exclusion between two writers
+  - [ ] Signal that a reader has finished
+  - why: The first waiting writer does `sem_wait(&readTry)`, forcing subsequent readers to block on readTry until the writers drain.
+
+- **MCQ:** Which semaphore actually serializes access to the shared data?
+  - [x] `resource`
+  - [ ] `rmutex`
+  - [ ] `wmutex`
+  - [ ] `readTry`
+  - why: First reader and every writer acquire `resource`; it is the real exclusion mechanism, while the others protect metadata or gate readers.
+
+- **MCQ:** In the writer-preference scheme, can a reader starve?
+  - [x] No; once the last waiting writer finishes, readTry is posted and readers proceed
+  - [ ] Yes, if writers keep arriving
+  - [ ] Yes, but only with more than 64 readers
+  - [ ] No, because readers hold priority over writers
+  - why: The design explicitly drains waiting writers then reopens readTry; arriving writers queue behind existing writers but do not permanently shut out readers.
+
+- **MCQ:** Three readers are reading; a writer arrives. What is the correct sequence?
+  - [x] Writer blocks readTry (waiting_writers=1), readers finish one by one, last reader posts resource, writer acquires resource
+  - [ ] Writer interrupts one reader immediately and proceeds
+  - [ ] All three readers are force-dropped to let the writer in
+  - [ ] The writer signals readTry and joins the readers
+  - why: The writer cannot preempt active readers; it closes the gate to new readers, then takes resource when the last active reader releases it.
+
+- **MCQ:** A writer is writing and a reader arrives. What happens?
+  - [x] The reader blocks on `readTry` because the writer (through waiting_writers) has it held at 0
+  - [ ] The reader blocks on `resource` directly
+  - [ ] The reader proceeds concurrently because reads are non-destructive
+  - [ ] The reader forces the writer to abort
+  - why: The first writer took readTry when it was waiting; even after it becomes the active writer, new readers hit readTry first and block there.
+
+- **MCQ:** Why is `rmutex` separate from `wmutex`?
+  - [x] rmutex protects `readcount`; wmutex protects `writecount` and `waiting_writers` — decoupling reduces contention
+  - [ ] POSIX requires distinct mutex names
+  - [ ] One controls readers and the other controls writers atomically
+  - [ ] They implement the reader-writer lock as two spinlocks
+  - why: Distinct counters protected by distinct mutexes means readers updating readcount and writers updating waiting_writers can proceed in parallel.
+
+- **MCQ:** Why does only the last writer post `readTry`?
+  - [x] Earlier writers still need readTry held so that additional writers can pass through exclusively before readers
+  - [ ] Only the last writer holds readTry
+  - [ ] Posting twice would overflow the semaphore
+  - [ ] readTry is a binary semaphore only the last posts to
+  - why: As long as `waiting_writers > 0` after this writer finishes, readers should stay blocked; only when no writers remain should readTry be re-enabled.
 
 ## Gotchas
 

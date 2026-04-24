@@ -52,6 +52,19 @@ interface Complexity {
   notes?: string;
 }
 
+interface McqChoice {
+  text: string;
+  correct: boolean;
+  why?: string;
+}
+
+interface KbMcq {
+  prompt: string;
+  choices: McqChoice[];
+  explanation?: string;
+  difficulty: "gentle" | "firm" | "tricky";
+}
+
 interface Topic {
   slug: string;
   unit: string;
@@ -67,6 +80,7 @@ interface Topic {
   warnings: string[];
   body: string;
   examQuestions: string[];
+  mcqs: KbMcq[];
   gotchas: string[];
   sources: string[];
 }
@@ -299,6 +313,102 @@ function extractBullets(section: Section | undefined): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Parse `## Common exam questions` into two shapes:
+ *   1. `mcqs` — MCQ bullets: prompt line starts with `MCQ:` or `**MCQ:**`
+ *      (optionally with a difficulty tag like `(gentle)`), followed by
+ *      indented sub-bullets for choices (`[x]` correct, `[ ]` incorrect)
+ *      and optionally a `why:` sub-bullet for the global explanation.
+ *   2. `shorts` — every other top-level bullet, treated as a free-response
+ *      prompt (backwards compatible with pre-MCQ KB files).
+ *
+ * Sub-bullet indentation is detected by leading whitespace greater than the
+ * parent bullet's indentation. Hand-authored KB files may mix tabs and
+ * spaces; we key only on "more indented than the parent" so both work.
+ */
+function parseExamQuestions(section: Section | undefined): { mcqs: KbMcq[]; shorts: string[] } {
+  if (!section) return { mcqs: [], shorts: [] };
+  const lines = section.body.split("\n");
+  const mcqs: KbMcq[] = [];
+  const shorts: string[] = [];
+
+  const indentOf = (l: string): number => (l.match(/^[ \t]*/)?.[0].length ?? 0);
+  const bulletOf = (l: string): string | null => {
+    const m = l.match(/^[ \t]*[-*]\s+(.*)$/);
+    return m ? m[1].trim() : null;
+  };
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const content = bulletOf(line);
+    if (!content) { i++; continue; }
+
+    const indent = indentOf(line);
+
+    // Collect all deeper-indented sub-bullets belonging to this parent.
+    const children: string[] = [];
+    let j = i + 1;
+    while (j < lines.length) {
+      const sub = lines[j];
+      if (sub.trim() === "") { j++; continue; }
+      if (indentOf(sub) <= indent) break;
+      const subContent = bulletOf(sub);
+      if (subContent !== null) children.push(subContent);
+      j++;
+    }
+
+    const mcqMatch = content.match(/^\*\*?MCQ:\*\*?\s*(.*)$/i) ?? content.match(/^MCQ:\s*(.*)$/i);
+    if (mcqMatch) {
+      let prompt = mcqMatch[1].trim();
+      // Optional difficulty tag at the start: "(gentle) What...".
+      let difficulty: KbMcq["difficulty"] = "firm";
+      const diffMatch = prompt.match(/^\((gentle|firm|tricky)\)\s*/i);
+      if (diffMatch) {
+        difficulty = diffMatch[1].toLowerCase() as KbMcq["difficulty"];
+        prompt = prompt.slice(diffMatch[0].length);
+      }
+      prompt = stripMd(prompt).trim();
+
+      const choices: McqChoice[] = [];
+      let explanation: string | undefined;
+      for (const c of children) {
+        const why = c.match(/^why:\s*(.+)$/i);
+        if (why) {
+          explanation = stripMd(why[1]).trim();
+          continue;
+        }
+        const checked = c.match(/^\[([ xX*✓])\]\s*(.+?)(?:\s*[—–-]\s*(.+))?$/);
+        if (checked) {
+          const mark = checked[1];
+          const text = stripMd(checked[2]).trim();
+          const whyText = checked[3] ? stripMd(checked[3]).trim() : undefined;
+          choices.push({
+            text,
+            correct: /[xX*✓]/.test(mark),
+            why: whyText,
+          });
+        }
+      }
+
+      if (prompt && choices.length >= 2 && choices.some((c) => c.correct)) {
+        mcqs.push({ prompt, choices, explanation, difficulty });
+      } else if (prompt) {
+        // Malformed MCQ — fall back to short so the question is not silently dropped.
+        console.warn("[build-kb]  ⚠ malformed MCQ skipped (needs >=2 choices + one [x]): " + prompt.slice(0, 60));
+        shorts.push(prompt);
+      }
+    } else {
+      const clean = stripMd(content).trim();
+      if (clean) shorts.push(clean);
+    }
+
+    i = j;
+  }
+
+  return { mcqs, shorts };
+}
+
 function cardsFor(t: Topic): Flashcard[] {
   const out: Flashcard[] = [];
   const def = t.sections.find((s) => /definition/i.test(s.heading));
@@ -380,6 +490,22 @@ function cardsFor(t: Topic): Flashcard[] {
 
 function quizzesFor(t: Topic): QuizQuestion[] {
   const out: QuizQuestion[] = [];
+
+  // KB-authored MCQs (from `**MCQ:**` bullets under ## Common exam questions)
+  t.mcqs.forEach((m, i) => {
+    out.push({
+      id: t.slug + "::mcq-" + i,
+      topicSlug: t.slug,
+      kind: "mcq",
+      prompt: m.prompt,
+      choices: m.choices,
+      difficulty: m.difficulty,
+      source: "kb",
+      explanation: m.explanation ?? "See the " + t.title + " KB entry.",
+    });
+  });
+
+  // Remaining plain bullets become short-answer (Ollama-graded in the app).
   t.examQuestions.forEach((q, i) => {
     out.push({
       id: t.slug + "::q-" + i,
@@ -510,10 +636,16 @@ function main() {
       complexity,
       warnings,
       body,
-      examQuestions: extractBullets(sections.find((s) => /exam questions/i.test(s.heading))),
+      examQuestions: [],
+      mcqs: [],
       gotchas: extractBullets(sections.find((s) => /gotcha|trap/i.test(s.heading))),
       sources: extractBullets(sections.find((s) => /source/i.test(s.heading))),
     };
+
+    const examSection = sections.find((s) => /exam questions/i.test(s.heading));
+    const parsedExam = parseExamQuestions(examSection);
+    topic.examQuestions = parsedExam.shorts;
+    topic.mcqs = parsedExam.mcqs;
 
     // Exam-prep files are study guides, not algorithm entries — don't require Definition.
     const isExamPrep = unit === "07-exam-prep";
@@ -579,6 +711,7 @@ function main() {
       warnings: t.warnings,
       body: t.body,
       examQuestions: t.examQuestions,
+      mcqCount: t.mcqs.length,
       gotchas: t.gotchas,
       sources: t.sources,
     })),

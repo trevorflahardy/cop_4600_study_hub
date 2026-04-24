@@ -104,12 +104,42 @@ The stack example (last row) illustrates how negative growth works: a high offse
 
 ## Common exam questions
 
-- What are the three main segments, and what is stored in each?
-- Why does the stack need a "grows positive" bit while the heap does not?
-- How does segmentation reduce external fragmentation compared to base-and-bounds?
-- Can two processes share a code segment? Why or why not?
-- Given a 16-bit VA split as [2 segment bits][14 offset bits], segment table shows: Code base 32 KB, Heap base 34 KB. What is the PA for VA 0x3000 (offset 0x1000 in heap)?
-- Why is internal fragmentation still a concern in segmentation?
+- **MCQ:** Which three segments are classically used for a user process?
+  - [x] Code, heap, stack
+  - [ ] Code, data, TLB
+  - [ ] Heap, stack, page table
+  - [ ] Text, swap, kernel
+  - why: The logical layout stores instructions in code, malloc'd blocks in heap, and locals/returns in stack. Each gets its own base/bounds pair.
+- **MCQ:** Why does the stack require a "grows positive" bit in the segment table?
+  - [x] The stack grows toward lower addresses, so the hardware's bounds check must use the opposite direction.
+  - [ ] The stack uses negative virtual addresses.
+  - [ ] The stack base is recomputed on every push.
+  - [ ] The stack lacks a bounds register.
+  - why: Heap and code bounds check offset < size; stack grows downward so valid offsets sit near the end of the segment, flipping the check direction.
+- **MCQ:** How does segmentation reduce external fragmentation vs. base-and-bounds?
+  - [x] Each segment is placed independently, so unused gaps between code/heap/stack do not waste physical memory.
+  - [ ] Segments are the same size as pages, so fragmentation is eliminated.
+  - [ ] The OS compacts segments on every context switch.
+  - [ ] Segments are not subject to fragmentation.
+  - why: A single base-and-bounds forces one contiguous region per process including unused gaps. Segmentation places each region separately, reclaiming those gaps.
+- **MCQ:** Can two processes share a code segment, and why?
+  - [x] Yes: code is read-only, so mapping the same physical region to both processes' code segments is safe.
+  - [ ] No: sharing a segment breaks process isolation.
+  - [ ] Yes, but only if both processes have the same PID.
+  - [ ] No: the bounds register cannot point to another process's memory.
+  - why: Read-only code can be shared without write conflicts, letting libc and similar libraries occupy one physical copy.
+- **MCQ:** Given a 16-bit VA with [2 segment bits][14 offset bits], Code base = 32 KB, Heap base = 34 KB, what is the PA for VA 0x5000 (segment 01 = heap, offset 0x1000)?
+  - [x] 34 KB + 0x1000 = 38 KB
+  - [ ] 32 KB + 0x1000 = 33 KB + some
+  - [ ] 0x5000
+  - [ ] 34 KB + 0x5000
+  - why: Top 2 bits = 01 selects heap; offset = 0x1000 = 4096. PA = heap_base + offset = 34 KB + 4 KB = 38 KB. The full VA is not added; only its offset portion is.
+- **MCQ:** Why can internal fragmentation still occur under segmentation?
+  - [x] Allocated blocks inside a segment may not fill it exactly, leaving unused bytes within the segment.
+  - [ ] Each segment reserves padding for hardware alignment.
+  - [ ] The segment table itself is oversized.
+  - [ ] Bounds registers round up to the nearest megabyte.
+  - why: Segmentation only removes fragmentation between segments; within a segment, the allocator may still leave small unused regions.
 
 ## Gotchas
 

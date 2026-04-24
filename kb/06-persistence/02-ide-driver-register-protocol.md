@@ -148,13 +148,54 @@ void ide_interrupt_handler() {
 
 ## Common exam questions
 
-1. Why is bit 4 (DRIVE/HEAD register) set to 0xE0 for LBA mode? What do the bits mean?
-2. If DRQ is not set after issuing a READ command, what should the driver do? Timeout? Keep polling?
-3. A sector is 512 bytes. The data port is 16 bits. How many `inw()` calls are needed per sector?
-4. What is the difference between checking ERROR in 0x1F7 vs. reading 0x1F1?
-5. In interrupt-driven reads of multi-sector transfers, when is DRQ asserted and cleared?
-6. Why does the control register (0x3F6) enable/disable interrupts? When would you disable them?
-7. If you want to read LBA 0x12345678, what values do you write to 0x1F3, 0x1F4, 0x1F5, 0x1F6?
+- **MCQ:** A sector is 512 bytes and the IDE data port is 16 bits wide. How many inw() calls are needed per sector?
+  - [x] 256
+  - [ ] 512
+  - [ ] 128
+  - [ ] 64
+  - why: 512 B / 2 B per word = 256 16-bit reads from 0x1F0 to drain one sector.
+
+- **MCQ:** To read LBA 0x12345678, what byte goes into register 0x1F5 (LBA high byte)?
+  - [x] 0x34
+  - [ ] 0x12
+  - [ ] 0x56
+  - [ ] 0x78
+  - why: 0x1F5 holds bits 16-23, which is (0x12345678 >> 16) & 0xFF = 0x34; 0x1F6 gets bits 24-27 (0x2 | mode bits).
+
+- **MCQ:** The driver just issued a READ (0x20) command. Which status bits must it see before copying data from 0x1F0?
+  - [x] BUSY=0 and DRQ=1
+  - [ ] BUSY=1 and DRQ=1
+  - [ ] READY=0 and DRQ=0
+  - [ ] FAULT=1 and ERROR=1
+  - why: The controller asserts DRQ once a sector's worth of data is staged in the buffer, and clears BUSY when the command step completes.
+
+- **MCQ:** The status register at 0x1F7 has bit 0 set after a command. What should the driver do next?
+  - [x] Read 0x1F1 to get specific error details
+  - [ ] Ignore it and read data anyway
+  - [ ] Immediately reset the drive via 0x3F6
+  - [ ] Re-issue the same command without inspection
+  - why: Bit 0 of 0x1F7 is the generic ERROR flag; the actual failure code (ABRT, IDNF, UNC, etc.) sits in the error register 0x1F1.
+
+- **MCQ:** Why is the DRIVE/HEAD register set to 0xE0 when issuing an LBA-mode read?
+  - [x] It selects master drive (bit 4=0) and enables LBA mode (bit 6=1); bits 7 and 5 are legacy 1s
+  - [ ] It selects slave drive and disables interrupts
+  - [ ] It encodes the low byte of the LBA
+  - [ ] It tells the controller to do a reset
+  - why: The 0xE0 pattern keeps legacy reserved bits set while choosing LBA-mode / master; slave would be 0xF0 (bit 4=1).
+
+- **MCQ:** When using interrupts for multi-sector transfers, when does DRQ typically re-assert?
+  - [x] After each sector's data has been read out, for the next sector
+  - [ ] Only once, at the very beginning of the transfer
+  - [ ] Only after the entire transfer completes
+  - [ ] Never; DRQ is only used for writes
+  - why: The controller raises DRQ again each time a fresh sector is buffered, letting the driver pull data one sector at a time.
+
+- **MCQ:** Why might a driver disable interrupts via 0x3F6 for a specific operation?
+  - [x] During tight polling loops or initialization sequences where interrupt delivery would be disruptive
+  - [ ] To permanently silence the device
+  - [ ] Because DRQ cannot be polled while interrupts are enabled
+  - [ ] To force the drive into slave mode
+  - why: Some bootloaders and reset sequences prefer strict polling; 0x3F6 bit 1 lets the driver suppress IRQs for the duration.
 
 ## Gotchas
 

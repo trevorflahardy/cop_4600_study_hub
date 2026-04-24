@@ -63,13 +63,54 @@ A child enters ZOMBIE after exit() is called. It remains there until the parent 
 
 ## Common exam questions
 
-- What is a zombie process? How does it form?
-- What happens if a process forks 10 children and never calls wait()? Describe the state of the process table.
-- What is an orphan process? How does the OS handle orphans?
-- Can a process be both a zombie and an orphan? Explain.
-- Why does the OS keep zombie processes around instead of immediately freeing them?
-- What happens if the init process (PID 1) exits? (Trick question: init should never exit in a well-functioning system; if it does, the system crashes.)
-- How can you detect zombie processes in a running system? (ps command output—show Z state.)
+- **MCQ:** Which description matches a zombie process?
+  - [x] A child that has exited but whose parent has not yet called wait(), so its PCB entry still holds the exit status.
+  - [ ] A child that is still running after its parent exited.
+  - [ ] A process that has been suspended with SIGSTOP.
+  - [ ] A kernel thread that is blocked on a spinlock.
+  - why: Zombies have already called exit(); their heavy resources are freed but a PCB slot with PID and exit status lingers until the parent reaps them with wait().
+
+- **MCQ:** A parent forks 100 children, each exits immediately, and the parent never calls wait(). What is the main consequence?
+  - [x] 100 zombie entries accumulate in the process table, consuming PCB slots.
+  - [ ] The 100 children continue running forever in the background.
+  - [ ] Their memory is leaked back to the parent.
+  - [ ] The OS automatically kills the parent.
+  - why: Unreaped children remain as zombies holding PCB slots. Their address spaces are gone, but enough zombies can exhaust the process table.
+
+- **MCQ:** Which process adopts orphaned children and periodically reaps them?
+  - [x] init (PID 1)
+  - [ ] The kernel scheduler thread
+  - [ ] The shell that spawned the original parent
+  - [ ] The child's grandparent process
+  - why: When a parent exits first, its still-running children are reparented to init (PID 1), which loops on wait() to clean them up when they eventually exit.
+
+- **MCQ:** Can a single process be both a zombie and an orphan at the same instant?
+  - [x] No; a zombie has already exited, while an orphan is still running with init as its new parent.
+  - [ ] Yes; any exited child with no parent qualifies as both.
+  - [ ] Yes; the kernel marks both flags simultaneously.
+  - [ ] No, because init is never allowed to have children.
+  - why: The states are mutually exclusive in time: orphan means still alive but reparented; zombie means already terminated awaiting reap. An exited orphan is simply a zombie reaped by init.
+
+- **MCQ:** Why does the OS keep a zombie's PCB around instead of freeing it the moment the process exits?
+  - [x] To preserve the exit status so the parent can retrieve it via wait() or waitpid().
+  - [ ] Because the child's memory cannot be freed until its parent dies.
+  - [ ] So that signals sent after exit can still be delivered.
+  - [ ] To keep the PID usable by other processes.
+  - why: The exit status has to live somewhere until the parent asks for it; the minimal PCB entry is that storage. Once wait() returns it, the PCB is freed.
+
+- **MCQ:** What is the correct way to avoid accumulating zombies when a parent spawns many children?
+  - [x] Always call wait() or waitpid() (or install a SIGCHLD handler that reaps them) once per child.
+  - [ ] Call fork() with a special no-zombie flag.
+  - [ ] Have each child call wait() on itself before exiting.
+  - [ ] Send SIGKILL to the children after they exit.
+  - why: Each terminated child needs a reaping wait() call; SIGCHLD handlers are the standard way for long-running parents to reap asynchronously.
+
+- **MCQ:** Are orphan processes themselves a resource leak?
+  - [x] No; init adopts them and reaps them when they exit, so there is no lingering leak.
+  - [ ] Yes; orphans hold memory forever because no parent can free them.
+  - [ ] Yes; orphans block the scheduler from selecting other processes.
+  - [ ] No; orphans are killed immediately when their parent dies.
+  - why: Orphans keep running normally under init. When they eventually exit, init's wait() loop reaps them, preventing any long-term leak.
 
 ## Gotchas
 

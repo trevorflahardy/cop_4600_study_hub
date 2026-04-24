@@ -130,12 +130,37 @@ The check and use happen without interruption.
 
 ## Common exam questions
 
-- What is the difference between an atomicity violation and a race condition?
-- Given a code snippet, identify where an atomicity violation could occur.
-- Write a safe version of code that has an atomicity violation.
-- Why is the "check then use" pattern dangerous in concurrent code?
-- Can an atomicity violation occur with only one thread? Why or why not?
-- Compare atomicity violations to order violations. Which is more common in real code?
+- **MCQ:** Thread 1 does `if (thd->proc_info) fputs(thd->proc_info, ...);` while Thread 2 does `thd->proc_info = NULL;`. What kind of concurrency bug is this?
+  - [x] Atomicity violation: a check-then-use sequence that should be one indivisible unit is split.
+  - [ ] Order violation: Thread 2 runs before Thread 1 finishes initializing proc_info.
+  - [ ] Deadlock: both threads block waiting for each other.
+  - [ ] Livelock: both threads spin in a retry loop.
+  - why: The logical atomic region (check != NULL, then use) is interrupted by Thread 2's write. No lock orders violated, nothing is blocked — the check and use just are not atomic.
+- **MCQ:** What is the correct fix for the MySQL proc_info atomicity violation?
+  - [x] Protect the entire check-and-use region in Thread 1 and the write in Thread 2 with the same mutex.
+  - [ ] Acquire locks in a globally consistent order.
+  - [ ] Replace the pointer with a CAS-based lock-free update.
+  - [ ] Add random backoff before Thread 1 retries the check.
+  - why: The bug is that two operations that must be atomic are split. A shared mutex around both threads' access to proc_info makes the check-use pair indivisible. Lock ordering is for deadlock, not atomicity; CAS is for lock-free code; backoff fixes livelock.
+- **MCQ:** Can an atomicity violation occur with a single thread (no concurrency)?
+  - [x] No — atomicity violations require another thread to interleave between the split operations.
+  - [ ] Yes — the compiler can split any C statement into multiple instructions.
+  - [ ] Yes — signal handlers always cause atomicity violations.
+  - [ ] Yes — CPU pipelines execute instructions out of order even single-threaded.
+  - why: An atomicity violation is defined by a concurrent interleaving that exposes intermediate state. Without a second thread (or signal handler racing the main code), no observer sees the split, so the logical atomicity is preserved.
+- **MCQ:** Which pattern is the classic red flag for a potential atomicity violation?
+  - [x] Check a condition, then act on the value that was checked (check-then-use) without holding a lock.
+  - [ ] Using `pthread_cond_wait` inside a `while` loop.
+  - [ ] Acquiring two locks in address order.
+  - [ ] Calling `malloc` inside a critical section.
+  - why: Check-then-use splits two operations that logically should be one: between the check and the use, another thread can invalidate the checked value. The other listed patterns are correct/safe idioms.
+- **MCQ:** Thread 1 has `if (x > 0) x = x - 1;` and Thread 2 has `x = 0;`, both unlocked. What can go wrong?
+  - [x] Thread 1 may decrement after Thread 2 zeroes x, producing an unintended negative value.
+  - [ ] Thread 1 will deadlock waiting for Thread 2's lock.
+  - [ ] Thread 1 and Thread 2 will livelock retrying.
+  - [ ] The program will segfault because x is not initialized.
+  - why: Thread 1 checks `x > 0`, sees true, then Thread 2 sets `x = 0`, then Thread 1 subtracts 1 producing -1 — an underflow caused by the check and the use not being atomic together.
+- Compare atomicity violations to order violations. Which is more common in real code and why?
 
 ## Gotchas
 

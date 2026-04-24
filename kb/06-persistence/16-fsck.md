@@ -251,13 +251,54 @@ Filesystem consistent ✓
 
 ## Common exam questions
 
-1. What are the six phases of FSCK?
-2. FSCK detects a block allocated in bitmap but not in any inode. What is this called, and what does FSCK do?
-3. Why is FSCK slow? How does it scale with disk size?
-4. Can FSCK recover all data after a crash? What types of corruption can it NOT fix?
-5. FSCK finds an inode pointing to a free block. What does it do?
-6. Explain the difference between "orphaned inode" and "orphaned block."
-7. After FSCK repairs a filesystem, are you guaranteed the data is correct?
+- **MCQ:** FSCK finds a block marked allocated in the data bitmap but referenced by no inode. What does it do?
+  - [x] Treat it as an orphaned block and either clear the bit or move the contents to lost+found
+  - [ ] Immediately delete the filesystem
+  - [ ] Assign the block to the root inode
+  - [ ] Mark the bitmap as corrupt and stop
+  - why: Orphan handling is FSCK's standard space-leak recovery: reconcile the bitmap with inode references, preserving data in lost+found when useful.
+
+- **MCQ:** Why is FSCK slow on large filesystems?
+  - [x] It must scan the entire inode table, bitmaps, and directory tree, so runtime grows with disk size
+  - [ ] It does extra cryptographic verification
+  - [ ] It waits for the disk to idle
+  - [ ] It reboots between phases
+  - why: FSCK's core work is a full structural traversal; on multi-TB volumes this can take hours, motivating journaling.
+
+- **MCQ:** Can FSCK recover data integrity after a crash?
+  - [x] No: it repairs metadata consistency but cannot distinguish good from garbage data
+  - [ ] Yes: FSCK guarantees all file contents are correct
+  - [ ] Only for files under 4 KB
+  - [ ] Only when paired with TRIM
+  - why: FSCK reconciles structural invariants (bitmaps, nlink, directory entries); it has no way to know intended user data.
+
+- **MCQ:** FSCK finds an inode whose pointer references a block not allocated in the data bitmap. What is the typical remediation?
+  - [x] Flag the inconsistency and either clear the pointer or mark the block allocated based on heuristics
+  - [ ] Silently ignore the entry
+  - [ ] Delete the filesystem
+  - [ ] Convert the inode into a symlink
+  - why: FSCK reconciles mismatches; the usual policy is to prefer the inode view and update the bitmap (or clear the bad pointer if the block looks garbage).
+
+- **MCQ:** What is the difference between an orphaned inode and an orphaned block?
+  - [x] Orphaned inode: allocated but no directory entry references it. Orphaned block: allocated in bitmap but no inode references it.
+  - [ ] Both refer to the same situation
+  - [ ] Orphaned inode is always deleted; orphaned block never is
+  - [ ] Only orphaned blocks are fixable by FSCK
+  - why: FSCK handles each by relinking orphan inodes into lost+found and by reclaiming or preserving orphan blocks depending on policy.
+
+- **MCQ:** During FSCK's link-count phase, the recomputed reference count for an inode does not match `i_links_count`. What does FSCK do?
+  - [x] Overwrite `i_links_count` with the recounted value
+  - [ ] Delete the inode unconditionally
+  - [ ] Ignore the mismatch
+  - [ ] Halt the filesystem
+  - why: The directory tree is authoritative for link counts; FSCK corrects nlink to match the number of directory entries actually found.
+
+- **MCQ:** Why was journaling introduced as an alternative to relying on FSCK?
+  - [x] Journaling bounds recovery time to journal size (seconds) instead of scanning the entire disk (hours)
+  - [ ] Journaling eliminates the need for any disk writes
+  - [ ] Journaling guarantees bit-perfect data recovery from arbitrary corruption
+  - [ ] Journaling is required by POSIX
+  - why: Journaling replays a small log to restore consistency; FSCK scales with disk size, which becomes untenable on modern TB-scale volumes.
 
 ## Gotchas
 

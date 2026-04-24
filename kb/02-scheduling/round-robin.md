@@ -83,10 +83,47 @@ O(1) per scheduling decision (dequeue and enqueue).
 
 ## Common exam questions
 
-- How does time slice size affect response time and throughput?
-- Given a process set and time slice, draw the RR Gantt chart and compute turnaround/response times.
-- Explain the tiebreak rule: "at end of slice, new job enqueued first, preempted job to tail."
-- When does RR behave like FIFO?
+- **MCQ:** How does a very large time slice make Round Robin behave?
+  - [x] Approximately like FIFO
+  - [ ] Approximately like SJF
+  - [ ] Approximately like lottery scheduling
+  - [ ] It starves short jobs
+  - why: When the slice exceeds typical burst lengths, each job runs to completion before being preempted, which is exactly FIFO.
+
+- **MCQ:** With the Quiz 2 process set (A:0/3, B:1/6, C:4/4, D:6/2) and quantum=2, what is the average response time under RR?
+  - [x] 1.25
+  - [ ] 2
+  - [ ] 3.25
+  - [ ] 0
+  - why: Response times are A=0, B=1, C=2, D=2, averaging (0+1+2+2)/4 = 1.25.
+
+- **MCQ:** With that same process set and quantum=2, what is the average turnaround time?
+  - [x] 8
+  - [ ] 6.75
+  - [ ] 10
+  - [ ] 3.25
+  - why: Turnarounds are A=3, B=15, C=10, D=4, averaging (3+15+10+4)/4 = 8.
+
+- **MCQ:** Per the Quiz 2 tiebreak rule, if a new job arrives exactly when the current job's slice expires, which is enqueued first?
+  - [x] The new arrival, then the preempted job at the tail
+  - [ ] The preempted job, then the new arrival at the tail
+  - [ ] Whichever has the shorter remaining burst
+  - [ ] Whichever has the lower PID
+  - why: Enqueuing the arrival first improves its response time and matches the Quiz 2 rule.
+
+- **MCQ:** What is the principal downside of making the RR quantum very small?
+  - [x] Context-switch overhead dominates useful CPU work
+  - [ ] Response time grows without bound
+  - [ ] It becomes equivalent to SJF
+  - [ ] Jobs starve
+  - why: Small slices improve responsiveness but every expiration pays a context-switch cost; with tiny slices that overhead consumes a large fraction of CPU.
+
+- **MCQ:** Compared to SJF, RR with a moderate quantum typically has which trade-off?
+  - [x] Better response time but worse turnaround time
+  - [ ] Better response time and better turnaround time
+  - [ ] Worse response time and worse turnaround time
+  - [ ] Identical metrics on all workloads
+  - why: RR gives every job a quick first run (low response) but interleaves long jobs across the timeline (higher turnaround than SJF, which runs shortest to completion).
 
 ## Gotchas
 

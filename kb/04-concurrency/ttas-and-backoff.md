@@ -96,11 +96,47 @@ Exponential backoff sequence on contention:
 
 ## Common exam questions
 
-- How does TTAS improve on basic TAS spinlocks?
-- Why is exponential backoff more effective than linear backoff?
-- Explain cache coherency effects: why do frequent atomic operations hurt performance?
-- Describe a scenario where backoff is essential vs. optional.
-- What is the risk of excessive backoff?
+- **MCQ:** How does TTAS improve on plain TAS spinlocks?
+  - [x] It spins on a cheap non-atomic read until the lock looks free, then attempts a single atomic TAS
+  - [ ] It uses CAS instead of TAS to be faster
+  - [ ] It disables interrupts during the spin
+  - [ ] It guarantees FIFO fairness
+  - why: Repeated TAS attempts invalidate the cache line across cores; reading non-atomically keeps the line shared and only performs an atomic op when acquisition looks plausible.
+
+- **MCQ:** Why does naive TAS on every iteration hurt performance under contention?
+  - [x] Each atomic write invalidates the cache line on other cores, creating cacheline ping-pong
+  - [ ] TAS instructions are slower than regular loads on all architectures
+  - [ ] TAS requires a kernel trap
+  - [ ] It prevents the compiler from inlining the loop
+  - why: Atomic stores force the cache line into Modified state on the writer, invalidating copies elsewhere; repeated TAS across cores thrashes the coherence protocol.
+
+- **MCQ:** In exponential backoff, what is the typical update rule after a failed TAS?
+  - [x] Double the current delay (up to some maximum cap)
+  - [ ] Increment delay by 1
+  - [ ] Halve the current delay
+  - [ ] Reset delay to 1 on every failure
+  - why: Exponential growth quickly thins out retries under heavy contention, reducing collisions and coherence traffic; the cap prevents pathological latencies.
+
+- **MCQ:** What is a downside of exponential backoff?
+  - [x] A waiter may delay acquiring a free lock because its scheduled retry is far in the future
+  - [ ] It violates mutual exclusion
+  - [ ] It prevents other threads from acquiring the lock
+  - [ ] It requires a kernel system call per retry
+  - why: After a long backoff, the lock may free up but the thread sleeps through it; there is tension between reducing contention and responsiveness.
+
+- **MCQ:** Which of these best describes the "test" part of test-test-and-set?
+  - [x] A non-atomic read of the flag, cheap because it doesn't migrate the cache line
+  - [ ] An atomic compare-and-swap
+  - [ ] A kernel call that checks lock state
+  - [ ] A write to the flag, but only if we expect to acquire
+  - why: The initial spin is a read-only check; because it is non-atomic, cache lines remain shared and no coherence invalidation happens while the lock is held.
+
+- **MCQ:** Compared to TTAS + backoff, why might a park-based (futex) lock be preferable under heavy contention?
+  - [x] Waiters sleep in the kernel instead of consuming CPU time while backed off
+  - [ ] Park-based locks guarantee FIFO
+  - [ ] Park-based locks avoid atomic instructions
+  - [ ] Park-based locks are faster in the uncontended case
+  - why: Even with backoff, spinning still burns CPU; parking removes waiters from the scheduler so other work can run.
 
 ## Gotchas
 

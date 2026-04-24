@@ -106,10 +106,47 @@ O(n) per scheduling decision (finding shortest remaining time).
 
 ## Common exam questions
 
-- What is the key difference between SJF and STCF?
-- Given a process set with late arrivals, compute STCF turnaround and response times.
-- Explain the tiebreak rule: "STCF only preempts when strictly shorter."
-- How does preemption improve turnaround time compared to SJF?
+- **MCQ:** What is the key difference between SJF and STCF?
+  - [x] STCF is preemptive; SJF is non-preemptive
+  - [ ] STCF needs ticket counts; SJF does not
+  - [ ] SJF uses remaining time; STCF uses total burst time
+  - [ ] STCF requires round-robin within each priority level
+  - why: STCF preempts a running job when a strictly shorter job arrives, while SJF always runs the current job to completion.
+
+- **MCQ:** Per the Quiz 2 tiebreak rule, when should STCF preempt a running job?
+  - [x] Only when the new job's remaining time is strictly less
+  - [ ] Whenever any new job arrives
+  - [ ] When the new job's remaining time is less than or equal
+  - [ ] Only at quantum boundaries
+  - why: On ties, the current job continues — avoiding needless context switches when preemption would not help turnaround.
+
+- **MCQ:** With process set A:0/3, B:1/6, C:4/4, D:6/2, what is the STCF scheduling order?
+  - [x] A, B, C, D, B
+  - [ ] A, B, D, C
+  - [ ] A, C, D, B
+  - [ ] A, B, C, B, D
+  - why: A runs 0-3, B runs 3-4, C preempts B at t=4 (C=4 < B rem=5), C runs 4-8 (D ties at t=6 so C continues), D runs 8-10, B resumes 10-15.
+
+- **MCQ:** For that same set, what is the average response time under STCF?
+  - [x] 1
+  - [ ] 1.25
+  - [ ] 2.25
+  - [ ] 3.5
+  - why: Response times are A=0, B=2, C=0, D=2, averaging (0+2+0+2)/4 = 1.
+
+- **MCQ:** For that same set, what is the average turnaround time under STCF?
+  - [x] 6.25
+  - [ ] 6.75
+  - [ ] 8
+  - [ ] 7.25
+  - why: Turnarounds are A=3, B=14, C=4, D=4, averaging (3+14+4+4)/4 = 6.25.
+
+- **MCQ:** What is the main cost of STCF relative to SJF?
+  - [x] More context switches due to preemption
+  - [ ] Higher average turnaround time
+  - [ ] Requires random number generation
+  - [ ] Needs a red-black tree to function
+  - why: Each preemption pays a context-switch cost; STCF's aggressive preemption trades that cost for lower waiting for short jobs.
 
 ## Gotchas
 

@@ -71,10 +71,36 @@ O(1) for scheduling decision (dequeue front of queue).
 
 ## Common exam questions
 
+- **MCQ:** Which property best characterizes FIFO (FCFS) scheduling?
+  - [ ] Preemptive, shortest-job-first
+  - [x] Non-preemptive, arrival-order
+  - [ ] Preemptive, round-robin
+  - [ ] Non-preemptive, priority-based
+  - why: FCFS dispatches whichever job arrived first and runs it to completion without preemption.
+
+- **MCQ:** Processes A, B, C arrive at time 0 in that order with CPU bursts 10, 1, 1. What is the average turnaround time under FIFO?
+  - [ ] 4
+  - [ ] 7
+  - [x] 11
+  - [ ] 12
+  - why: A completes at 10, B at 11, C at 12. Average = (10 + 11 + 12) / 3 = 11. The short jobs wait behind the long one — the convoy effect.
+
+- **MCQ:** Which scheduling problem is FIFO most vulnerable to?
+  - [ ] Starvation of CPU-bound jobs
+  - [x] Convoy effect: short jobs queued behind long ones
+  - [ ] Excessive context-switch overhead
+  - [ ] Priority inversion
+  - why: Convoy effect is the signature failure mode of FIFO; starvation and context-switch overhead are not FIFO issues.
+
+- **MCQ:** Why is FIFO poorly suited to interactive systems?
+  - [ ] It uses too many system calls per tick.
+  - [ ] It requires accurate burst-length estimation.
+  - [x] Response time for short interactive jobs can be arbitrarily high when long jobs run first.
+  - [ ] It cannot handle I/O-bound processes.
+  - why: Interactive workloads need low response time; FIFO lets any long-running job block every later arrival until it finishes.
+
 - Explain the convoy effect with a concrete example.
 - Given a process set, draw the Gantt chart for FIFO and compute average turnaround time.
-- Why is FIFO not suitable for interactive systems?
-- How does FIFO differ from SJF in terms of job ordering?
 
 ## Gotchas
 

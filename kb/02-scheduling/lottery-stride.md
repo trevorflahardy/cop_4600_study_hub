@@ -92,12 +92,54 @@ Over the first 10 runs: A runs 2 times, B runs 2 times, C runs 6 times. Ratio = 
 
 ## Common exam questions
 
-- How do lottery and stride scheduling differ from time-based schedulers like FIFO/SJF?
-- Explain the fairness metric "unfairness U = t1_finish / t2_finish."
-- Given ticket counts, compute the expected CPU time for each job under lottery scheduling.
-- Trace stride scheduling over several scheduling decisions; verify proportional-share property.
-- What is the purpose of ticket transfer and ticket inflation?
-- Why should new jobs in stride scheduling start with pass = min(existing passes)?
+- **MCQ:** What is the key difference between lottery and stride scheduling?
+  - [x] Lottery is probabilistic; stride is deterministic
+  - [ ] Lottery is preemptive; stride is non-preemptive
+  - [ ] Lottery uses priorities; stride uses FIFO
+  - [ ] Lottery requires burst-time knowledge; stride does not
+  - why: Both are proportional-share, but lottery picks randomly each tick while stride always picks the lowest pass value.
+
+- **MCQ:** A stride job has 50 tickets and the large constant is 10,000. What is its stride?
+  - [x] 200
+  - [ ] 50
+  - [ ] 100
+  - [ ] 500
+  - why: stride = large_constant / tickets = 10000 / 50 = 200.
+
+- **MCQ:** Under lottery scheduling, A holds 75 tickets and B holds 25 tickets out of 100. Over many scheduling decisions, approximately what fraction of the CPU does A receive?
+  - [x] 75%
+  - [ ] 50%
+  - [ ] 25%
+  - [ ] 100%
+  - why: Proportional share gives CPU proportional to tickets, so A gets 75/100 = 75% in expectation.
+
+- **MCQ:** Given A (stride=100), B (stride=200), C (stride=40) all starting at pass=0, which process runs third after the initial three ties are broken in order A, B, C?
+  - [x] C
+  - [ ] A
+  - [ ] B
+  - [ ] Tie between A and C
+  - why: After A, B, C each run once their passes are 100, 200, 40. Minimum is C=40, so C runs again.
+
+- **MCQ:** Why should a new job entering stride scheduling be assigned pass = min(existing passes)?
+  - [x] Otherwise a pass=0 newcomer monopolizes the CPU until others catch up
+  - [ ] To avoid integer overflow in the pass counter
+  - [ ] To guarantee O(log n) scheduling decisions
+  - [ ] To prevent ticket transfer abuse
+  - why: A new job with pass=0 when others have pass > 0 will be the minimum for many rounds in a row, starving the rest.
+
+- **MCQ:** Which ticket mechanism lets a client process temporarily hand its tickets to a server it is waiting on?
+  - [x] Ticket transfer
+  - [ ] Ticket inflation
+  - [ ] Ticket currency
+  - [ ] Ticket boost
+  - why: Transfer loans tickets between processes; inflation raises a process's own ticket count, and currency is a per-user abstraction layer.
+
+- **MCQ:** In a stride run over 10 slices with tickets A=100, B=50, C=250, the observed counts are A=2, B=2, C=6. Does this match the proportional-share goal?
+  - [x] Yes, the ratio 2:2:6 reduces to 1:1:3, matching 100:50:250
+  - [ ] No, A should run 5 times
+  - [ ] No, B should run 0 times
+  - [ ] No, all three should run equally
+  - why: 100:50:250 simplifies to 2:1:5, but 2:2:6 is close over only 10 slices; stride converges exactly over longer runs, and this short window matches the expected ordering.
 
 ## Gotchas
 

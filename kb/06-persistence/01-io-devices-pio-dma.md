@@ -120,13 +120,54 @@ void interrupt_handler() {
 
 ## Common exam questions
 
-1. Why is polling inefficient for disks but acceptable for network packet arrival?
-2. Explain the three phases of a DMA transfer. When does the CPU get interrupted?
-3. In a system with 10 concurrent disk requests using interrupts, why don't all requests have the same latency?
-4. If a device completes in 1 μs but context-switching costs 10 μs, should you use polling or interrupts?
-5. How does memory-mapped I/O differ from dedicated I/O instructions? Which is easier to use?
-6. What is the purpose of the status register? Why can't the OS just issue a command and return immediately?
-7. A DMA controller is transferring a 10 MB file at 125 MB/s. How long does the CPU wait?
+- **MCQ:** A device completes each request in 1 us but a context switch costs 10 us. Which I/O mode minimizes overhead?
+  - [x] Polling (PIO), because the device is faster than a context switch
+  - [ ] Interrupts, because they always reduce CPU overhead
+  - [ ] DMA, because it frees the CPU entirely
+  - [ ] Memory-mapped I/O, because it avoids special instructions
+  - why: Interrupt overhead (~10 us) would dwarf the 1 us device latency, so polling wins when device time is less than switch cost.
+
+- **MCQ:** A DMA controller moves a 10 MB buffer at 125 MB/s. Roughly how long is the CPU free for other work during this transfer?
+  - [x] About 80 ms
+  - [ ] About 8 ms
+  - [ ] About 800 ms
+  - [ ] About 1.25 ms
+  - why: 10 MB / 125 MB/s = 0.08 s = 80 ms, during which the DMA engine handles the copy and the CPU can run other tasks.
+
+- **MCQ:** Which statement best describes the canonical device protocol using the three hardware registers?
+  - [x] Poll status until READY, write parameters and data, write command, poll status until done
+  - [ ] Write command, read data, check status only on failure
+  - [ ] Write data, write status, write command simultaneously
+  - [ ] Wait for an interrupt before checking any register
+  - why: The status register gates both the initial readiness check and the completion check; command and data registers are written between those polls.
+
+- **MCQ:** Why does memory-mapped I/O dominate over dedicated I/O instructions on modern systems?
+  - [x] The OS can use normal load/store instructions, simplifying drivers
+  - [ ] It is faster because it bypasses the memory bus
+  - [ ] It avoids the need for any status register
+  - [ ] Dedicated I/O instructions are illegal on x86-64
+  - why: Mapping device registers into the address space means the same load/store path (and MMU protection) works for device access, eliminating special opcodes.
+
+- **MCQ:** A disk takes ~6 ms to service a read. During that time with interrupts, how much CPU work is lost?
+  - [x] Roughly one context switch (a few microseconds)
+  - [ ] All 6 ms (CPU spins)
+  - [ ] Zero, because DMA is always used
+  - [ ] About 3 ms (half the I/O time)
+  - why: Interrupts let the OS schedule other work for the full 6 ms; only the switch-in and switch-out overhead is wasted.
+
+- **MCQ:** Why must DMA implementations coordinate with the CPU cache?
+  - [x] Stale cache lines can shadow memory written by DMA, causing inconsistent reads
+  - [ ] DMA controllers cannot access physical memory
+  - [ ] Caches must be disabled globally whenever DMA runs
+  - [ ] DMA bypasses the memory controller entirely
+  - why: If the CPU has cached a page that DMA then updates, the CPU will read stale data unless caches are flushed/invalidated for the DMA region.
+
+- **MCQ:** Which benefit specifically belongs to DMA rather than interrupt-driven PIO?
+  - [x] The CPU is freed from copying data byte-by-byte during the transfer
+  - [ ] The OS never has to handle an interrupt
+  - [ ] The device no longer needs a status register
+  - [ ] Polling is always eliminated for small transfers
+  - why: Interrupt-driven PIO still requires the CPU to copy bytes to/from the device; DMA offloads the actual data movement, issuing a single completion interrupt.
 
 ## Gotchas
 

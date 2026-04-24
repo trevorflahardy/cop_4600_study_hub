@@ -263,13 +263,54 @@ Example: 10 TB disk with 10 million files.
 
 ## Common exam questions
 
-1. What is logged in data journaling vs. metadata journaling?
-2. Why does ordered journaling wait for data to be written before logging metadata?
-3. If a crash occurs after the journal TxE is written, will the filesystem replay the transaction?
-4. Which journaling mode is safest from corruption? Which is fastest?
-5. Explain why TxE must be exactly 512 bytes (one sector).
-6. In metadata journaling, what happens if crash occurs between data write and metadata log?
-7. Compare I/O counts: data journaling (8), metadata journaling (7), ordered journaling (7).
+- **MCQ:** What is written to the journal in data journaling vs. metadata journaling?
+  - [x] Data journaling logs both data and metadata; metadata journaling logs only metadata (data goes directly to FS)
+  - [ ] Both log only data blocks
+  - [ ] Data journaling logs only inodes
+  - [ ] Metadata journaling logs the full filesystem
+  - why: The log's scope is what differentiates the modes; data journaling is safest but doubles the write load.
+
+- **MCQ:** Ordered journaling writes data to the filesystem BEFORE logging metadata. Why?
+  - [x] To ensure metadata, once replayed, never points at stale/garbage data
+  - [ ] To cut journal size in half
+  - [ ] Because data writes are cheaper than metadata writes
+  - [ ] To avoid updating the inode at all
+  - why: If metadata could reach disk before data, a post-crash inode might reference unwritten blocks (garbage); ordering prevents that corruption.
+
+- **MCQ:** In metadata journaling (unordered), a crash happens between the data write and the metadata log. What is the possible outcome?
+  - [x] Stale-before-new: a just-written data block may be referenced by old metadata, producing corruption
+  - [ ] The filesystem is always consistent
+  - [ ] The journal replay recovers the data automatically
+  - [ ] Only fsck can detect it, never recover
+  - why: Without ordering, metadata and data writes can race; a crash may surface inconsistencies that ordered journaling avoids.
+
+- **MCQ:** Which journaling mode is safest from data corruption, at the cost of double writes?
+  - [x] Data journaling
+  - [ ] Metadata (writeback) journaling
+  - [ ] Ordered journaling
+  - [ ] No journaling
+  - why: Logging every data block means replay can always restore the committed state; the tradeoff is roughly 2x write I/O.
+
+- **MCQ:** Why must the TxE (transaction-end) block be exactly one 512-byte sector?
+  - [x] Disks guarantee atomic writes only at sector granularity, so the marker is either fully present or fully absent
+  - [ ] The journal format mandates 512 bytes for compatibility with ext2
+  - [ ] Larger writes are slower
+  - [ ] TxE must fit into a single DMA transfer
+  - why: Recovery depends on an all-or-nothing commit marker; a torn marker would leave recovery ambiguous.
+
+- **MCQ:** A crash occurs AFTER the TxE reaches disk but BEFORE checkpoint completes. What does recovery do?
+  - [x] Replay the committed transaction by rewriting its blocks to the filesystem
+  - [ ] Skip the transaction; the crash invalidated it
+  - [ ] Roll back the transaction
+  - [ ] Invoke FSCK on the entire disk
+  - why: A present TxE with matching TxB means the transaction was committed; replay is idempotent and brings the FS to the post-transaction state.
+
+- **MCQ:** Which journaling mode would allow stale data to appear in a file after crash recovery?
+  - [x] Writeback/metadata journaling, because data writes are not ordered relative to metadata
+  - [ ] Ordered journaling
+  - [ ] Data journaling
+  - [ ] Any mode, equally
+  - why: Writeback journaling logs only metadata; with no ordering, the inode can point at a yet-unwritten data block, exposing stale contents.
 
 ## Gotchas
 

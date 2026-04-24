@@ -54,11 +54,47 @@ Result: counter incremented twice, correctly.
 
 ## Common exam questions
 
-- Define mutual exclusion, progress, and bounded waiting. Why is each important?
-- Can a solution achieve mutual exclusion without progress? Give an example.
-- What is the difference between a deadlock and starvation?
-- Explain how a lock enforces all three critical section requirements.
-- Design a critical section for protecting a shared counter.
+- **MCQ:** Which three properties must a correct critical-section solution satisfy?
+  - [x] Mutual exclusion, progress, and bounded waiting
+  - [ ] Atomicity, fairness, and priority inversion avoidance
+  - [ ] Liveness, safety, and determinism
+  - [ ] Mutual exclusion, determinism, and constant-time entry
+  - why: The classical trio is mutual exclusion (safety), progress (no indefinite stall when no one is in CS), and bounded waiting (no starvation).
+
+- **MCQ:** A solution blocks every thread whenever any thread wants to enter, so no thread ever enters. Which property fails?
+  - [x] Progress
+  - [ ] Mutual exclusion
+  - [ ] Bounded waiting
+  - [ ] Atomicity
+  - why: Mutual exclusion is trivially preserved when nobody enters; progress is violated because a waiter cannot make forward progress even when the section is free.
+
+- **MCQ:** What distinguishes starvation from deadlock?
+  - [x] Deadlock: no one progresses; starvation: some threads progress indefinitely while another waits forever
+  - [ ] Starvation only happens with spinlocks; deadlock only with semaphores
+  - [ ] Deadlock requires exactly two threads; starvation requires three or more
+  - [ ] Deadlock is always recoverable; starvation is not
+  - why: In deadlock, a cycle of threads each wait for a resource the others hold. In starvation, the system keeps making progress but a specific thread is perpetually passed over.
+
+- **MCQ:** Which of the following is a race condition rather than a correct critical section?
+  - [x] `counter = counter + 1` with no locking across threads
+  - [ ] `lock(m); counter++; unlock(m);`
+  - [ ] `sem_wait(&s); counter++; sem_post(&s);`
+  - [ ] Using a CAS loop to atomically increment counter
+  - why: The unprotected `counter = counter + 1` is a load-modify-store sequence that can interleave, losing updates.
+
+- **MCQ:** What is the "bounded waiting" requirement?
+  - [x] Once a thread requests entry, the number of times others can enter first is bounded
+  - [ ] A thread's critical section must complete in a bounded number of instructions
+  - [ ] The lock must be released within a bounded amount of wall-clock time
+  - [ ] The number of threads contending must be bounded
+  - why: Bounded waiting prevents starvation: waiters are guaranteed eventual entry because only finitely many overtakes are permitted.
+
+- **MCQ:** Which statement about critical-section scope is most accurate?
+  - [x] Only the minimal code touching shared state should be inside the critical section
+  - [ ] Longer critical sections are safer because they enforce serialization more strictly
+  - [ ] Entering the critical section must disable interrupts for correctness
+  - [ ] Critical sections must always hold the lock for the entire thread lifetime
+  - why: Shrinking the critical section to the shared-state accesses reduces contention and preserves concurrency while still providing mutual exclusion.
 
 ## Gotchas
 

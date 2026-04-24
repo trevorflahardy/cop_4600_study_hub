@@ -306,13 +306,54 @@ Result: Block 1000 contains /bar's data (correct!)
 
 ## Common exam questions
 
-1. Explain the block reuse problem: why does replaying old transactions corrupt new files?
-2. What is a revoke record, and when is it added to the journal?
-3. Why must revoke records be scanned before replaying transactions?
-4. If block 1000 is revoked in transaction 2, but also appears in transaction 1, which transaction's version of block 1000 is used after recovery?
-5. Can revoke records prevent all corruption after crashes?
-6. In ext3, when is a block actually safe to reuse after being freed?
-7. Explain the difference between "deleting a file" and "freeing the file's blocks" from the journal's perspective.
+- **MCQ:** What is the "block reuse" corruption scenario that revoke records prevent?
+  - [x] Old metadata from a committed transaction is replayed over a block that has since been reused as user data
+  - [ ] Two processes writing the same file simultaneously
+  - [ ] An inode whose nlink overflows
+  - [ ] A data block that cannot be read due to disk error
+  - why: Without revokes, replay can reinstate an old directory block over a new data block, clobbering the reallocated contents.
+
+- **MCQ:** When is a revoke record added to the journal?
+  - [x] When a block that had metadata written by earlier transactions is freed, so future replay will skip it
+  - [ ] Whenever a block is read
+  - [ ] Whenever a file is opened
+  - [ ] Whenever the journal is rotated
+  - why: Freeing a block is the moment at which future replay of old transactions becomes dangerous; the revoke flags the block as "do not replay."
+
+- **MCQ:** During recovery, when must revoke records be processed relative to replay?
+  - [x] First: build the revoke set, then replay transactions skipping revoked blocks
+  - [ ] After replay, to undo mistakes
+  - [ ] Interleaved with replay, randomly
+  - [ ] Only if FSCK fails
+  - why: Revokes must be known up front; otherwise replay could already write an old version of a revoked block before the revoke is seen.
+
+- **MCQ:** Block 1000 appears in transaction 1 (old metadata) and is revoked in transaction 2; transaction 3 writes new file data at block 1000. After recovery, what does block 1000 contain?
+  - [x] Transaction 3's new file data (transaction 1's version is skipped due to revoke)
+  - [ ] Transaction 1's old metadata
+  - [ ] Mixed bytes from both transactions
+  - [ ] Zeroes
+  - why: The revoke suppresses replay of block 1000 from transaction 1; transaction 3's write is the only version applied to that block.
+
+- **MCQ:** Revoke records completely solve all crash-consistency problems.
+  - [x] False: they address the block-reuse corner case only; ordered data journaling and careful replay are still required
+  - [ ] True for all filesystems
+  - [ ] True only for ext4
+  - [ ] False because revokes are deprecated
+  - why: Revokes are one specific fix; broader consistency still relies on write ordering and transaction commit semantics.
+
+- **MCQ:** Why must revoke records be logged in the SAME transaction that frees the block, not a later one?
+  - [x] A crash between the free and a later revoke would lose the revoke, allowing corrupting replay
+  - [ ] The journal format disallows cross-transaction revokes
+  - [ ] Revokes are immutable after creation
+  - [ ] Revokes consume the same slot as TxE
+  - why: Atomicity of the free + revoke pair must match atomicity of the transaction that performs the free; otherwise the journal can diverge from the FS's actual state.
+
+- **MCQ:** Deleting a file vs. freeing its blocks, from the journal's viewpoint, differs because:
+  - [x] Deleting removes the directory entry and inode; freeing blocks may produce revoke records to guard against stale replay
+  - [ ] They are the same operation
+  - [ ] Deletion never touches the journal
+  - [ ] Freeing blocks bypasses the journal entirely
+  - why: Block freeing is the source of the reuse corner case; revokes accompany freed blocks to keep future recovery safe.
 
 ## Gotchas
 

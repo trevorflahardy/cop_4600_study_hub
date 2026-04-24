@@ -147,11 +147,48 @@ Given: PT base = 0x1000, VA = 0x12AB, page size = 256 bytes, PTE size = 4 bytes
 
 ## Common exam questions
 
-- 32-bit VA, 4 KB pages, 4-byte PTE. Compute: (a) offset bits, (b) VPN bits, (c) PT entries, (d) PT size in MB.
-- 16-bit VA, 256-byte pages, 2-byte PTE, PT base 0x2000. For VA 0x4F3A, compute VPN, offset, and PTE address.
-- 1 GB VAS, 2 KB pages, 4-byte PTE. How many bits for VPN? How many PT entries? PT size in MB?
-- Given page size 512 bytes, how many offset bits?
-- If VPN bits = 20, how many entries in the PT?
+- **MCQ:** For a 32-bit VA with 4 KB pages and 4-byte PTEs, how large is the linear page table?
+  - [x] 4 MB
+  - [ ] 1 MB
+  - [ ] 2 MB
+  - [ ] 8 MB
+  - why: VPN bits = 32 - 12 = 20, entries = 2^20, size = 2^20 * 4 = 4 MB.
+- **MCQ:** Given page size = 512 bytes, how many offset bits?
+  - [x] 9
+  - [ ] 8
+  - [ ] 10
+  - [ ] 12
+  - why: log2(512) = log2(2^9) = 9.
+- **MCQ:** For a 16-bit VA with 256-byte pages and 2-byte PTEs (PT base 0x2000), what is the PTE address for VA 0x4F3A?
+  - [x] 0x209E
+  - [ ] 0x204F
+  - [ ] 0x209C
+  - [ ] 0x213A
+  - why: offset bits = 8, VPN = 0x4F, PTE addr = 0x2000 + (0x4F * 2) = 0x2000 + 0x9E = 0x209E.
+- **MCQ:** For a 1 GB VAS with 2 KB pages and 4-byte PTEs, what is the total linear page table size?
+  - [x] 2 MB
+  - [ ] 1 MB
+  - [ ] 4 MB
+  - [ ] 512 KB
+  - why: VA bits = 30, offset = 11, VPN = 19, entries = 2^19, size = 2^19 * 4 = 2,097,152 bytes = 2 MB.
+- **MCQ:** For a 16-bit VA with 256-byte pages, what are VPN and offset for VA 0x4F3A?
+  - [x] VPN = 0x4F, Offset = 0x3A
+  - [ ] VPN = 0x4F3, Offset = 0xA
+  - [ ] VPN = 0x4, Offset = 0xF3A
+  - [ ] VPN = 0x3A, Offset = 0x4F
+  - why: With 8 offset bits, VPN = 0x4F3A >> 8 = 0x4F; offset = 0x4F3A & 0xFF = 0x3A.
+- **MCQ:** For a 4 GB VAS with 4 KB pages and 4-byte PTEs, how many PT entries does each process need?
+  - [x] 1,048,576 (2^20)
+  - [ ] 524,288 (2^19)
+  - [ ] 2,097,152 (2^21)
+  - [ ] 4,096 (2^12)
+  - why: VA bits = 32, offset = 12, VPN = 20, entries = 2^20 = 1,048,576.
+- **MCQ:** Given PT base = 0x1000, VA = 0x12AB, page size = 256 bytes, and PTE size = 4 bytes, at what address is the PTE stored?
+  - [x] 0x1048
+  - [ ] 0x104A
+  - [ ] 0x1024
+  - [ ] 0x10AB
+  - why: offset bits = 8, VPN = 0x12, PTE addr = 0x1000 + (0x12 * 4) = 0x1000 + 0x48 = 0x1048.
 
 ## Gotchas
 

@@ -75,10 +75,47 @@ O(n) to find the shortest job each scheduling decision.
 
 ## Common exam questions
 
-- When does SJF minimize average turnaround time optimally?
-- Why does SJF fail when jobs arrive at different times?
-- Given a process set with late arrivals, draw the SJF Gantt chart and compute average TAT.
-- Compare SJF to FIFO in terms of convoy effect.
+- **MCQ:** Under what condition does SJF minimize average turnaround time optimally?
+  - [x] All jobs arrive at t=0 and burst times are known in advance
+  - [ ] Jobs arrive at arbitrary times and bursts are known
+  - [ ] All jobs have equal burst times
+  - [ ] The quantum is set to the shortest burst
+  - why: SJF is optimal only with simultaneous arrivals; staggered arrivals re-introduce convoy-style waits.
+
+- **MCQ:** With process set A:0/3, B:1/6, C:4/4, D:6/2, what is the SJF scheduling order?
+  - [x] A, B, D, C
+  - [ ] A, D, C, B
+  - [ ] A, B, C, D
+  - [ ] B, A, D, C
+  - why: A runs at t=0, then B (only ready at t=3), then at t=9 D (burst 2) is shorter than C (burst 4), so D then C.
+
+- **MCQ:** For that same set under SJF, what is the average turnaround time?
+  - [x] 6.75
+  - [ ] 7.25
+  - [ ] 8
+  - [ ] 6.25
+  - why: Turnarounds are A=3, B=8, C=11, D=5, averaging (3+8+11+5)/4 = 6.75.
+
+- **MCQ:** Why does SJF lose optimality with late-arriving jobs?
+  - [x] It is non-preemptive, so a long job already running blocks shorter late arrivals
+  - [ ] The ready queue must be sorted, which costs O(n log n) per tick
+  - [ ] It cannot compare floating-point burst estimates
+  - [ ] It requires tickets like lottery scheduling
+  - why: A 100s job that started at t=0 still runs to completion even if shorter jobs arrive at t=10; STCF fixes this with preemption.
+
+- **MCQ:** Which scheduling issue is SJF most susceptible to when short jobs keep arriving?
+  - [x] Starvation of long jobs
+  - [ ] Priority inversion
+  - [ ] Gaming of time slices
+  - [ ] Convoy effect
+  - why: A steady stream of short jobs keeps the scheduler picking them over any long pending job, so long jobs never run.
+
+- **MCQ:** What is the primary practical obstacle to using SJF in a general-purpose OS?
+  - [x] The OS usually does not know each job's burst time in advance
+  - [ ] It requires hardware timers faster than 1ms
+  - [ ] It cannot run on multicore CPUs
+  - [ ] It produces worse turnaround than FIFO
+  - why: Real systems lack an oracle for burst length; MLFQ and similar schedulers approximate SJF by learning from observed behavior.
 
 ## Gotchas
 

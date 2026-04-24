@@ -212,13 +212,53 @@ Total: 208
 
 ## Common exam questions
 
-1. Given a disk head at track 100 with queue [50, 200, 75, 225, 125], compute total seek time for FCFS, SSTF, and SCAN.
-2. Why does SCAN not starve requests at the edge of the disk, but SSTF can?
-3. When would C-SCAN be preferred over SCAN? What fairness property does it provide?
-4. If seek time = 1 ms per 10 tracks and rotation time ≈ 4 ms, would you use SSTF or SPTF?
-5. In SCAN, what happens when the head reaches the end of the disk (end of range 0-199)? Does it reverse immediately or service requests on the way back?
-6. Given two adjacent requests at tracks 50 and 51, why does SSTF almost always choose the closer one?
-7. How does SPTF differ from SSTF when rotation time is significant?
+- **MCQ:** Head at track 53 with queue [98, 183, 37, 122, 14]. In what order does SSTF service the requests?
+  - [x] 37, 14, 98, 122, 183
+  - [ ] 14, 37, 98, 122, 183
+  - [ ] 98, 122, 183, 37, 14
+  - [ ] 14, 183, 37, 122, 98
+  - why: From 53 the closest is 37 (16), then 14 (23), then jump to 98, then 122, then 183.
+
+- **MCQ:** Head at track 53 moving upward with queue [98, 183, 37, 122, 14], end tracks 0-199. What order does SCAN visit?
+  - [x] 98, 122, 183, 37, 14
+  - [ ] 37, 14, 98, 122, 183
+  - [ ] 14, 37, 98, 122, 183
+  - [ ] 98, 122, 183, 14, 37
+  - why: SCAN services all requests in the current direction (98, 122, 183) before reversing and serving 37, 14 on the way down.
+
+- **MCQ:** Head at track 100 with queue [50, 200, 75, 225, 125] serviced FCFS. Total seek distance?
+  - [x] 575 tracks
+  - [ ] 300 tracks
+  - [ ] 450 tracks
+  - [ ] 125 tracks
+  - why: 100->50 (50) + 50->200 (150) + 200->75 (125) + 75->225 (150) + 225->125 (100) = 575 tracks.
+- **MCQ:** Which algorithm can starve requests at the disk's edges under a steady stream of middle-track requests?
+  - [x] SSTF
+  - [ ] SCAN
+  - [ ] C-SCAN
+  - [ ] FCFS
+  - why: SSTF always picks the closest request; edge-track requests may never become "closest" if middle requests keep arriving.
+
+- **MCQ:** C-SCAN differs from SCAN primarily by doing which of the following?
+  - [x] Jumping back to track 0 without servicing on the return sweep, to equalize wait time
+  - [ ] Servicing in shortest-seek order during both sweeps
+  - [ ] Using rotation time instead of seek time
+  - [ ] Never reversing direction
+  - why: C-SCAN provides more uniform waiting by making one-way sweeps; the return to 0 is a fast reposition, not a service pass.
+
+- **MCQ:** When should SPTF be preferred over SSTF?
+  - [x] When rotational latency is comparable to seek time, so both must be considered
+  - [ ] When the disk has no rotation
+  - [ ] When requests always land on the same track
+  - [ ] When fairness is more important than throughput
+  - why: SPTF chooses the request minimizing seek + rotation; it wins when rotation (a few ms) is on the same order as seek.
+
+- **MCQ:** A disk has 1 ms seek per 10 tracks and a 4 ms full rotation. For two requests 10 tracks away with different sector offsets, which scheduler exploits rotational position?
+  - [x] SPTF
+  - [ ] SSTF
+  - [ ] FCFS
+  - [ ] SCAN
+  - why: SSTF/SCAN/FCFS ignore rotation; only SPTF evaluates which request's sector will be under the head soonest.
 
 ## Gotchas
 

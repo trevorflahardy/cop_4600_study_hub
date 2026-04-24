@@ -75,12 +75,42 @@ Both threads are blocked: T1 waits for L2 (held by T2), and T2 waits for L1 (hel
 
 ## Common exam questions
 
-- Identify which of the four conditions are present in a given code snippet. If all four are present, deadlock is possible.
-- Draw a resource-allocation graph and determine if it contains a cycle. A cycle indicates deadlock.
-- Given a deadlock scenario, identify which single condition could be broken to prevent it.
-- Explain why a particular condition (e.g., "no preemption") is necessary for deadlock to occur.
-- Can deadlock occur if threads acquire locks in the same global order? Why or why not?
-- What is the difference between a cycle in the RAG and an actual deadlock state?
+- **MCQ:** Which of the four Coffman conditions is specifically the one broken by enforcing a global lock ordering?
+  - [x] Circular wait.
+  - [ ] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] No preemption.
+  - why: Global lock ordering means no thread ever holds a higher-address lock while waiting for a lower-address lock. That makes a cycle in the wait-for graph impossible. Mutual exclusion, hold-and-wait, and no preemption still hold.
+- **MCQ:** Which Coffman condition is broken by using CAS-based lock-free data structures?
+  - [x] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] No preemption.
+  - [ ] Circular wait.
+  - why: CAS updates a single memory location atomically without any thread claiming exclusive control of a region. No lock is held, so mutual exclusion (the requirement for exclusive access to resources) is absent.
+- **MCQ:** Which Coffman condition is broken by acquiring all required locks atomically via a prevention lock?
+  - [x] Hold-and-wait.
+  - [ ] Mutual exclusion.
+  - [ ] No preemption.
+  - [ ] Circular wait.
+  - why: After the atomic acquisition, a thread either holds every lock it needs or holds none. It never holds one lock while waiting for another, which is the hold-and-wait condition.
+- **MCQ:** Which Coffman condition is broken by using `pthread_mutex_trylock` with release-and-retry?
+  - [x] No preemption.
+  - [ ] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] Circular wait.
+  - why: With trylock, a thread voluntarily releases locks it already holds when it fails to acquire another one. This is self-preemption of its lock holdings, removing the no-preemption condition (though it can introduce livelock).
+- **MCQ:** Two threads: T1 holds L1 and waits for L2; T2 holds L2 and waits for L1. Which of the four conditions are present?
+  - [x] All four: mutual exclusion, hold-and-wait, no preemption, and circular wait.
+  - [ ] Only mutual exclusion and circular wait.
+  - [ ] Only hold-and-wait and no preemption.
+  - [ ] Only circular wait.
+  - why: Mutual exclusion (each lock is exclusive), hold-and-wait (each thread holds one and waits for another), no preemption (pthread mutexes cannot be stolen), and circular wait (T1 → L2 → T2 → L1 → T1) all hold. When all four are true and the interleaving occurs, deadlock happens.
+- **MCQ:** If every thread in the system acquires locks in the same global order (e.g., always L1 before L2 before L3), can deadlock occur?
+  - [x] No — a cycle in the wait-for graph is impossible under a consistent total order.
+  - [ ] Yes — ordering does not help if threads use trylock.
+  - [ ] Yes — mutual exclusion still causes deadlock on its own.
+  - [ ] Yes — no preemption always guarantees deadlock eventually.
+  - why: A cycle would require some thread to hold a lower-numbered lock while waiting for a higher-numbered lock AND another thread to do the reverse — a contradiction under a total order. So circular wait cannot arise.
 
 ## Gotchas
 

@@ -36,12 +36,49 @@ Why "limited"? Because the OS never truly gives up control. It ensures that trap
 
 ## Common exam questions
 
-- What are the two mechanisms that Limited Direct Execution uses to keep the OS in control?
-- Why is a timer interrupt necessary, given that system calls already allow the OS to regain control?
-- Describe the sequence of events when a timer interrupt fires while a user process is running.
-- What does the OS save and restore during a context switch?
-- How does the xv6 `swtch()` routine work at a high level?
-- What is the overhead of a system call compared to a regular function call?
+- **MCQ:** What two mechanisms does Limited Direct Execution rely on to guarantee the OS can always regain control of the CPU?
+  - [x] Trap instructions (for explicit requests) and timer interrupts (for enforced preemption)
+  - [ ] Page faults and segmentation faults
+  - [ ] Cooperative yields and polling loops
+  - [ ] Function call returns and exception handlers only
+  - why: LDE uses synchronous traps so the kernel runs when a process asks, and asynchronous timer interrupts so the kernel runs even when a process never asks. Faults and polling alone cannot preempt a runaway infinite loop, and cooperative yielding depends on the process cooperating.
+
+- **MCQ:** Why is a timer interrupt necessary when system calls already allow the OS to regain control?
+  - [x] A process stuck in an infinite loop may never execute a trap instruction, so the timer is the only guaranteed way to preempt it
+  - [ ] System calls are too slow to be used for scheduling decisions
+  - [ ] The trap table can only be accessed from timer-interrupt context
+  - [ ] Timer interrupts are required to flush the TLB after every instruction
+  - why: A process that never makes a syscall would otherwise hold the CPU forever. The timer guarantees the kernel a scheduled opportunity to preempt regardless of what the user code does.
+
+- **MCQ:** During a context switch in xv6, what is saved by the `swtch()` routine itself?
+  - [x] The kernel context (callee-saved registers, stack pointer, return address) used by the kernel's C code
+  - [ ] The full user-mode register set, including all general-purpose registers
+  - [ ] The page table base register and TLB entries
+  - [ ] Only the program counter of the user process
+  - why: The user register state was already saved by the CPU onto the kernel stack when the trap/interrupt fired. `swtch()` only needs to save the kernel-side callee-saved registers so the scheduler can resume correctly.
+
+- **MCQ:** What happens on a return-from-trap instruction?
+  - [x] The CPU switches from kernel mode to user mode and restores the saved user PC and registers
+  - [ ] The CPU flushes all caches and restarts the process from scratch
+  - [ ] The CPU stays in kernel mode but jumps to a user address
+  - [ ] The CPU disables interrupts and enters a privileged loop
+  - why: return-from-trap is the privileged instruction that drops privilege back to user mode while reloading the process's saved PC/registers so execution resumes as if the trap never happened.
+
+- **MCQ:** Which of the following is NOT part of the standard LDE boot-time setup?
+  - [ ] Initialize the trap table with handlers for exceptions and interrupts
+  - [ ] Arm the hardware timer to fire at regular intervals
+  - [ ] Set up kernel stacks for handling traps
+  - [x] Pre-translate every user virtual address to a physical address before the process runs
+  - why: The MMU performs address translation lazily on each access; the OS does not pre-translate all addresses. The first three steps are exactly how the kernel prepares for LDE at boot.
+
+- **MCQ:** Why is frequent context switching harmful to performance?
+  - [x] Each switch requires saving/restoring many registers and causes TLB flushes and cache misses
+  - [ ] Context switches require writing the process to disk
+  - [ ] The kernel must recompile user code on every switch
+  - [ ] Context switches permanently disable interrupts
+  - why: A switch is pure overhead: register save/restore plus the indirect cost of cold caches and flushed TLB entries on the newly scheduled process. Too many switches means the CPU spends more time switching than computing.
+
+- Describe in detail the sequence of events from the moment a timer interrupt fires until a new process begins executing in user mode.
 
 ## Gotchas
 

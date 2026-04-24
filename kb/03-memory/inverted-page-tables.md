@@ -143,11 +143,42 @@ ipt_translate(vpn, pid, offset):
 
 ## Common exam questions
 
-- Why is an inverted page table smaller than a forward page table for 64-bit systems?
-- What is the main disadvantage of inverted page tables?
-- Explain how hashing is used in IPT translation.
-- If physical memory is 512 MB, page size is 4 KB, and each IPT entry is 8 bytes, how large is the IPT?
-- True or False: In an inverted page table, each process has its own page table.
+- **MCQ:** Why is an inverted page table smaller than a forward page table on a 64-bit system?
+  - [x] Its size is proportional to physical memory, not to the virtual address space.
+  - [ ] Its size is proportional to the virtual address space, but each entry is smaller.
+  - [ ] It uses implicit VPNs and stores no PFN field.
+  - [ ] It stores entries only for pages currently in the TLB.
+  - why: Forward PT size scales with 2^(VA-offset); IPT size scales with physical_memory / page_size, which is far smaller for 64-bit VAs.
+- **MCQ:** With 512 MB physical memory, 4 KB pages, and 8-byte IPT entries, how large is the IPT?
+  - [x] 1 MB
+  - [ ] 512 KB
+  - [ ] 2 MB
+  - [ ] 4 MB
+  - why: Entries = 512 MB / 4 KB = 2^29 / 2^12 = 2^17. Size = 2^17 * 8 = 2^20 = 1 MB.
+- **MCQ:** True or False: In an inverted page table, each process has its own page table.
+  - [x] False: the IPT is system-wide and disambiguates entries with a PID/ASID field.
+  - [ ] True: every process needs a private IPT for isolation.
+  - [ ] True: IPT is duplicated per process but shares the hash function.
+  - [ ] False: the IPT is per-process but stores only PIDs, not VPNs.
+  - why: There is one IPT across the whole system; entries carry PID/ASID so the hardware can tell whose page lives in each frame.
+- **MCQ:** What is the main translation-time disadvantage of an inverted page table?
+  - [x] Hash lookups are slower than direct array indexing, and collisions force linear probing.
+  - [ ] Each translation requires a disk I/O.
+  - [ ] It cannot store a valid bit.
+  - [ ] It requires flushing on every context switch.
+  - why: Forward PTs index directly by VPN in O(1). IPTs must hash and probe on collisions, so translation latency varies.
+- **MCQ:** In the IPT, where does the PFN come from when a lookup hits?
+  - [x] Implicitly from the entry's index in the IPT (entry i corresponds to frame i).
+  - [ ] From an explicit PFN field stored alongside the VPN.
+  - [ ] From the hash value computed over VPN + PID.
+  - [ ] From the TLB, which must also hit on the same lookup.
+  - why: Each IPT slot IS a physical frame, so the slot index serves as the PFN. That is why no explicit PFN field is needed.
+- **MCQ:** Why do inverted page tables complicate page sharing between processes?
+  - [x] One frame can back only one (VPN, PID) entry, so shared pages need an auxiliary mapping structure.
+  - [ ] Shared pages bypass the hash function entirely.
+  - [ ] Shared pages cannot use the present bit.
+  - [ ] The PID field is too small to hold multiple owners.
+  - why: An IPT slot records a single owner. Sharing a code page across processes requires an extra table mapping the frame to multiple (VPN, PID) pairs.
 
 ## Gotchas
 

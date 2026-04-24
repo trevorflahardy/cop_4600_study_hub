@@ -229,13 +229,54 @@ Inode 102 (symlink) contains "nonexistent", but resolving "nonexistent" fails (n
 
 ## Common exam questions
 
-1. You create a hard link to a file, then delete the original. What happens to the file?
-2. Can you create a hard link to a directory? Why or why not?
-3. A file has nlink=1 and you create a hard link. What is nlink now?
-4. If you delete a file with nlink=3, how many unlink() calls are needed to actually delete it?
-5. A symlink points to a file on a different filesystem. Is this possible with hard links?
-6. What is the inode size of a 4-byte symlink vs. a 4-byte regular file?
-7. After `rm file`, the file still has nlink=1. What is preventing it from being deleted?
+- **MCQ:** You `ln original hardlink`, then `rm original`. What is the state of the file data?
+  - [x] Still intact and accessible via `hardlink`; nlink decreased from 2 to 1
+  - [ ] Immediately deleted because original is gone
+  - [ ] Marked as unreadable even through hardlink
+  - [ ] Moved to lost+found
+  - why: Hard links share one inode; removing one name only decrements nlink. The data lives on as long as nlink > 0.
+
+- **MCQ:** Why is it forbidden to create a hard link to a directory on most Unix filesystems?
+  - [x] It could create cycles in the directory tree, breaking path resolution and fsck
+  - [ ] Directories have no inode
+  - [ ] It would waste too much disk space
+  - [ ] Hard links only work on regular files for permission reasons
+  - why: Allowing directory hard links lets a directory reference an ancestor, producing loops; symlinks sidestep this by storing a pathname instead of an inode.
+
+- **MCQ:** Hard links can reference files on a different filesystem.
+  - [x] False: hard links require the same inode-number space (same filesystem)
+  - [ ] True: hard links work across any mount point
+  - [ ] True: hard links automatically copy data across filesystems
+  - [ ] False: but only on NTFS
+  - why: An inode number is only meaningful within one filesystem, so hard links are restricted to that filesystem; symlinks store pathnames and can cross filesystems.
+
+- **MCQ:** A symbolic link's on-disk size is roughly:
+  - [x] The length of the pathname it stores
+  - [ ] The size of its target file
+  - [ ] Exactly 256 bytes
+  - [ ] Zero bytes
+  - why: A symlink is a tiny file whose data is the target pathname; symlink storage is therefore proportional to that string's length.
+
+- **MCQ:** A file starts with nlink=1. You then run `ln file file2 && ln file2 file3`. What is nlink?
+  - [x] 3
+  - [ ] 2
+  - [ ] 1
+  - [ ] 4
+  - why: Each successful `ln` adds a directory entry and increments nlink; the inode now has three names.
+
+- **MCQ:** You `rm` the only name of a file, but a process still has it open. What happens next?
+  - [x] Directory entry vanishes, nlink becomes 0, but the inode persists until that process closes its FD
+  - [ ] The `rm` fails with EBUSY
+  - [ ] The file is deleted immediately, the open FD becomes invalid
+  - [ ] The open FD is silently redirected to /dev/null
+  - why: Unlink removes the name; the kernel only frees the inode and data blocks once both nlink and OFE ref_count are zero.
+
+- **MCQ:** A symlink whose target does not exist is called:
+  - [x] A dangling symlink; resolving it returns ENOENT but the symlink itself is valid
+  - [ ] An invalid inode that is automatically deleted
+  - [ ] A hard link with nlink=0
+  - [ ] A corrupted directory entry
+  - why: Symlinks just store a pathname; missing targets produce "no such file" errors on dereference, but the symlink file itself remains.
 
 ## Gotchas
 

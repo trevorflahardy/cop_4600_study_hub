@@ -92,12 +92,42 @@ on_context_switch(old_process, new_process):
 
 ## Common exam questions
 
-- Given base = 32 KB, bounds = 48 KB, and VA = 0x3000 (12 KB), compute the physical address.
-- Why does the bounds register contain size (48 KB) rather than the end address (80 KB)?
-- How does base-and-bounds ensure memory protection between processes?
-- What is external fragmentation, and why is it a problem for base-and-bounds?
-- During a context switch, what two values must the OS save and restore?
-- If a process references VA 0xFFFF and bounds = 48 KB, what happens?
+- **MCQ:** Given base = 32 KB and bounds = 48 KB, what physical address does virtual address 0x3000 (12 KB) map to?
+  - [x] 44 KB
+  - [ ] 12 KB
+  - [ ] 32 KB
+  - [ ] 80 KB
+  - why: PA = VA + base = 12 KB + 32 KB = 44 KB. The bounds check passes because 12 < 48.
+- **MCQ:** With base = 32 KB and bounds = 48 KB, which virtual address triggers a protection fault?
+  - [x] 0xC000 (48 KB)
+  - [ ] 0x0000 (0 KB)
+  - [ ] 0x2000 (8 KB)
+  - [ ] 0x5000 (20 KB)
+  - why: The check is VA < bounds. 48 KB is not strictly less than 48 KB, so it faults. All the others are within range.
+- **MCQ:** Why does the bounds register hold the size (48 KB) rather than the end physical address (80 KB)?
+  - [x] The check VA < bounds is simpler when bounds is a size, so the hardware only needs to compare against the virtual offset.
+  - [ ] So the OS does not have to save base during a context switch.
+  - [ ] Because virtual addresses already include the base, so comparing to 80 KB would be redundant.
+  - [ ] Because physical end addresses cannot be stored in hardware registers.
+  - why: Size-as-bounds lets the hardware compare the virtual address directly without first adding base, keeping the check fast.
+- **MCQ:** During a context switch between processes under base-and-bounds, what must the OS save and restore?
+  - [x] The base and bounds register values
+  - [ ] Only the base register
+  - [ ] The full virtual address space contents
+  - [ ] The page table base pointer
+  - why: Each process owns a base/bounds pair stored in its PCB; both must be swapped to isolate processes. There is no page table under pure base-and-bounds.
+- **MCQ:** What is the key weakness that limits base-and-bounds in multi-process systems?
+  - [x] External fragmentation of physical memory
+  - [ ] Internal fragmentation inside each page
+  - [ ] Excessive TLB misses
+  - [ ] Lack of protection between processes
+  - why: Because each process needs a contiguous physical region, gaps between regions can become unusable even when total free memory is sufficient.
+- **MCQ:** A process references VA 0xFFFF (64 KB - 1) with base = 32 KB and bounds = 48 KB. What happens?
+  - [x] Hardware raises a protection fault because 64 KB > 48 KB.
+  - [ ] PA = 96 KB - 1 is returned successfully.
+  - [ ] The access silently wraps inside bounds.
+  - [ ] A TLB miss is raised.
+  - why: 0xFFFF = 65535 which exceeds the 48 KB bounds, so the check VA < bounds fails and the hardware traps.
 
 ## Gotchas
 

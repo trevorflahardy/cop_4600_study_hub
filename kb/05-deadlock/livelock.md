@@ -143,13 +143,42 @@ T1 waits; T2 wakes earlier (random 20ms < 50ms) and succeeds. **Progress is made
 
 ## Common exam questions
 
-- What is the difference between deadlock and livelock? Provide examples of each.
-- Describe the trylock + goto top pattern and explain why it can cause livelock.
-- How does random backoff solve livelock? Why is randomness necessary?
-- Compare the CPU usage and responsiveness of deadlock vs. livelock.
-- Can livelock occur with blocking locks (not trylock)? Why or why not?
-- Write code that demonstrates livelock and then add backoff to fix it.
-- In the exam (Midterm 2, Question 11), does the trylock pattern cause deadlock or livelock? Explain.
+- **MCQ:** What is the core difference between deadlock and livelock?
+  - [x] Deadlocked threads are blocked and idle; livelocked threads are active and running but make no progress.
+  - [ ] Deadlock wastes CPU; livelock does not.
+  - [ ] Deadlock affects only one thread; livelock always affects two or more.
+  - [ ] Livelock is just a synonym for starvation.
+  - why: Deadlock shows as blocked threads consuming no CPU. Livelock threads are busy-spinning through trylock retries, so CPU use is high even though the system makes zero forward progress.
+- **MCQ:** Two threads using `lock(L1); if (trylock(L2) fails) { unlock(L1); goto top; }` with no delay run simultaneously and symmetrically. What is the likely outcome?
+  - [x] Livelock — both threads keep acquiring, failing, releasing, and retrying at nearly the same time.
+  - [ ] Deadlock — both threads block forever on L1.
+  - [ ] Starvation of exactly one thread while the other proceeds.
+  - [ ] Correct progress with no issues.
+  - why: trylock breaks no-preemption so they never block, but the symmetric retry logic causes them to collide, release, and retry together indefinitely. They are running but not progressing.
+- **MCQ:** Why does adding a random delay before retrying fix livelock?
+  - [x] The randomness breaks the symmetric timing of retries, so one thread eventually retries alone and succeeds.
+  - [ ] It reduces CPU frequency, slowing both threads down.
+  - [ ] It converts trylock into a blocking lock automatically.
+  - [ ] It assigns priorities to the threads.
+  - why: Livelock persists because both threads' retries line up. Random backoff desynchronizes them: with different delays, one thread wakes and acquires both locks before the other wakes to collide again.
+- **MCQ:** Can livelock occur with pure blocking `pthread_mutex_lock` (no trylock)?
+  - [x] No — blocking locks cannot cause livelock since a waiting thread is truly blocked, not actively retrying.
+  - [ ] Yes — any lock usage can cause livelock.
+  - [ ] Yes — blocking locks always cause both deadlock and livelock.
+  - [ ] No — blocking locks cannot deadlock either.
+  - why: Livelock requires threads that are runnable and looping. Blocking mutex_lock parks the thread until the lock is released, so there is nothing to spin on. Blocking locks can still deadlock, but they cannot livelock.
+- **MCQ:** A program is "running hot" (high CPU) but shows no output progress over many minutes. Which bug is most consistent with that symptom?
+  - [x] Livelock.
+  - [ ] Classic deadlock with blocking locks.
+  - [ ] Atomicity violation.
+  - [ ] Order violation.
+  - why: Deadlock leaves CPU idle because threads are parked. Livelock keeps threads runnable in a retry loop, so the CPU is pegged even though the program does nothing useful. Atomicity/order violations manifest as crashes or bad data, not CPU-bound stalls.
+- **MCQ:** Which Coffman condition does trylock-based retry actually aim to break?
+  - [x] No preemption — by voluntarily releasing locks when it cannot acquire another, the thread self-preempts.
+  - [ ] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] Circular wait.
+  - why: Trylock lets a thread let go of locks it already holds when further acquisition fails, which is exactly self-preemption of its held resources. This removes no-preemption, at the cost of introducing livelock if retries are symmetric.
 
 ## Gotchas
 

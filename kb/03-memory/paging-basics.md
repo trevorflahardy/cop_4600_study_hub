@@ -126,12 +126,48 @@ translate(virtual_address, page_table_base):
 
 ## Common exam questions
 
-- Given 32-bit VA, 4 KB pages, how many bits are for VPN? How many for offset?
-- What does the "present bit" indicate, and why is it separate from "valid"?
-- If a PTE has valid=1 and present=0, what does the OS do on a memory reference to that page?
-- Explain why offset bits are copied directly from VA to PA (not looked up in a table).
-- Given a page table base, VPN, and PTE size, compute the physical address of the PTE.
-- How large is a linear page table for 32-bit VA with 4 KB pages and 4-byte PTEs?
+- **MCQ:** For a 32-bit VA with 4 KB pages, how many bits are offset and VPN?
+  - [x] 12 offset bits, 20 VPN bits
+  - [ ] 10 offset bits, 22 VPN bits
+  - [ ] 11 offset bits, 21 VPN bits
+  - [ ] 13 offset bits, 19 VPN bits
+  - why: offset_bits = log2(4096) = 12, so VPN = 32 - 12 = 20.
+- **MCQ:** For a 64-byte VAS with 16-byte pages, what are VPN and offset for VA 0x21?
+  - [x] VPN = 2, Offset = 1
+  - [ ] VPN = 1, Offset = 2
+  - [ ] VPN = 2, Offset = 0x21
+  - [ ] VPN = 0, Offset = 0x21
+  - why: offset bits = log2(16) = 4. 0x21 >> 4 = 2 (VPN), 0x21 & 0xF = 1 (offset).
+- **MCQ:** A PTE has valid=1 and present=0. On a reference, what does the OS do?
+  - [x] Treat it as a page fault: fetch the page from swap and update the PTE.
+  - [ ] Raise a protection fault and kill the process.
+  - [ ] Treat it as valid and use the stored PFN directly.
+  - [ ] Ignore the access silently.
+  - why: valid=1 means the OS reserved the mapping; present=0 means it is swapped to disk. This is the exact condition that triggers a page-fault swap-in.
+- **MCQ:** How large is a linear page table for 32-bit VA, 4 KB pages, and 4-byte PTEs?
+  - [x] 4 MB
+  - [ ] 1 MB
+  - [ ] 2 MB
+  - [ ] 16 MB
+  - why: Entries = 2^20; size = 2^20 * 4 = 4,194,304 bytes = 4 MB per process.
+- **MCQ:** Why are offset bits copied directly from VA to PA rather than translated?
+  - [x] The offset is a position inside a page/frame and pages and frames have the same size.
+  - [ ] Offset bits are always zero in virtual addresses.
+  - [ ] The TLB stores the offset separately from the VPN.
+  - [ ] The page table stores offset mappings in a second array.
+  - why: Paging is one-to-one at byte granularity within a page; only the page-level mapping (VPN to PFN) needs translation.
+- **MCQ:** Given PT base = 0x1000, VPN = 5, and PTE size = 4 bytes, what is the PTE address?
+  - [x] 0x1014
+  - [ ] 0x1005
+  - [ ] 0x1020
+  - [ ] 0x1050
+  - why: PTE addr = base + VPN * PTE_size = 0x1000 + (5 * 4) = 0x1014.
+- **MCQ:** What is the practical difference between "valid" and "present" in a PTE?
+  - [x] Valid = the OS has reserved this mapping; present = the page currently resides in RAM.
+  - [ ] They are synonyms; different hardware just names them differently.
+  - [ ] Valid tracks permissions; present tracks dirty state.
+  - [ ] Present is set only for shared pages; valid is set only for private pages.
+  - why: A page can be validly allocated to a process but temporarily swapped to disk (valid=1, present=0); the OS uses this pair to distinguish "never allocated" from "swapped out".
 
 ## Gotchas
 

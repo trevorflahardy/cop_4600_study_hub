@@ -96,11 +96,47 @@ void lock(lock_t *lock) {
 
 ## Common exam questions
 
-- Explain the difference between TAS and CAS. When would you use CAS over TAS?
-- Why is the atomicity of these instructions critical for lock correctness?
-- How does LL/SC differ from TAS and CAS in detecting conflicts?
-- Trace through a TAS-based spin lock acquisition and release.
-- Can you implement a correct lock without hardware atomic instructions? Why or why not?
+- **MCQ:** What value does `TestAndSet(ptr, new)` return?
+  - [x] The OLD value at `*ptr` (before the store)
+  - [ ] The new value it just wrote
+  - [ ] 1 on success, 0 on failure
+  - [ ] A pointer to the previous holder
+  - why: Callers branch on the old value: if TAS returns 0 the lock was free and is now owned; if it returns 1 the lock was held.
+
+- **MCQ:** How does `CompareAndSwap(ptr, expected, new)` decide whether to write?
+  - [x] It writes `new` only if `*ptr` currently equals `expected`; it returns the value it saw
+  - [ ] It always writes `new` and returns `expected`
+  - [ ] It writes `new` if any other thread has not modified `*ptr`
+  - [ ] It swaps *ptr and expected unconditionally
+  - why: CAS is a conditional atomic write keyed on the observed value, enabling optimistic lock-free updates.
+
+- **MCQ:** What makes LL/SC different from CAS in detecting conflicts?
+  - [x] StoreConditional fails if ANY intervening write happened to the tracked address, not only a matching value
+  - [ ] LL/SC is a single instruction while CAS is two
+  - [ ] LL/SC cannot fail spuriously
+  - [ ] SC always succeeds the first time
+  - why: LL marks the address; any store to it (even from the same thread) can invalidate the reservation, so SC returns failure even if the value happens to match.
+
+- **MCQ:** In a TAS spinlock `while (TestAndSet(&flag, 1) == 1) ;`, when does a thread exit the loop?
+  - [x] When TAS returns 0, meaning the flag was free and is now owned by this thread
+  - [ ] When TAS returns 1, meaning it succeeded in acquiring
+  - [ ] When an interrupt fires
+  - [ ] Never, under contention
+  - why: Returning 0 means "old value was 0 (free), I set it to 1", so the caller now holds the lock.
+
+- **MCQ:** Why does TAS subtly differ from CAS for lock implementation?
+  - [x] TAS always writes `new`; CAS only writes when the old value matches, supporting richer protocols
+  - [ ] TAS is not atomic on modern CPUs
+  - [ ] CAS cannot be used to build a spinlock
+  - [ ] TAS requires a memory barrier but CAS does not
+  - why: CAS's conditional store enables lock-free algorithms (stacks, queues) where blind writes would clobber concurrent updates.
+
+- **MCQ:** Can a correct mutual-exclusion lock be built without any hardware atomic instruction on a modern multi-core CPU?
+  - [x] No — without atomic RMW or LL/SC, races on the flag itself can violate mutual exclusion
+  - [ ] Yes — `volatile int flag = 1` is sufficient
+  - [ ] Yes — disabling the compiler optimizer works
+  - [ ] Yes — busy-waiting guarantees atomicity
+  - why: Peterson-style software solutions work in theory but rely on sequential consistency; real hardware reorders memory operations, so atomic primitives or barriers are required.
 
 ## Gotchas
 

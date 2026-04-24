@@ -200,12 +200,42 @@ With only 4 philosophers at the table, at least one has both forks. Progress is 
 
 ## Common exam questions
 
-- Draw the naive code and show an interleaving that leads to deadlock. Identify the four conditions present.
-- Explain why the odd-even ordering breaks the circular wait in dining philosophers.
-- How does the N-1 limit prevent deadlock? Why is it sufficient?
-- Compare the two solutions on fairness and concurrency. Which would you use in practice?
-- Generalize the odd-even solution to N locks (not just 5 philosophers).
-- Can the odd-even solution starve any philosopher? Why or why not?
+- **MCQ:** In the naive dining philosophers solution, all five philosophers simultaneously pick up their left fork. What happens?
+  - [x] Deadlock via circular wait: each holds its left fork while waiting for its right, which is the next philosopher's left.
+  - [ ] Livelock: they all spin in a trylock loop.
+  - [ ] Starvation of philosopher 0 only.
+  - [ ] Progress: pigeonhole guarantees one philosopher eats.
+  - why: Each philosopher holds one fork and waits for the next philosopher's fork, forming a closed cycle of length 5. All four Coffman conditions hold, so the system deadlocks.
+- **MCQ:** Why does making philosopher 4 (the last, odd-numbered in the odd/even solution) pick up the right fork before the left fix the deadlock?
+  - [x] It breaks the circular wait: the lock-acquisition order is no longer uniform around the table, so no closed cycle can form.
+  - [ ] It eliminates mutual exclusion on forks.
+  - [ ] It preempts other philosophers' forks.
+  - [ ] It guarantees philosopher 4 always eats first.
+  - why: With one philosopher grabbing in the opposite order, two adjacent philosophers now contend for the same fork first, and one fails rather than entering the cycle. The wait-for graph cannot close into a ring.
+- **MCQ:** Which "fix" to dining philosophers actually STILL deadlocks?
+  - [x] Making every philosopher pick up the left fork first, then the right.
+  - [ ] Odd philosophers right-then-left, even philosophers left-then-right.
+  - [ ] Letting at most N-1 philosophers sit at the table via a semaphore.
+  - [ ] Using address-ordered lock acquisition on all forks.
+  - why: Uniform "left first" is precisely the naive broken version: every philosopher starts a closed cycle simultaneously. Asymmetric ordering, the N-1 semaphore, and address ordering all break circular wait.
+- **MCQ:** How does the N-1 semaphore solution prevent deadlock for N philosophers?
+  - [x] With at most N-1 philosophers at the table and N forks, by pigeonhole at least one philosopher has both neighboring forks free.
+  - [ ] It eliminates mutual exclusion on forks.
+  - [ ] It makes forks preemptible.
+  - [ ] It uses CAS instead of mutexes on forks.
+  - why: You cannot form a cycle of length N with only N-1 participants competing for N resources. At least one philosopher is not contending, so one of their neighbors can always acquire both forks.
+- **MCQ:** Does the odd-even solution guarantee freedom from starvation?
+  - [x] No — it prevents deadlock but a specific philosopher may still eat less frequently depending on scheduling.
+  - [ ] Yes — odd-even ordering guarantees perfect fairness.
+  - [ ] No — it does not even prevent deadlock.
+  - [ ] Yes — every philosopher eats in strict round-robin order.
+  - why: Breaking circular wait guarantees progress for the system, but individual philosophers can be consistently outpaced by faster neighbors. Starvation freedom requires additional fairness (e.g., FIFO semaphore queues).
+- **MCQ:** Which Coffman condition do both dining philosophers solutions target?
+  - [x] Circular wait.
+  - [ ] Mutual exclusion (forks still must be held exclusively).
+  - [ ] Hold-and-wait (philosophers still hold one fork while acquiring another in solution 1).
+  - [ ] No preemption (forks are never forcibly taken).
+  - why: Both solutions break the cycle either by asymmetric ordering or by limiting participants so no full cycle can form. Mutual exclusion on forks, hold-and-wait (solution 1), and no preemption all remain true.
 
 ## Gotchas
 

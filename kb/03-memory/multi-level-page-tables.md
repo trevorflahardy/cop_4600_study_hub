@@ -134,11 +134,42 @@ translate_2level(virtual_address, directory_base):
 
 ## Common exam questions
 
-- For a 38-bit VA, 16 KiB pages, 4-byte PDE/PTE, compute: (a) offset bits, (b) directory index bits, (c) PT index bits, (d) max PT entries.
-- Why does multi-level PT save memory compared to linear PT?
-- How many memory accesses are required for a 2-level PT walk on a TLB miss?
-- What happens when a PDE has valid=0?
-- For a 5-level PT, list all possible memory access counts from 1 to 11 (covering TLB hit/miss and instruction fetch).
+- **MCQ:** For a 38-bit VA with 16 KiB pages and 4-byte PDE/PTE, how many offset bits are there?
+  - [x] 14
+  - [ ] 12
+  - [ ] 13
+  - [ ] 16
+  - why: Offset bits = log2(16 KiB) = log2(2^14) = 14.
+- **MCQ:** Under the same 38-bit VA / 16 KiB page / 4-byte entry setup, how are the index bits split between directory and page table?
+  - [x] 12 directory bits and 12 page-table bits
+  - [ ] 10 directory bits and 14 page-table bits
+  - [ ] 14 directory bits and 10 page-table bits
+  - [ ] 11 directory bits and 13 page-table bits
+  - why: Each PT fits in one 16 KiB page: 16384 / 4 = 4096 = 2^12 entries, so PT index = 12 bits. Remaining 38 - 14 - 12 = 12 bits become the directory index.
+- **MCQ:** Why does a multi-level page table save memory compared to a linear page table for sparse address spaces?
+  - [x] Secondary page tables are only allocated for regions of VAS that are actually used; invalid PDEs cost only one entry.
+  - [ ] Each PTE is smaller in multi-level page tables.
+  - [ ] Multi-level tables are compressed at runtime.
+  - [ ] The TLB eliminates the need for most entries.
+  - why: If a PDE has valid=0, no secondary PT is allocated for that 2^(PT-bits + offset-bits) range, avoiding wasted memory on unused regions.
+- **MCQ:** For a 2-level page table walk on a TLB miss, how many memory accesses are needed to load one data word?
+  - [x] 3 (directory, PT, data)
+  - [ ] 2 (PT, data)
+  - [ ] 4 (directory, PT, TLB, data)
+  - [ ] 1 (data only)
+  - why: Each level is read from memory (1 PDE + 1 PTE = 2), then the data itself = 3 total. On a TLB hit it drops to 1.
+- **MCQ:** What happens during translation when a PDE has valid=0?
+  - [x] A page fault is raised and no secondary PT lookup is performed.
+  - [ ] The hardware zero-extends the PDE and keeps walking.
+  - [ ] The OS silently allocates a secondary PT and retries.
+  - [ ] The TLB is flushed and the walk restarts.
+  - why: valid=0 means no secondary PT exists for that range; the hardware traps to the OS, which decides whether to allocate or kill the process.
+- **MCQ:** For a 5-level page table on a TLB miss loading a data word (no instruction fetch counted), how many memory accesses occur at minimum?
+  - [x] 6 (five PT levels + data)
+  - [ ] 5 (just the PT levels)
+  - [ ] 11 (all combinations)
+  - [ ] 3 (only three levels are walked)
+  - why: Each of the 5 levels requires 1 memory access, plus 1 for the data itself. Including instruction fetch and TLB hits yields the 1/3/5/7/9/11 set noted in exam_1.
 
 ## Gotchas
 

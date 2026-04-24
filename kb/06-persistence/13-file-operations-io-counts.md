@@ -244,13 +244,54 @@ With batching and journaling, the I/O advantage increases because metadata updat
 
 ## Common exam questions
 
-1. How many disk I/Os are needed to open("/a/b/c/d/file") in the worst case?
-2. Creating a new file: 4 reads, 4 writes. Explain each.
-3. Writing 4 KB to an already-allocated block: how many reads and writes?
-4. Why does `write()` to a new block require reading the inode multiple times?
-5. A file grows from 0 to 4 MB (1000 blocks). How many I/Os for allocating all blocks?
-6. Why is batching multiple small writes more efficient than writing one byte at a time?
-7. `fsync()` is called on a file with 100 dirty blocks. Minimum I/Os needed?
+- **MCQ:** Worst-case (cold-cache) reads to `open("/foo/bar")` a regular file is:
+  - [x] 5 (root inode, root dir data, foo inode, foo dir data, bar inode)
+  - [ ] 2
+  - [ ] 3
+  - [ ] 7
+  - why: Each path component costs one inode read plus one directory-data read; the final inode is read once more to verify it.
+
+- **MCQ:** `open("/a/b/c/d/file")` in the worst case (cold cache, all directories) requires approximately how many reads?
+  - [x] 11 (root inode + 5 pairs of dir-data + inode reads)
+  - [ ] 6
+  - [ ] 4
+  - [ ] 20
+  - why: Starting from root, each of the five path components needs a directory read and an inode read (5*2), plus the initial root inode read.
+
+- **MCQ:** `create("/foo/bar")` typically costs how many reads and writes (assuming /foo is cached)?
+  - [x] 4 reads + 4 writes
+  - [ ] 2 reads + 2 writes
+  - [ ] 5 reads + 5 writes
+  - [ ] 0 reads + 4 writes
+  - why: Path traversal plus inode-bitmap read (4 reads), and bitmap+new inode+directory data+parent inode writes (4 writes).
+
+- **MCQ:** Overwriting a 4 KB region in an already-allocated block costs approximately:
+  - [x] A few reads and 1 write (data block); bitmap not touched
+  - [ ] 5 reads + 3 writes, like allocation
+  - [ ] 0 reads + 0 writes (in-memory only)
+  - [ ] 1 read + 2 writes to the bitmap
+  - why: No new block is allocated, so only the data block is written (plus a metadata update if atime/mtime is flushed).
+
+- **MCQ:** A 4 MB file is created and written from scratch (1000 * 4 KB blocks) with fresh allocations. Which statement best characterizes I/O cost?
+  - [x] Each new block allocation pays bitmap + data + inode writes, so thousands of I/Os unless batched
+  - [ ] A single I/O covers the entire 4 MB
+  - [ ] Only the inode is written once
+  - [ ] Writes incur no I/O until close()
+  - why: Every freshly-allocated block updates the data bitmap and inode pointers; without coalescing, that is several I/Os per block.
+
+- **MCQ:** `fsync(fd)` on a file with 100 dirty data blocks requires at minimum how many disk writes?
+  - [x] 100 data-block writes plus metadata (inode) writes
+  - [ ] 1 write
+  - [ ] 0 writes
+  - [ ] 10 writes
+  - why: fsync must flush every outstanding dirty page for that file; you cannot compress 100 dirty pages into one write.
+
+- **MCQ:** Why is batching many small writes more efficient than issuing them individually?
+  - [x] Metadata updates (bitmap, inode) and journal overhead amortize over one combined write
+  - [ ] The disk can only perform one write per second
+  - [ ] Single-byte writes are illegal
+  - [ ] Small writes always bypass the cache
+  - why: A coalesced large write pays bitmap/inode bookkeeping once; many tiny writes each incur the same overhead.
 
 ## Gotchas
 

@@ -96,12 +96,42 @@ Two threads in deadlock, detector runs:
 
 ## Common exam questions
 
-- Explain how a resource-allocation graph represents deadlock as a cycle.
-- What is the difference between deadlock detection and deadlock prevention?
-- How often should a deadlock detector run? What are the trade-offs?
-- What are the strategies for recovering from a detected deadlock?
-- Which thread should be chosen as the victim in deadlock recovery? Why?
-- In what systems is detection-and-recovery preferred over prevention?
+- **MCQ:** In a resource-allocation graph (RAG) with one instance of each lock, what indicates deadlock?
+  - [x] A directed cycle involving threads and locks (e.g., T1 → L2 → T2 → L1 → T1).
+  - [ ] Any thread waiting for any lock.
+  - [ ] More than N threads where N is the number of locks.
+  - [ ] The graph being disconnected.
+  - why: For single-instance resources, a cycle in the RAG is both necessary and sufficient for deadlock. Simply waiting for a lock is not deadlock unless the wait participates in a cycle.
+- **MCQ:** How does detection-and-recovery differ from prevention?
+  - [x] Detection allows deadlock to occur and resolves it afterward; prevention structurally eliminates one of the four Coffman conditions so deadlock is impossible.
+  - [ ] Detection breaks circular wait; prevention breaks mutual exclusion.
+  - [ ] Detection requires trylock; prevention uses blocking locks.
+  - [ ] Detection is deterministic; prevention uses randomness.
+  - why: Detection is reactive: it accepts deadlock as a runtime event and recovers via victim selection. Prevention is proactive: it removes one condition (ordering, all-at-once, trylock, CAS) so no deadlock ever forms.
+- **MCQ:** What is the main trade-off of running the deadlock detector very frequently?
+  - [x] More CPU spent building the RAG and scanning for cycles even when no deadlock exists.
+  - [ ] Higher likelihood of livelock.
+  - [ ] Loss of mutual exclusion.
+  - [ ] Inability to recover deadlocks that do occur.
+  - why: Cycle detection is O(V+E) per run. Frequent runs catch deadlocks quickly but waste cycles when the system is healthy; infrequent runs save CPU but let deadlocks persist longer.
+- **MCQ:** In recovery, what does "process termination" mean?
+  - [x] Killing one or more threads in the deadlock cycle so their locks are released and the remaining threads can proceed.
+  - [ ] Shutting the whole OS down and rebooting.
+  - [ ] Removing the thread from the scheduler queue but keeping its locks.
+  - [ ] Running the thread to completion while ignoring the cycle.
+  - why: The simplest recovery is victim selection: pick a thread in the cycle, force it to exit, and free its locks. Other threads then make progress. The killed thread loses uncommitted work.
+- **MCQ:** Why is detection-and-recovery well-suited to database systems?
+  - [x] Databases already have transaction rollback, so aborting a deadlocked transaction is cheap and restores a consistent state.
+  - [ ] Databases do not use locks at all.
+  - [ ] Databases can predict every lock request in advance.
+  - [ ] Databases only run single-threaded.
+  - why: DBMSs log operations so rollback is a built-in primitive. Choosing a victim transaction, aborting it, and restarting has low extra cost. In contrast, a C program killed mid-state loses work unrecoverably.
+- **MCQ:** Why is detection-and-recovery generally unsuitable for real-time systems?
+  - [x] Unpredictable detection intervals and recovery pauses violate real-time deadlines.
+  - [ ] Real-time systems never use locks.
+  - [ ] Cycle detection always takes exponential time.
+  - [ ] Real-time kernels cannot build resource graphs.
+  - why: Real-time systems demand bounded worst-case response times. Allowing deadlock and then stalling arbitrarily for detection and victim selection introduces latency spikes that break hard deadlines.
 
 ## Gotchas
 

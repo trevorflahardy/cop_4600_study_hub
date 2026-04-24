@@ -149,11 +149,42 @@ Let me retrace assuming the if-condition is checked correctly:
 
 ## Common exam questions
 
-- Given two locks L1 and L2, show how to order them by address to prevent circular wait.
-- For the vector_add problem, identify the deadlock scenario and then show how address ordering fixes it.
-- Can a thread acquire locks out of order if it always acquires all locks? (Answer: No, if all threads follow the same order.)
-- What is the difference between "lock ordering" and "lock ordering by address"?
-- How does lock ordering by address scale to N locks?
+- **MCQ:** Which Coffman condition does global lock ordering (e.g., always acquire lower address first) eliminate?
+  - [x] Circular wait.
+  - [ ] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] No preemption.
+  - why: Under a total order, no thread can hold a high-address lock while waiting for a low-address lock if it also holds the low one. That rules out the closed cycle in the wait-for graph. Mutual exclusion, hold-and-wait, and no preemption all still hold.
+- **MCQ:** In the vector_add scenario, Thread 1 calls `vector_add(&A, &B)` and Thread 2 calls `vector_add(&B, &A)`. Why does naive "lock v1 first, then v2" deadlock?
+  - [x] Thread 1 locks A then waits for B; Thread 2 locks B then waits for A — a two-node cycle in the wait-for graph.
+  - [ ] vector_add uses trylock, which causes livelock.
+  - [ ] Thread 2 reads A before Thread 1 initializes it.
+  - [ ] Both threads spin on CAS indefinitely.
+  - why: The naive code acquires in argument order. When the two callers pass arguments in swapped order, the lock-acquisition order is inverted, creating the classic two-thread circular wait.
+- **MCQ:** Address-ordered locking fixes vector_add by doing what?
+  - [x] Both threads acquire the lower-address lock first regardless of argument order, so they acquire in the same global order.
+  - [ ] Both threads use trylock with random backoff.
+  - [ ] The vectors are made lock-free via CAS.
+  - [ ] One vector is designated as read-only.
+  - why: Address-ordered acquisition gives every thread the same total order on locks. A cycle would require one thread holding lower-first and another holding higher-first simultaneously — a contradiction.
+- **MCQ:** With address-ordered locking, can deadlock still occur if all threads consistently follow the order?
+  - [x] No — a cycle in the wait-for graph is mathematically impossible under a consistent total order.
+  - [ ] Yes — mutual exclusion alone causes deadlock.
+  - [ ] Yes — hold-and-wait is not addressed by ordering.
+  - [ ] Yes — no preemption is still present.
+  - why: The other three conditions can all hold, but without circular wait all four cannot simultaneously hold, so deadlock cannot occur. That is exactly why breaking any single condition suffices.
+- **MCQ:** Which category of strategy is "acquire locks in increasing address order"?
+  - [x] Deadlock prevention (breaks circular wait structurally).
+  - [ ] Deadlock avoidance (banker-style scheduling).
+  - [ ] Deadlock detection and recovery.
+  - [ ] Livelock mitigation via backoff.
+  - why: The strategy eliminates circular wait by construction rather than by scheduling around unsafe states (avoidance) or letting deadlock happen and cleaning up (detection/recovery).
+- **MCQ:** What is the main practical drawback of global lock ordering in large codebases?
+  - [x] Every call site across every module must follow the ordering — one violation anywhere can reintroduce deadlock.
+  - [ ] It forces all locks to become reader-writer locks.
+  - [ ] It doubles memory usage per mutex.
+  - [ ] It requires every thread to use CAS instead of mutex.
+  - why: A global ordering is a program-wide invariant. Library code, plugins, or a single miswritten helper can acquire out of order and create a cycle. Maintaining the invariant across modules and teams is the hard part.
 
 ## Gotchas
 

@@ -162,12 +162,42 @@ Thread1's initialization completes before Thread2 uses it.
 
 ## Common exam questions
 
-- What is the difference between an order violation and a race condition?
-- Given code with an order violation, explain what could go wrong and show a safe version using a condition variable.
-- Why is a simple assignment like `ready = 1` insufficient to enforce order in concurrent code?
-- What role does the state variable (e.g., `mtInit`) play in the condition variable fix?
-- Why must you use `while (ready == 0)` instead of `if (ready == 0)` when waiting?
-- Can an order violation occur with locks but without condition variables? (Answer: Yes, if you only lock the final assignment and not the entire initialization.)
+- **MCQ:** Thread 1 creates Thread 2 via `mThread = PR_CreateThread(...)`; Thread 2 immediately reads `mThread->State`, which may still be NULL. What kind of bug is this?
+  - [x] Order violation: Thread 2 uses mThread before Thread 1's initialization is guaranteed to complete.
+  - [ ] Atomicity violation: a check-then-use sequence is split.
+  - [ ] Deadlock: both threads wait on each other's locks.
+  - [ ] Livelock: both threads spin retrying.
+  - why: The bug is an implicit ordering assumption (init must happen before use) that is not enforced. No check-then-use pair, no cycle in a wait-for graph, no spinning retries.
+- **MCQ:** Which primitive is the standard fix for the mThread order violation?
+  - [x] A condition variable plus a state flag, with Thread 2 waiting and Thread 1 signaling after initialization.
+  - [ ] Replacing the pointer with CAS.
+  - [ ] Adding a global lock ordering.
+  - [ ] Adding random backoff before Thread 2 reads mThread.
+  - why: The correct tool for "wait until X is true" is a condition variable guarded by a mutex and a state variable. Thread 1 sets the state and signals; Thread 2 waits until the state becomes true. CAS, lock ordering, and backoff target different bug classes.
+- **MCQ:** Why must the waiter use `while (ready == 0) pthread_cond_wait(...)` rather than `if (ready == 0) pthread_cond_wait(...)`?
+  - [x] Spurious wakeups and lost wakeups mean the condition must be rechecked after every return from cond_wait.
+  - [ ] `if` does not compile with condition variables.
+  - [ ] `while` is needed to enforce mutual exclusion.
+  - [ ] `while` automatically adds random backoff.
+  - why: pthread_cond_wait may return without a matching signal (spurious wakeup). Using `while` rechecks the predicate after waking and blocks again if it is still false, which is the safe idiom.
+- **MCQ:** Why is `ready = 1;` as a plain assignment (no mutex, no condition variable) insufficient to enforce order in concurrent code?
+  - [x] Without memory barriers, compiler/CPU reordering and cache effects can make Thread 2 see `ready == 1` before it sees the preceding initialization of `data`.
+  - [ ] Plain assignment is always atomic and works fine.
+  - [ ] `ready = 1` always deadlocks.
+  - [ ] `ready = 1` only works on single-core systems.
+  - why: Under relaxed memory models, stores can be reordered so another thread observes `ready = 1` while `data` is still stale. Mutex/condvar operations include the memory barriers that make the initialization visible before the flag.
+- **MCQ:** What distinguishes an order violation from an atomicity violation (Lu et al.)?
+  - [x] Order violation: one access should happen before another but is not enforced. Atomicity violation: two accesses should be indivisible but another thread interleaves between them.
+  - [ ] They are the same bug with different names.
+  - [ ] Order violations always deadlock; atomicity violations never do.
+  - [ ] Order violations occur only with trylock; atomicity violations never do.
+  - why: Both are non-deadlock concurrency bugs from the Lu et al. study. Order violations are about happens-before ordering of independent accesses; atomicity violations are about interleaving inside a supposedly atomic region.
+- **MCQ:** What role does the `mtInit` state variable play in the CV-based fix?
+  - [x] It remembers that initialization has already completed, so a late-arriving waiter does not block forever after the signal was sent.
+  - [ ] It acts as a lock to provide mutual exclusion.
+  - [ ] It adds random backoff.
+  - [ ] It forces preemption of the initializer thread.
+  - why: Without a state variable, a thread that starts waiting after the signal has fired would miss the wakeup and sleep forever. `mtInit` records that the event happened, so new waiters check the flag and proceed immediately.
 
 ## Gotchas
 

@@ -151,11 +151,47 @@ Correct behavior with two CVs:
 
 ## Common exam questions
 
-- Explain why single CV with if fails with multiple consumers.
-- Why does single CV with while still fail?
-- Trace through the two-CV solution to show why it works.
-- How should the bounded buffer case be modified (MAX > 1)?
-- Can readers starve writers or vice versa with condition variables?
+- **MCQ:** In the single-CV, `if`-guarded producer/consumer, what specifically breaks with multiple consumers?
+  - [x] A woken consumer does not re-check count, so it can consume when the buffer is already empty
+  - [ ] The mutex is never released when `if` is used
+  - [ ] Only one consumer ever wakes for any signal
+  - [ ] pthread_cond_signal returns an error with multiple waiters
+  - why: With `if`, a consumer who is woken proceeds without re-checking, so another consumer that ran first can have emptied the buffer — the woken consumer then reads stale state.
+
+- **MCQ:** Why does single CV + `while` still fail for a producer/consumer with multiple threads of each kind?
+  - [x] A signal may wake the wrong thread type (e.g., a consumer wakes another consumer) so the intended thread stays asleep
+  - [ ] `while` causes busy-waiting instead of blocking
+  - [ ] pthread_cond_signal only wakes producers when used with a single CV
+  - [ ] The mutex deadlocks when any thread uses `while`
+  - why: One CV cannot distinguish producer-waits from consumer-waits; a consumer that signals after consuming might wake another consumer, which sees count==0 and re-sleeps, leaving the producer blocked.
+
+- **MCQ:** What are the initial values and roles of the two CVs in the correct solution?
+  - [x] `empty` is signaled by consumers after get; `fill` is signaled by producers after put
+  - [ ] `empty` is initialized to MAX; `fill` is initialized to 0
+  - [ ] `empty` is signaled by producers; `fill` is signaled by consumers
+  - [ ] Both CVs are broadcast on every operation
+  - why: Consumers wait on `fill` (need data) and signal `empty` (made room); producers wait on `empty` (need room) and signal `fill` (made data).
+
+- **MCQ:** A producer wakes from `cond_wait(&empty, &mutex)`. What must it do next?
+  - [x] Re-check its `while (count == MAX)` predicate before proceeding to put
+  - [ ] Immediately call put() since the wake guarantees space
+  - [ ] Release the mutex before checking the predicate
+  - [ ] Signal `empty` again to chain-wake the next producer
+  - why: Mesa semantics do not guarantee the predicate still holds when the waiter reacquires the mutex, so every CV wait must be inside a loop.
+
+- **MCQ:** In the broken `if`-based code, which concrete interleaving causes a consumer to block forever?
+  - [x] C1 waits, C2 waits, P produces and signals (wakes C1), C1 consumes and signals (no producer waiting), C2 runs stale with `if` and consumes empty buffer
+  - [ ] P produces MAX items, then consumers never wake
+  - [ ] The mutex is released before the signal, losing the wake
+  - [ ] pthread_cond_signal requires while loops to function
+  - why: With `if`, C2 woken by C1's signal proceeds straight to get() on an empty buffer (or worse, stays asleep); with multiple consumers this can leave a consumer permanently blocked on stale state.
+
+- **MCQ:** How should the correct solution change when MAX > 1?
+  - [x] Producers wait while `count == MAX`; consumers wait while `count == 0`; indexes advance modulo MAX
+  - [ ] It cannot generalize; two CVs only work when MAX == 1
+  - [ ] Each buffer slot needs its own pair of CVs
+  - [ ] Broadcast replaces signal because the buffer is larger
+  - why: The predicates simply become "full" (count == MAX) and "empty" (count == 0); the fill/use indices wrap modulo MAX for FIFO ordering.
 
 ## Gotchas
 

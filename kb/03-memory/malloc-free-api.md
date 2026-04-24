@@ -101,13 +101,48 @@ If step 4 were followed by `int *pk = malloc(4);`, the allocator might return 0x
 
 ## Common exam questions
 
-- Explain the difference between `sizeof(int *)` and `sizeof(int[10])`.
-- What does `malloc()` return on success vs. failure?
-- Why must you check if `malloc()` returns NULL?
-- What is a dangling pointer, and how does `free()` create one?
-- Explain the difference between `malloc()` and `calloc()`.
-- Can `realloc()` fail? What should you do?
-- After `free(p)`, can you still access `p`? Why or why not?
+- **MCQ:** On a 32-bit system with `int *pi`, what are `sizeof(int *)` and `sizeof(int[10])`?
+  - [x] 4 and 40
+  - [ ] 40 and 40
+  - [ ] 4 and 4
+  - [ ] 10 and 40
+  - why: `sizeof` on a pointer gives pointer size (4 bytes). `sizeof` on a declared array gives total byte size: 10 * 4 = 40.
+- **MCQ:** What does `malloc(size)` return on failure?
+  - [x] NULL
+  - [ ] 0xFFFFFFFF
+  - [ ] -1
+  - [ ] The address of a zero-filled block
+  - why: On failure (e.g., out of memory) malloc returns NULL. Callers must check this before dereferencing.
+- **MCQ:** What is the behavior of `int *x = malloc(sizeof(int)); free(x); printf("%d\n", *x);`?
+  - [x] Undefined behavior: `x` is a dangling pointer after free.
+  - [ ] Always prints 0 because free zeros the block.
+  - [ ] Always crashes immediately with a segfault.
+  - [ ] Reallocates the same block automatically.
+  - why: After free, the allocator may reuse or unmap that memory. The pointer still holds the old address but dereferencing is undefined.
+- **MCQ:** Which statement best describes the difference between `malloc` and `calloc`?
+  - [x] `calloc` zero-initializes the allocated bytes; `malloc` leaves contents uninitialized.
+  - [ ] `calloc` allocates on the stack; `malloc` allocates on the heap.
+  - [ ] `malloc` succeeds more reliably than `calloc`.
+  - [ ] `calloc` cannot be paired with `free`.
+  - why: Both allocate heap memory, but calloc also writes zeros across all num*size bytes.
+- **MCQ:** Why must the return value of `realloc(ptr, new_size)` always be assigned back to `ptr`?
+  - [x] realloc may move the block to a new address if it cannot grow in place.
+  - [ ] realloc always invalidates ptr, so reassignment prevents a compile error.
+  - [ ] The C standard forbids calling realloc without an assignment.
+  - [ ] It marks the old pointer as dirty for garbage collection.
+  - why: If the current block cannot be extended, realloc allocates a new block, copies the data, frees the old, and returns the new address. Ignoring the return value leaks or uses a stale pointer.
+- **MCQ:** After `int *pi = malloc(sizeof(int) * 4)` how many bytes are allocated?
+  - [x] 16
+  - [ ] 4
+  - [ ] 8
+  - [ ] 40
+  - why: sizeof(int) is 4 bytes on the lecture's 32-bit system, so 4 * 4 = 16 bytes.
+- **MCQ:** After `free(p)` completes, which statement is true about the pointer variable `p`?
+  - [x] `p` still holds its old address but dereferencing it is undefined behavior.
+  - [ ] `p` is automatically set to NULL by free.
+  - [ ] `p` cannot be reassigned until the block is malloc'd again.
+  - [ ] `p` points to a zero-filled region for safety.
+  - why: free only updates allocator bookkeeping; the pointer variable is unchanged. Programmers often set `p = NULL` themselves to avoid misuse.
 
 ## Gotchas
 

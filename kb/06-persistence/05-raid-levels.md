@@ -225,13 +225,54 @@ Write this recovered block back to Disk 2 after replacement.
 
 ## Common exam questions
 
-1. A RAID-5 system has 8 disks, each 2 TB. How much usable capacity? How many disk failures can it survive?
-2. Why does RAID-4 have a "small-write problem" but RAID-5 does not?
-3. For a 4-disk RAID-0, compute total throughput for sequential and random workloads (single disk: 100 MB/s seq, 10 MB/s random).
-4. In RAID-1, why is random read throughput 2R (not R) but random write is R/2 (not 2R)?
-5. Draw the parity calculation for RAID-4 stripe with blocks A, B, C, D. If block B is lost, write the recovery formula.
-6. A RAID-5 array loses disk 3. How are surviving disks used to recover? Is recovery I/O read-heavy or write-heavy?
-7. Compare capacity utilization: RAID-1 (N=4) vs. RAID-5 (N=4) vs. RAID-0 (N=4).
+- **MCQ:** A RAID-5 array has 8 disks, each 2 TB. What is the usable capacity and how many simultaneous disk failures can it tolerate?
+  - [x] 14 TB usable, 1 failure tolerated
+  - [ ] 16 TB usable, 1 failure tolerated
+  - [ ] 8 TB usable, 2 failures tolerated
+  - [ ] 14 TB usable, 2 failures tolerated
+  - why: RAID-5 uses (N-1) disks of data capacity = 7 * 2 TB = 14 TB, and tolerates one disk failure via distributed parity.
+
+- **MCQ:** Why does RAID-4 suffer a small-write bottleneck that RAID-5 avoids?
+  - [x] RAID-4 concentrates all parity on one disk, so every random write hits it; RAID-5 rotates parity across all disks
+  - [ ] RAID-4 has no parity at all
+  - [ ] RAID-5 mirrors every block to reduce writes
+  - [ ] RAID-4 uses larger chunks that stall the bus
+  - why: With a dedicated parity disk, that disk receives every parity update and becomes the throughput ceiling; rotating parity spreads the load.
+
+- **MCQ:** A 4-disk RAID-0 with single-disk rates of 100 MB/s sequential and 10 MB/s random delivers what aggregate throughput?
+  - [x] 400 MB/s sequential, 40 MB/s random
+  - [ ] 100 MB/s sequential, 10 MB/s random
+  - [ ] 400 MB/s sequential, 10 MB/s random
+  - [ ] 200 MB/s sequential, 20 MB/s random
+  - why: RAID-0 stripes across all N disks, so both workloads scale linearly with N when there is no redundancy overhead.
+
+- **MCQ:** In a 4-block stripe A, B, C, D with parity P (RAID-4), disk holding B fails. Which formula recovers B?
+  - [x] B = P XOR A XOR C XOR D
+  - [ ] B = A XOR C XOR D
+  - [ ] B = P AND (A XOR C XOR D)
+  - [ ] B = P XOR (A + C + D)
+  - why: XOR parity is invertible: XORing all surviving blocks plus parity yields the missing block.
+
+- **MCQ:** Why is RAID-1 random read throughput 2R on a mirrored pair but random write only R (per pair)?
+  - [x] Reads can be serviced by either mirror in parallel, but each write must update both disks
+  - [ ] Writes use parity which is slower
+  - [ ] Reads bypass the disk cache
+  - [ ] Mirrors can only read one block at a time
+  - why: Both drives store the same data, so independent reads double; writes require two disk operations to keep mirrors in sync.
+
+- **MCQ:** Capacity utilization comparison at N=4: which ordering is correct?
+  - [x] RAID-0 (100%) > RAID-5 (75%) > RAID-1 (50%)
+  - [ ] RAID-1 (100%) > RAID-5 (75%) > RAID-0 (50%)
+  - [ ] All three offer identical 75% usable capacity
+  - [ ] RAID-5 (100%) > RAID-0 (75%) > RAID-1 (50%)
+  - why: RAID-0 has no redundancy (full capacity), RAID-5 loses 1 disk to parity ((N-1)/N = 3/4), RAID-1 mirrors so half is redundant.
+
+- **MCQ:** During a RAID-5 rebuild after one disk fails, which statement about I/O is correct?
+  - [x] Every surviving disk is read in full, while the replacement is written, so I/O is read-heavy across survivors
+  - [ ] Only parity blocks need to be read
+  - [ ] Only the replacement disk receives I/O
+  - [ ] Rebuild is entirely sequential on the failed disk only
+  - why: To reconstruct each lost block the array XORs the corresponding stripe on all remaining disks; this puts sustained read load on survivors and sequential writes on the new disk.
 
 ## Gotchas
 

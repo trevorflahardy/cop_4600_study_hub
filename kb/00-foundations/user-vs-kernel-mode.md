@@ -31,11 +31,56 @@ This enforced boundary prevents user processes from directly manipulating hardwa
 
 ## Common exam questions
 
-- What is the difference between user mode and kernel mode, and why do we need both?
-- What happens when user-mode code attempts to execute a privileged instruction?
-- Describe the trap/return-from-trap mechanism.
-- How does the privilege mode bit prevent user processes from interfering with each other?
-- What is the purpose of checking permissions in the kernel before allowing a system call to proceed?
+- **MCQ:** What primarily distinguishes kernel mode from user mode?
+  - [x] In kernel mode, privileged instructions (modifying page tables, disabling interrupts, I/O port access) are allowed; in user mode they are blocked by hardware
+  - [ ] Kernel mode runs at a higher clock speed than user mode
+  - [ ] User mode uses virtual addresses and kernel mode uses physical addresses only
+  - [ ] Kernel mode can only be entered by the bootloader, never by a running process
+  - why: The CPU privilege-mode bit gates a specific set of instructions. User mode is deliberately restricted so untrusted code cannot touch hardware directly; the kernel runs with the bit set to allow full access.
+
+- **MCQ:** What happens when user-mode code attempts to execute a privileged instruction?
+  - [x] The CPU raises a privilege exception that traps into the kernel
+  - [ ] The instruction silently succeeds
+  - [ ] The CPU reboots to prevent data corruption
+  - [ ] The user process is automatically promoted to kernel mode
+  - why: Privileged instructions are enforced by hardware: attempting one in user mode raises an exception so the kernel can decide how to handle the offense (typically terminate the process).
+
+- **MCQ:** Which instruction is responsible for switching the CPU from kernel mode back to user mode after handling a system call?
+  - [x] return-from-trap (e.g., `iret` / `sysret`)
+  - [ ] `call`
+  - [ ] `ret`
+  - [ ] `jmp`
+  - why: Ordinary `ret` and `jmp` do not change privilege level. Only a return-from-trap style instruction pops the saved CPU state and drops privilege atomically.
+
+- **MCQ:** Which of the following is NOT a privileged instruction on typical CPUs?
+  - [ ] Loading the page table base register
+  - [ ] Disabling interrupts
+  - [ ] Accessing an I/O port directly
+  - [x] Adding two values in general-purpose registers
+  - why: Arithmetic on registers is unprivileged and allowed in user mode. The other three manipulate hardware state the OS must control and are blocked in user mode.
+
+- **MCQ:** Why does the kernel validate arguments and permissions even after a trap hands control to it?
+  - [x] A malicious or buggy user process may pass invalid pointers or request operations it is not entitled to perform
+  - [ ] The trap instruction does not actually switch privilege modes
+  - [ ] User mode validates arguments but kernel mode must re-check them for speed
+  - [ ] Permission checks are required by the C compiler
+  - why: Crossing the trap boundary does not make arguments trustworthy. The kernel must defensively verify every pointer, file descriptor, and permission to uphold isolation.
+
+- **MCQ:** A privilege exception and a trap instruction both transition the CPU to kernel mode. How do they differ semantically?
+  - [x] A trap is an intentional request by user code; a privilege exception is triggered by an attempted forbidden operation
+  - [ ] A privilege exception runs in user mode and a trap runs in kernel mode
+  - [ ] Traps use the trap table, privilege exceptions do not
+  - [ ] They are identical in every respect
+  - why: Both vector through the trap table to a kernel handler, but one is cooperative (syscall) and the other is the CPU catching misbehavior. The kernel responds differently to each.
+
+- **MCQ:** How does dual-mode operation enable process isolation?
+  - [x] User processes cannot directly modify page tables or access other processes' memory because those actions require kernel mode
+  - [ ] Each user process runs on a physically different CPU core
+  - [ ] The kernel copies user memory to disk between every context switch
+  - [ ] User mode has no access to RAM at all
+  - why: Because memory protection and page-table changes are privileged, a user process is structurally unable to reach into another process's memory. All cross-process effects must go through the kernel.
+
+- Explain, step by step, what happens from the moment a user process executes a trap instruction to the moment it resumes at the instruction after the trap.
 
 ## Gotchas
 

@@ -134,12 +134,42 @@ At T3, physical memory sees: evict a page from B, load a page for B, evict a pag
 
 ## Common exam questions
 
-- Define thrashing and explain why it is bad.
-- Why doesn't adding swap space solve thrashing?
-- What is the working set, and how does it relate to thrashing?
-- List three strategies to prevent or recover from thrashing.
-- Given process A with WSS 64 MB and process B with WSS 80 MB, and physical memory 128 MB, will they thrash? Why?
-- What system metrics indicate thrashing is occurring?
+- **MCQ:** Which best describes thrashing?
+  - [x] Total working-set size exceeds physical RAM, so the CPU spends most of its time swapping pages instead of executing code.
+  - [ ] A deadlock on the page table lock that halts memory allocation.
+  - [ ] TLB misses dominate the critical path of every instruction.
+  - [ ] Too many context switches between I/O-bound processes.
+  - why: Thrashing is fundamentally a memory pressure problem: page fault rate saturates disk I/O and CPU utilization collapses.
+- **MCQ:** True or False: "Increasing the size of the swap space will always resolve thrashing."
+  - [x] False: more swap only lets the OS evict more; only more physical RAM or reducing workload fixes it.
+  - [ ] True: larger swap proportionally reduces page-fault latency.
+  - [ ] True: thrashing is caused by running out of swap space.
+  - [ ] False: increasing swap has no effect at all on paging behavior.
+  - why: Per Quiz 5, swap just gives the OS more room to thrash the disk. The root cause is insufficient RAM for the active working set.
+- **MCQ:** Process A has WSS 64 MB, process B has WSS 80 MB, and physical memory is 128 MB. Do they thrash?
+  - [x] Yes: combined WSS = 144 MB > 128 MB, forcing continuous evictions.
+  - [ ] No: each process individually fits in 128 MB.
+  - [ ] No: swap space prevents thrashing entirely.
+  - [ ] Yes, but only if they share pages.
+  - why: Thrashing depends on total active working-set size. 64 + 80 = 144 > 128, so physical memory cannot hold both working sets concurrently.
+- **MCQ:** Which combination of system metrics most clearly indicates thrashing?
+  - [x] High page-fault rate with low CPU utilization and high disk I/O.
+  - [ ] Low page-fault rate with high CPU utilization.
+  - [ ] High CPU utilization with low disk I/O.
+  - [ ] High TLB hit rate with high CPU utilization.
+  - why: Thrashing's signature is CPU stalled on I/O: many faults per second, disk busy, CPU idle despite ready processes.
+- **MCQ:** Which recovery action most directly relieves thrashing?
+  - [x] Suspend or kill low-priority processes to shrink total working-set demand.
+  - [ ] Increase swap space.
+  - [ ] Increase the page size uniformly for all processes.
+  - [ ] Increase TLB associativity.
+  - why: Reducing concurrency brings total WSS back under physical memory. Adding RAM is the other effective fix; none of the distractors solve the underlying memory-demand mismatch.
+- **MCQ:** Which statement about the working set is correct?
+  - [x] It is the set of distinct pages a process actively uses over a recent time interval.
+  - [ ] It is the total number of pages the process has ever touched.
+  - [ ] It is the physical frames reserved for the process at startup.
+  - [ ] It is the pages currently resident in the TLB.
+  - why: Working set is a time-bounded notion of "currently hot" pages. If the WSS fits in RAM, faults are rare; if not, thrashing begins.
 
 ## Gotchas
 

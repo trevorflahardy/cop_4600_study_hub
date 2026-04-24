@@ -111,13 +111,54 @@ When a process forks, the child inherits the parent's file descriptor table. Bot
 
 ## Common exam questions
 
-- How does a shell implement output redirection (`cmd > file`) using fork, close, open, and exec?
-- How does a shell implement input redirection (`cmd < file`) using fork, close, open, and exec?
-- How does a pipe (`cmd1 | cmd2`) work at the process level? Describe fork, close, dup2/open, and exec calls.
-- Why does close() followed by open() reliably return the same FD? Give an example.
-- What is a file descriptor? What are the standard FDs (0, 1, 2)?
-- If a process forks and the child redirects FD 1 to a file, does the parent's FD 1 still point to the terminal? Explain.
-- How does the shell prevent a pipe FD from being inherited by its children? (close() in parent after fork.)
+- **MCQ:** To implement `ls > out.txt`, after fork() what sequence does the child run before launching ls?
+  - [x] close(STDOUT_FILENO), then open("out.txt", ...), then the execvp call
+  - [ ] open("out.txt", ...), then execvp, then close(STDOUT_FILENO)
+  - [ ] pipe(fds), then execvp, then wait()
+  - [ ] execvp first, then close/open to swap the FD afterward
+  - why: Closing FD 1 frees its slot; open() then returns the lowest free FD (1), so stdout points to the file before the program is loaded with the execvp call.
+
+- **MCQ:** Why does calling close(1) followed by open("out.txt", ...) reliably make FD 1 refer to out.txt?
+  - [x] POSIX guarantees open() returns the lowest unused file descriptor, which is 1 after the close.
+  - [ ] open() is hard-coded to return 1 whenever stdout has been redirected.
+  - [ ] The kernel assigns FD numbers in round-robin order starting at 1.
+  - [ ] The C library rewrites the FD number to match stdout.
+  - why: The lowest-free-FD rule is what makes close/open redirection work; after closing 1, slot 1 is the lowest free, so open() takes it.
+
+- **MCQ:** What are the three standard file descriptors present when a process starts?
+  - [x] 0 = stdin, 1 = stdout, 2 = stderr
+  - [ ] 0 = stderr, 1 = stdin, 2 = stdout
+  - [ ] 1 = stdin, 2 = stdout, 3 = stderr
+  - [ ] 0 = stdout, 1 = stderr, 2 = stdin
+  - why: POSIX reserves FD 0 for standard input, FD 1 for standard output, and FD 2 for standard error.
+
+- **MCQ:** For `ls | wc`, what must happen in the ls child before its execvp call?
+  - [x] dup2 the pipe's write end onto FD 1, then close both original pipe FDs
+  - [ ] dup2 the pipe's read end onto FD 0, then close both original pipe FDs
+  - [ ] close FD 1 and FD 2, leaving the pipe untouched
+  - [ ] open a new pipe file in /tmp and redirect stdout to it
+  - why: ls writes to stdout, so its FD 1 must point at the pipe's write end; dup2 does this atomically, and closing the originals avoids keeping stray pipe FDs open.
+
+- **MCQ:** After a parent creates a pipe and forks two children, why should the parent close both pipe FDs?
+  - [x] If the parent keeps the write end open, the reader never sees EOF and can block forever.
+  - [ ] Closing them speeds up the children's exec calls.
+  - [ ] The kernel deletes the pipe when all FDs are closed in one process.
+  - [ ] It prevents the parent from being reparented to init.
+  - why: A pipe's read end returns EOF only when all write-end FDs (across all processes) are closed. A parent holding the write end stalls the reader.
+
+- **MCQ:** A process forks; the child closes FD 1 and opens a file so its FD 1 points to that file. What about the parent's FD 1?
+  - [x] Unchanged; the parent's FD 1 still points to whatever it pointed to before the fork (e.g., the terminal).
+  - [ ] Also redirected, because FD tables are shared after fork.
+  - [ ] Closed, because closing in one process closes in both.
+  - [ ] Duplicated to the file, but read-only for the parent.
+  - why: fork() gives the child its own copy of the file descriptor table. Changes in the child do not affect the parent's table.
+
+- **MCQ:** Which single syscall atomically redirects new_fd to refer to the same file as old_fd, closing new_fd if necessary?
+  - [x] dup2(old_fd, new_fd)
+  - [ ] close(new_fd) followed by open(old_fd)
+  - [ ] pipe(new_fd)
+  - [ ] fork() followed by close()
+  - why: dup2 is the canonical atomic-redirection primitive; close-then-open works for files but is not atomic and cannot target an arbitrary existing descriptor.
 
 ## Gotchas
 

@@ -39,12 +39,56 @@ The **system call interface** is the formal way a user process requests the OS. 
 
 ## Common exam questions
 
-- What is the difference between a trap and an interrupt?
-- Name three types of exceptions that trigger traps.
-- Describe the role of the trap table and how it directs the CPU to the correct handler.
-- How does a timer interrupt allow the OS to enforce multiprocessing on a single CPU?
-- Why must the OS disable interrupts during critical sections of code?
-- What information does the kernel typically save when handling a trap or interrupt?
+- **MCQ:** What is the key distinction between a trap and an interrupt?
+  - [x] A trap is synchronous and caused by the currently executing instruction; an interrupt is asynchronous and caused by external hardware
+  - [ ] A trap runs in user mode; an interrupt runs in kernel mode
+  - [ ] A trap is raised only by the kernel; an interrupt is raised only by user code
+  - [ ] A trap is always a system call; an interrupt is always a page fault
+  - why: Synchronous vs. asynchronous is the defining distinction. Traps (syscall, illegal instruction, page fault) are tied to the running instruction; interrupts (timer, disk, NIC) arrive independently from hardware.
+
+- **MCQ:** Which of the following is NOT a trap?
+  - [ ] A user process executes a `syscall` instruction
+  - [ ] A user process divides by zero
+  - [ ] A user process accesses an unmapped virtual address (page fault)
+  - [x] A disk finishes a read and signals the CPU that data is ready
+  - why: A disk completion is asynchronous hardware-generated, so it is an interrupt. The other three are synchronous, caused by the current instruction, and therefore traps.
+
+- **MCQ:** What is the purpose of the trap table?
+  - [x] It maps each exception/interrupt number to the address of a kernel handler routine
+  - [ ] It stores the page table entries for kernel memory
+  - [ ] It records which process last called a system call
+  - [ ] It buffers user-mode trap instructions before executing them
+  - why: The trap table (IDT on x86) is an indexed array of handler addresses set up at boot. The CPU uses the exception/interrupt number as the index to jump to the correct handler.
+
+- **MCQ:** How does the timer interrupt enable multiprocessing on a single CPU?
+  - [x] It periodically forces control back to the kernel so the scheduler can switch processes
+  - [ ] It duplicates the CPU so multiple processes can run truly in parallel
+  - [ ] It lets user code yield voluntarily to other processes
+  - [ ] It blocks system calls until the current process completes
+  - why: A single CPU can only run one instruction stream at a time. The timer guarantees the kernel periodically regains control, enabling time-sliced multiplexing even if processes never trap voluntarily.
+
+- **MCQ:** Why does the kernel sometimes disable interrupts during critical sections?
+  - [x] To prevent an interrupt handler from running on partially updated shared data structures
+  - [ ] To permanently speed up the CPU by removing hardware signals
+  - [ ] To stop user processes from issuing system calls
+  - [ ] To force the MMU to refresh all translations
+  - why: If an interrupt fires while the kernel is mid-update (e.g., of the trap table), the handler could read inconsistent state. Disabling interrupts briefly guarantees atomicity of the critical section.
+
+- **MCQ:** Which example is a system call specifically (not just any trap)?
+  - [x] `read()` executing a `syscall` instruction to ask the OS for bytes from a file
+  - [ ] A page fault caused by accessing an unmapped address
+  - [ ] An illegal-instruction exception from running a privileged opcode in user mode
+  - [ ] A divide-by-zero exception
+  - why: A system call is a deliberate trap issued by user code via a trap instruction to request OS service. The other examples are also traps, but they are unintentional exceptions, not system calls.
+
+- **MCQ:** Why must interrupt handlers be kept short?
+  - [x] They run while preempting other work, so slow handlers delay other interrupts and degrade responsiveness
+  - [ ] The CPU forcibly halts handlers that run longer than one instruction
+  - [ ] Kernel mode cannot execute more than a few instructions at a time
+  - [ ] The trap table only holds one handler at a time
+  - why: A handler runs with priority over the interrupted work and often with further interrupts masked. Long handlers create latency or drop events, which is why real drivers defer heavy work to bottom halves or kernel threads.
+
+- Describe the full sequence of CPU and kernel actions from the moment a user process executes a `syscall` instruction to the moment execution resumes in user mode.
 
 ## Gotchas
 

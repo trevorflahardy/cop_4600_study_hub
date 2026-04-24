@@ -149,11 +149,47 @@ void fooFree(Foo* obj) {
 
 ## Common exam questions
 
-- Design a synchronization mechanism for N threads to execute in order.
-- Why do you need separate locks and condition variables for each stage?
-- Can you use a single lock and two CVs for the three-thread ordering problem? Explain.
-- Trace through the execution of print_in_order with threads starting in different orders.
-- What happens if the ready flag is not set before signaling?
+- **MCQ:** In the "print first, second, third" problem with CVs, why is a ready flag required alongside signaling?
+  - [x] It handles the case where the signaler runs before the waiter has blocked (no lost wakeup) and supports re-checks on wake
+  - [ ] pthread forbids calling signal without a flag set
+  - [ ] The flag tells the CV which thread to wake
+  - [ ] Without it, broadcast would be mandatory
+  - why: If `second()` calls cond_wait before `first()` signals, great; but if `first()` runs first, the flag ensures `second()` does not block waiting for a signal that already happened.
+
+- **MCQ:** Why does `second()` use `while (ready1 == 0)` rather than `if`?
+  - [x] Spurious wakeups and Mesa semantics require re-checking the predicate
+  - [ ] pthread_cond_wait is a no-op when `if` is used
+  - [ ] `while` spins until ready1 flips, avoiding the kernel
+  - [ ] `if` would cause first() to be called twice
+  - why: As with every CV wait, the wait must be inside a loop so the thread re-checks the predicate after being woken.
+
+- **MCQ:** Can the three-thread ordering be solved with a single lock and two CVs?
+  - [x] Yes — one lock guarding both `ready1` and `ready2` works, since the three threads never need the lock simultaneously for long
+  - [ ] No — each stage strictly requires its own lock
+  - [ ] Only if Hoare semantics are used
+  - [ ] Only if `second` and `third` are the same thread
+  - why: Using one mutex is sufficient because the critical sections are short; two locks just limit contention slightly and keep the stages independent.
+
+- **MCQ:** What happens if `first()` calls `pthread_cond_signal(&cond1)` WITHOUT first setting `ready1 = 1`?
+  - [x] If `second()` has not yet waited, the signal is lost; if it has waited, it wakes and spins because the predicate is still false
+  - [ ] It is equivalent because Mesa semantics ensure correctness
+  - [ ] pthread_cond_signal will return EINVAL
+  - [ ] `second()` will proceed anyway since it was signaled
+  - why: CV signals have no memory; without the flag, a signal that arrives before the wait is dropped, and even if the wait is already pending, the woken thread will re-check the still-false predicate.
+
+- **MCQ:** To generalize the pattern to N threads executing in order, how many (ready flag, CV) pairs do you need?
+  - [x] N - 1 pairs, one between each consecutive pair of stages
+  - [ ] N pairs, one per thread
+  - [ ] 1 pair regardless of N
+  - [ ] 2 pairs regardless of N
+  - why: Each "finished-stage-k to start-stage-k+1" handoff needs its own ready flag and CV; there are N-1 such handoffs.
+
+- **MCQ:** Why is the ready flag still needed even though the mutex is held during signal?
+  - [x] The mutex only guards the signal call; it does not prevent the waiter from arriving AFTER the signal was issued
+  - [ ] The mutex cannot protect booleans
+  - [ ] pthread requires an explicit condition variable state
+  - [ ] The compiler may reorder signals past waits
+  - why: Signals are ephemeral — they wake whoever is already waiting. The flag persists in memory and is what a late-arriving waiter reads to skip blocking.
 
 ## Gotchas
 

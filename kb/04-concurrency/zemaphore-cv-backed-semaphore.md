@@ -87,11 +87,47 @@ Counting semaphore (MAX buffers, Zem initialized to MAX=2):
 
 ## Common exam questions
 
-- Why is a Zemaphore considered a "relaxed" implementation?
-- Explain how Zemaphore's while loop ensures correctness despite Mesa semantics.
-- Can you build a semaphore from only a condition variable (no mutex)? Why or why not?
-- Trace a Zemaphore-based producer-consumer.
-- What is the difference between Zemaphore semantics and true Linux semaphore semantics?
+- **MCQ:** Why does `Zem_wait` use a `while` loop around `pthread_cond_wait`?
+  - [x] Mesa semantics mean the predicate may be false when the thread reacquires the mutex
+  - [ ] `if` is a syntax error with condition variables
+  - [ ] `while` avoids spurious wakeups by disabling them
+  - [ ] `while` is required to decrement the semaphore value
+  - why: Another thread may have consumed the post between the signal and the waiter reacquiring the mutex; the while-loop re-checks before decrementing.
+
+- **MCQ:** Which primitive(s) does a Zemaphore use internally?
+  - [x] One mutex and one condition variable
+  - [ ] A single futex
+  - [ ] Two condition variables and no mutex
+  - [ ] Hardware CAS only
+  - why: The whole point is to show a semaphore can be built from mutex + CV; no atomic primitives are directly used.
+
+- **MCQ:** Can you build a semaphore from a condition variable alone, with no mutex?
+  - [x] No — the mutex is required to protect the value and avoid lost wakeups
+  - [ ] Yes — the CV already provides mutual exclusion
+  - [ ] Yes, if you use `pthread_cond_broadcast` instead of signal
+  - [ ] Yes — CVs internally embed a lock
+  - why: A CV does not protect any state; without a mutex, the value field and the wait predicate can race, and lost-wakeup bugs become inevitable.
+
+- **MCQ:** How does a Zemaphore differ from a classic Dijkstra semaphore's invariant?
+  - [x] Zemaphore `value` never goes negative; a classic semaphore's value can encode waiters as negative
+  - [ ] Zemaphore allows negative values; classic semaphores don't
+  - [ ] Zemaphore always uses broadcast; classic uses signal
+  - [ ] Zemaphore requires kernel support; classic doesn't
+  - why: In the Zemaphore, waiters park in the CV wait queue, not in a negative counter; each Zem_wait only decrements when value > 0.
+
+- **MCQ:** Initialized with value = 1, a Zemaphore behaves like:
+  - [x] A mutex
+  - [ ] A 1-slot producer/consumer signal
+  - [ ] A read-write lock
+  - [ ] A barrier
+  - why: First waiter decrements to 0, subsequent waiters block until a post increments to 1, exactly like a binary semaphore / mutex.
+
+- **MCQ:** In `Zem_post`, why is `pthread_cond_signal` called while the mutex is held?
+  - [x] Holding the mutex prevents a lost wakeup where a waiter has re-evaluated the predicate but not yet slept
+  - [ ] POSIX forbids signaling without the mutex
+  - [ ] Signal must atomically release the mutex
+  - [ ] Broadcasts require the mutex but signals don't
+  - why: Although signaling-under-lock can cause one extra context-switch on some systems, doing so ensures the signaled state and the predicate update are observed consistently by waiters.
 
 ## Gotchas
 

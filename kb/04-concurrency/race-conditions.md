@@ -57,11 +57,47 @@ Expected: 52; Actual: 51
 
 ## Common exam questions
 
-- Give an example of a race condition and explain why it occurs.
-- Why do high-level operations like `counter++` need atomic protection even though they look like single statements?
-- Describe the role of preemption (interrupts) in creating race conditions.
-- How would you prevent the race condition in the `counter++` example?
-- Can race conditions occur on a single-CPU system? Why or why not?
+- **MCQ:** Why does `counter++` produce a race condition despite looking like one operation?
+  - [x] It compiles to a load, modify, and store, each of which can be interrupted by another thread
+  - [ ] The `++` operator is undefined behavior in multithreaded code
+  - [ ] The compiler is allowed to duplicate it multiple times
+  - [ ] The value can exceed the integer range
+  - why: At the machine level it is three instructions; a context switch between load and store lets another thread read the same old value.
+
+- **MCQ:** Two threads each run `counter++` once starting from 50. What is the worst-case final value?
+  - [x] 51 (one update is lost)
+  - [ ] 50 (both updates are lost)
+  - [ ] 52 (correct)
+  - [ ] 100 (undefined)
+  - why: Both threads can load 50, both compute 51, and both store 51 — one increment is overwritten.
+
+- **MCQ:** Which statement best describes why race conditions are hard to reproduce in testing?
+  - [x] They depend on specific thread interleavings that may rarely occur on a given platform
+  - [ ] They only occur when `-O2` optimization is enabled
+  - [ ] They require at least 8 CPU cores
+  - [ ] They only manifest after millions of iterations
+  - why: The bug is latent in the code; whether it surfaces depends on the nondeterministic schedule chosen at runtime.
+
+- **MCQ:** Can a race condition occur on a single-CPU system?
+  - [x] Yes, because preemption can interrupt a thread mid-sequence and schedule another
+  - [ ] No, single-CPU systems execute one instruction at a time atomically
+  - [ ] Only if interrupts are disabled
+  - [ ] Only during I/O
+  - why: Multithreading on a single CPU interleaves threads via preemption; the load/modify/store sequence can still be split across a context switch.
+
+- **MCQ:** Which mechanism correctly eliminates the `counter++` race?
+  - [x] Protect the increment with a lock (or use an atomic add instruction)
+  - [ ] Declare `counter` as `volatile`
+  - [ ] Sleep between the read and write
+  - [ ] Use a local variable copy inside each thread
+  - why: Locks (or hardware atomic RMW) make the three-step sequence appear indivisible, which is exactly the missing property.
+
+- **MCQ:** Which of the following statements about race conditions is TRUE?
+  - [x] A program with a race can appear correct on many runs yet still be buggy
+  - [ ] Race conditions always cause crashes
+  - [ ] A race condition requires at least 3 threads to manifest
+  - [ ] A race condition can only occur on writes, never on reads mixed with writes
+  - why: Because races are timing-dependent, a "lucky" schedule may produce correct output; the bug is still present and will manifest eventually.
 
 ## Gotchas
 

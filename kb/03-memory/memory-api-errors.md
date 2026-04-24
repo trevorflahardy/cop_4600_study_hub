@@ -115,13 +115,48 @@ detect_uninitialized_read():
 
 ## Common exam questions
 
-- What is a memory leak, and how does it manifest in long-running programs?
-- Explain the difference between a memory leak and a dangling pointer.
-- Why is a double-free error dangerous to the allocator?
-- What happens when you dereference a dangling pointer?
-- How can you avoid dangling pointers after calling free()?
-- What is an uninitialized read, and why is it a security concern?
-- Identify the errors in: `int *p = malloc(100); int *q = p; free(p); *q = 5;`
+- **MCQ:** In `int *a = malloc(40); int *b = malloc(40); a = b; free(b);`, which error occurs?
+  - [x] Memory leak: the original block assigned to `a` is lost when `a` is overwritten.
+  - [ ] Double-free: both pointers alias the same block after assignment.
+  - [ ] Dangling pointer: `b` becomes invalid after the assignment.
+  - [ ] Uninitialized read: `a` is read before being initialized.
+  - why: Before reassignment, `a` is the only pointer to the first 40-byte block. Overwriting it without freeing leaks those bytes; only b's block is freed.
+- **MCQ:** What happens when you dereference a dangling pointer?
+  - [x] Undefined behavior: may read stale data, crash, or read another allocation's data.
+  - [ ] Always returns 0 because free zeros memory.
+  - [ ] The allocator automatically re-allocates the same block.
+  - [ ] The program terminates with a guaranteed segmentation fault.
+  - why: After free, the block may be reused or unmapped. The C standard leaves the outcome undefined; behavior depends on the allocator and OS.
+- **MCQ:** Why is calling `free(p)` twice on the same pointer dangerous?
+  - [x] It corrupts the allocator's free-list bookkeeping, causing crashes or heap corruption later.
+  - [ ] It causes a compiler error.
+  - [ ] It silently releases twice as much memory as expected.
+  - [ ] It triggers an uninitialized read.
+  - why: The allocator tracks free blocks with internal metadata. Freeing an already-free block confuses that bookkeeping and may corrupt future allocations.
+- **MCQ:** What is an uninitialized read?
+  - [x] Reading heap bytes from a block before any write to them, yielding garbage values.
+  - [ ] Reading a pointer before malloc returns.
+  - [ ] Reading memory after free corrupts it.
+  - [ ] Reading a stack local declared but not assigned.
+  - why: Fresh malloc'd memory contains whatever bits were previously in that region; reading before writing produces non-deterministic values.
+- **MCQ:** Identify the error in: `int *p = malloc(100); int *q = p; free(p); *q = 5;`
+  - [x] Dangling-pointer write: `q` aliases the freed block and `*q = 5` is undefined behavior.
+  - [ ] Memory leak: the block is never freed.
+  - [ ] Double-free: both `p` and `q` are freed.
+  - [ ] Uninitialized read: `q` is read before assignment.
+  - why: After `free(p)`, both `p` and `q` point to freed memory. Writing through `q` is a use-after-free, not a leak or double-free.
+- **MCQ:** Which is the most effective practice to prevent accidental dangling-pointer use after free?
+  - [x] Set the pointer to NULL immediately after calling free.
+  - [ ] Call free twice to mark the block.
+  - [ ] Zero the block with memset before free.
+  - [ ] Reassign the pointer to another valid block before free.
+  - why: Setting `p = NULL` converts silent use-after-free into an obvious NULL dereference. Double-free and pre-free memset do not help and can introduce new bugs.
+- **MCQ:** Why do memory leaks persist even after a local function returns?
+  - [x] The heap block lives until explicitly freed; losing the local pointer does not reclaim it.
+  - [ ] The OS frees all heap memory on function return.
+  - [ ] The compiler inserts an implicit free on scope exit.
+  - [ ] Stack unwinding runs destructors in C.
+  - why: C has no automatic cleanup for heap. Once the last pointer to a block is lost, the block remains allocated until program termination.
 
 ## Gotchas
 

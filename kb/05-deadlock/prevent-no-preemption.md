@@ -128,11 +128,42 @@ With different random delays, T2 finishes before T1 retries, breaking the symmet
 
 ## Common exam questions
 
-- What is the difference between deadlock and livelock? Which one does trylock() with no backoff cause?
-- Why does random backoff solve livelock?
-- What is the CPU waste of spinning with trylock() vs. blocking lock()?
-- Can exponential backoff guarantee eventual lock acquisition? Under what conditions?
-- Compare the performance of trylock + backoff vs. lock ordering by address.
+- **MCQ:** Which Coffman condition is broken by the trylock + release-and-retry pattern?
+  - [x] No preemption — a thread voluntarily releases (self-preempts) locks it already holds when it cannot acquire another.
+  - [ ] Mutual exclusion.
+  - [ ] Hold-and-wait.
+  - [ ] Circular wait.
+  - why: Traditional blocking locks cannot be taken away once held. Trylock lets the holder itself decide to give up existing locks if a new acquisition fails — that is self-preemption of the lock-holding condition.
+- **MCQ:** A naive trylock + goto top loop with no delay, run by two symmetric threads, most likely causes:
+  - [x] Livelock — both threads keep acquiring, failing, releasing, and retrying in lockstep.
+  - [ ] Classical deadlock with blocked threads.
+  - [ ] A segfault from double-unlock.
+  - [ ] Correct progress with no issues.
+  - why: Trylock prevents blocking, so no deadlock. But symmetric retry timing means both threads repeatedly collide and back out together, burning CPU without making progress.
+- **MCQ:** How does random (or exponential) backoff fix the livelock introduced by plain trylock retry?
+  - [x] It desynchronizes retries so that one thread wakes alone, acquires both locks, and finishes before the other retries.
+  - [ ] It promotes trylock to a blocking lock internally.
+  - [ ] It detects cycles in a resource-allocation graph.
+  - [ ] It enforces a global lock ordering.
+  - why: Livelock persists because retries align in time. Different random delays break the symmetry; probabilistically one thread retries first, gets both locks, and exits the contention before the other resumes.
+- **MCQ:** Compared with blocking `pthread_mutex_lock`, what is the CPU cost of trylock-based retry?
+  - [x] Higher — trylock keeps the thread runnable and spinning, wasting CPU; blocking locks park the thread until signaled.
+  - [ ] Lower — trylock uses no CPU because it is non-blocking.
+  - [ ] Identical — the scheduler treats them the same.
+  - [ ] Zero — trylock runs entirely in hardware.
+  - why: A parked thread consumes no CPU. A retry-looping thread is in the runnable state and executes each failed attempt, so CPU utilization is much higher even when no useful work is happening.
+- **MCQ:** How does trylock + backoff compare to address-ordered lock acquisition for preventing deadlock?
+  - [x] Address ordering deterministically prevents deadlock by breaking circular wait; trylock + backoff is probabilistic and can still burn CPU under contention.
+  - [ ] They are functionally identical.
+  - [ ] Trylock + backoff is strictly better in all cases.
+  - [ ] Address ordering causes livelock.
+  - why: Address ordering is a structural fix with no probabilistic retry. Trylock + backoff works but spends CPU on retries and depends on randomness to break symmetry, which is typically less efficient and less predictable.
+- **MCQ:** Which category of deadlock strategy does trylock + random backoff belong to?
+  - [x] Deadlock prevention (eliminates the no-preemption condition).
+  - [ ] Deadlock avoidance (banker-style scheduling).
+  - [ ] Deadlock detection and recovery.
+  - [ ] Mutual-exclusion elimination via CAS.
+  - why: It structurally removes one of the four Coffman conditions (no preemption) rather than scheduling around unsafe states or detecting cycles after the fact. CAS targets mutual exclusion, not no-preemption.
 
 ## Gotchas
 

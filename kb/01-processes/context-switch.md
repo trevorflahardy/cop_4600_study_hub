@@ -113,13 +113,54 @@ From Week2_2.pdf, the full Limited Direct Execution protocol with context switch
 
 ## Common exam questions
 
-- What registers must be saved during a context switch? Why?
-- Explain the steps of a context switch in xv6 (or a generic OS). Describe what swtch() does.
-- What is the difference in context switch cost between process switching and thread switching? Why?
-- How does a timer interrupt trigger a context switch? Sketch the sequence of events.
-- What is TLB invalidation and why does it happen during a process context switch?
-- Why must the program counter and stack pointer be saved? What would happen if they weren't?
-- Draw a timeline showing Process A running, a timer interrupt, a context switch to Process B, and Process B running.
+- **MCQ:** During a context switch in xv6, which pieces of state does swtch() save to the current process's struct context?
+  - [x] Callee-saved general-purpose registers, the program counter (eip), and the stack pointer (esp)
+  - [ ] Only the program counter, because everything else is in memory
+  - [ ] All CPU state including floating-point and segment registers
+  - [ ] Only user-mode registers; kernel registers are discarded
+  - why: xv6's lightweight swtch() saves eip, esp, and the callee-saved registers (ebx, ecx, edx, esi, edi, ebp). Full state including FP registers is only saved on traps that change privilege level.
+
+- **MCQ:** Why is a thread-to-thread context switch within a single process cheaper than a process-to-process context switch?
+  - [x] Threads share the same page table, so no page-table swap or TLB invalidation is needed.
+  - [ ] Threads do not have their own registers, so nothing needs to be saved.
+  - [ ] Threads always run in kernel mode, skipping the user/kernel transition.
+  - [ ] The scheduler skips the run queue when switching threads.
+  - why: Threads in the same process share an address space and page table, so the TLB stays valid and the expensive page-table switch is avoided.
+
+- **MCQ:** A timer interrupt fires while a user process is running. What happens first?
+  - [x] The hardware switches to kernel mode, saves the interrupted registers, and jumps to the pre-installed timer trap handler.
+  - [ ] The OS immediately frees the process's PCB.
+  - [ ] The scheduler selects the next process before any registers are saved.
+  - [ ] The process's user stack is copied into the kernel.
+  - why: Timer interrupts use the Limited Direct Execution trap table installed at boot; hardware saves minimal state and jumps to the kernel handler, which then decides whether to context-switch.
+
+- **MCQ:** What is the dominant cost of a process-to-process context switch on modern hardware?
+  - [x] TLB invalidation and cache pollution that slow future memory accesses
+  - [ ] The dozen or so register loads and stores in swtch()
+  - [ ] The time spent updating the process's PID number
+  - [ ] Recompiling the user program on the fly
+  - why: Saving/restoring registers is a handful of cycles; flushed TLB entries and cold caches cost many more cycles as the new process's translations and data are reloaded from memory.
+
+- **MCQ:** Why must the program counter be saved when a process is descheduled?
+  - [x] So that when the process resumes, execution continues at the exact instruction it left off.
+  - [ ] Because the scheduler needs the PC to compute process priority.
+  - [ ] So that the OS can count how many instructions each process ran.
+  - [ ] To keep the PCB the same size as in older systems.
+  - why: Without the saved PC, there would be no way to know where to resume the process; it is the essential pointer into the program's instruction stream.
+
+- **MCQ:** Which event is NOT a typical trigger for a context switch?
+  - [x] A user process performing a purely arithmetic computation with no syscall
+  - [ ] A timer interrupt firing after the process's time slice
+  - [ ] The process making a blocking read syscall
+  - [ ] The process explicitly calling yield()
+  - why: Pure user-mode computation does not transfer control to the kernel, so it alone cannot cause a context switch. Timer interrupts, blocking syscalls, and yield all enter the kernel and can trigger scheduling.
+
+- **MCQ:** Which best describes TLB invalidation on a process context switch?
+  - [x] Cached virtual-to-physical translations for the old address space are dropped so the new process does not use stale mappings.
+  - [ ] The TLB is physically powered off to save energy.
+  - [ ] The TLB is resized to match the new process's page table.
+  - [ ] Kernel mappings are erased and reloaded from disk.
+  - why: Because each process has its own page table, entries cached from the old process must be invalidated (or tagged with an ASID) to prevent the new process from translating addresses incorrectly.
 
 ## Gotchas
 

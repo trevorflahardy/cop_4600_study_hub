@@ -130,11 +130,47 @@ Reader preference scenario (3 readers, 1 writer):
 
 ## Common exam questions
 
-- Explain the roles of the first reader and last reader.
-- What is the difference between reader preference and writer preference?
-- Can readers starve writers with reader preference? When?
-- Trace a scenario with 2 readers, 1 writer, and another reader arriving.
-- Design a reader-writer lock using only mutexes and condition variables (no semaphores).
+- **MCQ:** Which concurrency rule does a reader-writer lock enforce?
+  - [x] Many readers OR one writer; never readers and a writer simultaneously
+  - [ ] Exactly one reader and one writer at a time
+  - [ ] One reader and many writers
+  - [ ] Any combination of readers and writers, bounded by CPU count
+  - why: Readers share; writers are exclusive. Mixing a reader with a writer would expose partial writes.
+
+- **MCQ:** In the reader-preference implementation, what does the first reader do?
+  - [x] Call `sem_wait(&writelock)` to block any writer while readers are active
+  - [ ] Call `sem_post(&writelock)` to wake the waiting writer
+  - [ ] Acquire `lock` and never release it
+  - [ ] Increment a writer-waiting counter
+  - why: Only the first reader needs to take writelock; subsequent readers just bump the count under `lock`.
+
+- **MCQ:** Why does only the LAST reader call `sem_post(&writelock)`?
+  - [x] Releasing it earlier would let a writer enter while other readers are still active
+  - [ ] Every reader must post to keep the semaphore balanced
+  - [ ] Only the last reader can decrement the counter
+  - [ ] Posting wakes all readers, not writers
+  - why: Writelock must stay held for the entire lifetime of any reader; posting before all readers finish would violate writer exclusion.
+
+- **MCQ:** What starvation scenario is intrinsic to reader preference?
+  - [x] A continuous stream of arriving readers can block a waiting writer indefinitely
+  - [ ] Readers can block each other on `writelock`
+  - [ ] Writers can starve other writers
+  - [ ] The last reader can deadlock with the first writer
+  - why: As long as readcount never drops to zero (new readers keep arriving), the writer never gets `writelock`.
+
+- **MCQ:** Why is `sem_t lock` needed in addition to `writelock`?
+  - [x] It protects the `readers` counter from concurrent increment/decrement
+  - [ ] It provides exclusive access for the writer
+  - [ ] It is used to signal condition variables
+  - [ ] It is held for the duration of every reader's critical section
+  - why: Without `lock`, two readers incrementing `readers` could race, corrupting the counter and the first-reader / last-reader logic.
+
+- **MCQ:** Compared to a plain mutex, a reader-writer lock is only a win when:
+  - [x] Reads are frequent, long, and writes are rare
+  - [ ] Writes dominate the workload
+  - [ ] All critical sections are equally short
+  - [ ] There is exactly one thread
+  - why: The extra bookkeeping (counter, two semaphores) only pays off when reads can overlap; otherwise a plain mutex is faster.
 
 ## Gotchas
 

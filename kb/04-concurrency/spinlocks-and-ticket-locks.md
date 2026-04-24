@@ -81,11 +81,47 @@ Ticket lock with 3 threads competing:
 
 ## Common exam questions
 
-- Explain why a TAS-based spinlock can cause starvation.
-- How does a ticket lock guarantee FIFO fairness?
-- Why is fetch-and-add essential for ticket lock implementation?
-- Compare the memory access patterns of TAS spinlock vs. ticket lock.
-- What is the main inefficiency of all spinlocks, regardless of implementation?
+- **MCQ:** What does a plain TAS-based spinlock fail to guarantee?
+  - [x] Fairness / bounded waiting — a thread can be repeatedly overtaken
+  - [ ] Mutual exclusion
+  - [ ] Progress when the lock is free
+  - [ ] Atomicity of the TAS instruction
+  - why: TAS just lets whichever thread wins the race grab the flag next; an unlucky thread can lose forever under contention.
+
+- **MCQ:** Which atomic instruction is central to a ticket lock?
+  - [x] Fetch-And-Add (to hand out a unique ticket number)
+  - [ ] Test-And-Set (to flip a flag)
+  - [ ] Compare-And-Swap (to swap the head pointer)
+  - [ ] Load-Linked only (no store needed)
+  - why: FetchAndAdd atomically returns the old value and increments, letting each thread grab a distinct, monotonically increasing ticket.
+
+- **MCQ:** How does a ticket lock ensure FIFO fairness?
+  - [x] A waiter spins until `turn == myturn`, so acquisitions happen in ticket order
+  - [ ] By disabling interrupts while waiting
+  - [ ] By maintaining a linked list of waiters
+  - [ ] By using a separate queue lock per thread
+  - why: The global `turn` counter advances one at a time; thread with the next matching ticket is the one that proceeds.
+
+- **MCQ:** What does `unlock` do in a ticket lock?
+  - [x] Atomically increment `turn`, letting the next ticket holder proceed
+  - [ ] Store 0 into `turn` to reset the sequence
+  - [ ] TAS(flag, 0) to clear the held bit
+  - [ ] Post on a semaphore to wake one waiter
+  - why: Incrementing turn is the hand-off; the waiter that holds turn-value-equal-to-myturn exits its spin.
+
+- **MCQ:** Which is the main drawback of ALL spinlocks regardless of fairness?
+  - [x] Waiters burn CPU cycles while spinning, wasting work
+  - [ ] They require kernel system calls on every acquire
+  - [ ] They require two atomic operations per acquire
+  - [ ] They cannot coexist with condition variables
+  - why: Spinning is the defining cost; whether TAS or ticket, a contended spinlock keeps the waiter burning a core.
+
+- **MCQ:** On an oversubscribed system (more runnable threads than CPUs), why are spinlocks especially bad?
+  - [x] A waiter spins while the lock holder may be off-CPU, so the spin cannot possibly succeed soon
+  - [ ] The OS cannot schedule spinning threads
+  - [ ] TAS instructions fail under oversubscription
+  - [ ] The ticket counter overflows faster
+  - why: Spinning is only useful when the holder is actively running on another core; if the holder is descheduled, waiters burn their quanta uselessly.
 
 ## Gotchas
 

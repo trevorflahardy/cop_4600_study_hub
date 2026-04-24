@@ -97,11 +97,47 @@ Concurrent independence scenario:
 
 ## Common exam questions
 
-- Why does a concurrent queue use two separate locks instead of one?
-- Explain the role of the sentinel node in simplifying queue operations.
-- How can a producer and consumer operate concurrently with separate locks?
-- What happens if dequeue() is called on an empty queue?
-- Design a bounded concurrent queue that blocks producers when full.
+- **MCQ:** Why does the Michael-Scott style concurrent queue use two separate locks?
+  - [x] So one producer and one consumer can proceed in parallel on different ends
+  - [ ] To satisfy the mutual-exclusion requirement, which demands two locks
+  - [ ] To allow a single thread to enqueue and dequeue atomically
+  - [ ] Because tail and head require different memory-ordering semantics
+  - why: Separate head and tail locks let enqueue and dequeue touch disjoint pointers concurrently; one lock would serialize them.
+
+- **MCQ:** What is the role of the sentinel (dummy) node?
+  - [x] It keeps `head` and `tail` non-null so enqueue/dequeue paths never special-case an empty list
+  - [ ] It stores the most recently dequeued value for debugging
+  - [ ] It guarantees FIFO ordering under contention
+  - [ ] It acts as the lock for the whole queue
+  - why: With a sentinel, an empty queue still has `head == tail` pointing at a real node, so no enqueue/dequeue path needs "if head is NULL" logic.
+
+- **MCQ:** With the two-lock queue, how does `dequeue` detect an empty queue?
+  - [x] By checking whether the sentinel's `next` pointer is NULL while holding `head_lock`
+  - [ ] By comparing `head` and `tail` without any locks
+  - [ ] By calling `sem_trywait` on an associated semaphore
+  - [ ] By blocking on a condition variable until an item exists
+  - why: The pseudocode reads `old_head->next`; if NULL, the queue is empty and dequeue returns -1.
+
+- **MCQ:** What must `enqueue` do before releasing `tail_lock`?
+  - [x] Link the new node into `tail->next` and advance `tail`
+  - [ ] Also acquire `head_lock` to update the sentinel
+  - [ ] Broadcast on a condition variable to wake consumers
+  - [ ] Free the previous tail node
+  - why: The enqueue critical section splices the new node after the current tail and then moves `tail` forward, both under `tail_lock`.
+
+- **MCQ:** A consumer calls dequeue on an empty queue. What happens in the basic (non-blocking) design shown?
+  - [x] It returns -1 immediately; it does not block the caller
+  - [ ] It busy-waits on `head->next` until an item arrives
+  - [ ] It invokes `pthread_cond_wait` on a paired CV
+  - [ ] It releases both locks and spawns a helper thread
+  - why: The pseudocode returns -1 on empty; blocking behavior requires pairing the queue with a condition variable or semaphore.
+
+- **MCQ:** Why is it risky to acquire both `head_lock` and `tail_lock` at once in application code?
+  - [x] Inconsistent acquisition order across code paths can cause deadlock
+  - [ ] The CPU only supports holding one lock per thread
+  - [ ] The queue automatically deadlocks whenever two locks are held
+  - [ ] It violates mutual exclusion because both locks protect the sentinel
+  - why: Nested lock acquisition must follow a fixed global order; otherwise two threads can each hold one and wait on the other.
 
 ## Gotchas
 

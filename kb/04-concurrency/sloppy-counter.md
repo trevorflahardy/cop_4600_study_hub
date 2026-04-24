@@ -108,11 +108,47 @@ But if get_value only reads global without locals:
 
 ## Common exam questions
 
-- Why is a sloppy counter useful for high-concurrency systems?
-- What is the trade-off between THRESHOLD and accuracy?
-- How does get_value() ensure it returns a consistent count?
-- Explain the per-CPU locality benefit of sloppy counters.
-- Can the sloppy counter ever return a value less than a previous get_value() call? Why or why not?
+- **MCQ:** What is the main reason a sloppy counter scales better than a single lock-protected counter?
+  - [x] Per-CPU local counters let most increments avoid the global lock
+  - [ ] It uses lock-free CAS, eliminating locking entirely
+  - [ ] It rounds increments to the nearest power of two for speed
+  - [ ] It disables interrupts during counting
+  - why: Each CPU mostly hits its own local counter and local lock; the global lock is only touched every THRESHOLD increments.
+
+- **MCQ:** What is the effect of increasing the THRESHOLD S?
+  - [x] Fewer global-lock acquisitions (higher throughput) at the cost of staler global values
+  - [ ] More accurate global values at the cost of throughput
+  - [ ] Fewer total increments because some are dropped
+  - [ ] Guaranteed wait-free progress
+  - why: Larger S means local counters accumulate longer before flushing, reducing global-lock traffic but allowing the global view to lag by up to S per CPU.
+
+- **MCQ:** Why must `get_value` read both the global AND the per-CPU local counters?
+  - [x] Unflushed increments live in the locals; reading only global gives a stale answer
+  - [ ] The global counter can be corrupted without the locals
+  - [ ] Reading both is required by POSIX
+  - [ ] The locals are more up-to-date than the global so the global is ignored
+  - why: An increment first updates its local, and only flushes to global when local hits S; any value still sitting in a local must be summed in.
+
+- **MCQ:** With 4 CPUs and THRESHOLD=3, what is the maximum divergence between a `get_value` that reads only `global` and the true count?
+  - [x] Up to 4 * (3-1) = 8 increments may be unflushed
+  - [ ] Exactly 3 increments
+  - [ ] Exactly 12 increments
+  - [ ] Zero; global is always exact
+  - why: Each local can hold up to S-1 un-flushed increments; across N CPUs that is N*(S-1) hidden updates.
+
+- **MCQ:** When does a per-CPU local counter flush to the global?
+  - [x] When the local reaches the threshold S
+  - [ ] On every increment, under a write-through policy
+  - [ ] When `get_value` is called
+  - [ ] Only when the CPU is about to context-switch
+  - why: The code compares `local >= THRESHOLD` on each increment, and only then grabs the global lock to add and reset.
+
+- **MCQ:** Which workload is LEAST appropriate for a sloppy counter?
+  - [x] Enforcing a strict limit where exact counts are required (e.g., exactly 100 allocations allowed)
+  - [ ] Aggregate statistics with many concurrent writers
+  - [ ] Per-CPU performance counters
+  - [ ] Approximate reference counts for cache hits
+  - why: Sloppy counters deliberately trade accuracy for throughput; hard limits that depend on exact counts will be violated because of unflushed locals.
 
 ## Gotchas
 

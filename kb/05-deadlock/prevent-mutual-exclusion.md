@@ -109,12 +109,42 @@ No locks are acquired. Both threads eventually succeed, and counter = 2 (correct
 
 ## Common exam questions
 
-- What is the difference between lock-based mutual exclusion and lock-free CAS?
-- Can deadlock occur when using CAS-based synchronization? Why or why not?
-- What is the ABA problem in lock-free programming? (threads see A, do work, see A again, but it's a different A)
-- Write a simple lock-free queue or stack using CAS.
-- When does a thread retry in the loop with CAS, and why?
-- Compare the performance of lock-free vs. lock-based for low-contention vs. high-contention scenarios.
+- **MCQ:** Which Coffman condition does CAS-based lock-free synchronization eliminate?
+  - [x] Mutual exclusion — no thread ever holds exclusive control of a critical section; updates are single atomic instructions.
+  - [ ] Hold-and-wait.
+  - [ ] No preemption.
+  - [ ] Circular wait.
+  - why: CAS atomically compares and swaps a single memory word. There is no locked region a thread "holds." Without mutual exclusion over a region, deadlock (which requires exclusive holding) cannot occur.
+- **MCQ:** Can classical deadlock occur with purely CAS-based code?
+  - [x] No — without locks there is nothing to hold, so the deadlock conditions cannot all hold.
+  - [ ] Yes — CAS deadlocks on contention.
+  - [ ] Yes — CAS introduces a new hold-and-wait pattern.
+  - [ ] Yes — CAS always requires a lock internally.
+  - why: Deadlock requires a thread to hold one resource while waiting for another. CAS neither holds anything between instructions nor waits — it either succeeds or fails and retries. However, livelock (symmetric retries) is still possible.
+- **MCQ:** A CAS-based insert does `do { n->next = head; } while (!CAS(&head, n->next, n));`. When does the loop retry?
+  - [x] When another thread changed `head` between the load and the CAS, so the expected value no longer matches.
+  - [ ] Every iteration, regardless of state.
+  - [ ] Only when the thread is preempted.
+  - [ ] Only when the list is empty.
+  - why: CAS succeeds only if the current value of `head` still equals the previously loaded `n->next`. If another thread inserted in between, head changed and CAS returns false, so the loop retries with the new head.
+- **MCQ:** What is the ABA problem in lock-free code?
+  - [x] A value changes from A to B and back to A, so CAS sees A and succeeds, even though the structure was modified in between.
+  - [ ] Two threads are stuck spinning on each other forever.
+  - [ ] A thread acquires lock A, then lock B, then lock A again.
+  - [ ] Two threads acquire locks in opposite orders.
+  - why: CAS only checks the value, not the history. If the value is restored to its original, CAS cannot detect that intermediate modifications occurred, which can corrupt linked data structures. Fix: versioned pointers or double-word CAS.
+- **MCQ:** When is lock-free CAS likely to outperform mutexes?
+  - [x] Under high contention on short critical sections, where mutex overhead and blocking dominate.
+  - [ ] Under very low contention on long critical sections.
+  - [ ] Only on single-core systems.
+  - [ ] Only when using recursive mutexes.
+  - why: Mutex lock/unlock has a fixed overhead and can park threads. For brief updates under heavy contention, CAS retries are cheaper than repeated blocking. For long or rarely contended sections, mutexes are simpler and often faster.
+- **MCQ:** Is livelock possible with CAS-based code?
+  - [x] Yes — threads can repeatedly fail and retry CAS in symmetric patterns, spinning without progress unless backoff is added.
+  - [ ] No — CAS eliminates all concurrency bugs.
+  - [ ] No — CAS converts livelock into deadlock.
+  - [ ] Only on single-core systems.
+  - why: Although CAS rules out deadlock (no held locks), multiple threads colliding on the same word can all CAS-fail and retry together. Random backoff on failed CAS prevents this, just as it prevents trylock-based livelock.
 
 ## Gotchas
 

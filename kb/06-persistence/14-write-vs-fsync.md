@@ -215,13 +215,54 @@ Both the data AND metadata must reach disk for consistency.
 
 ## Common exam questions
 
-1. What does `write()` return before `fsync()` is called? Can the data be lost?
-2. Explain the difference between write-back and write-through caching.
-3. A process writes 100 KB to a file without calling `fsync()`, then crashes. Is the data on disk?
-4. How long does `write()` typically take? How long does `fsync()`?
-5. A database writes a transaction log entry, then calls `fsync()`. Why is this important?
-6. Compare performance: `fsync()` after each write vs. `fsync()` after 1000 writes.
-7. After `fsync()` returns, is the file safe from crashes?
+- **MCQ:** `write()` returns successfully. What does this guarantee about disk persistence?
+  - [x] Nothing; the data may still be buffered in the page cache
+  - [ ] Data is durably on disk
+  - [ ] Data is on disk and a backup copy has been made
+  - [ ] The file has been fsync'd automatically
+  - why: Default write-back caching returns after copying to DRAM; durability requires an explicit `fsync()` or a kernel flush.
+
+- **MCQ:** A process writes 100 KB to a file without calling `fsync()`, then the machine crashes. What happens to the data?
+  - [x] It is likely lost because it was still in the page cache
+  - [ ] It is always on disk because write() returned
+  - [ ] The filesystem auto-recovers it on reboot
+  - [ ] The data is partially corrupted but readable
+  - why: Without fsync, no guarantee exists that the dirty pages reached disk before the crash.
+
+- **MCQ:** Typical latency ranges for write() vs. fsync() on a modern HDD-backed file system?
+  - [x] write() ~microseconds (memcpy), fsync() ~milliseconds (disk I/O)
+  - [ ] write() ~seconds, fsync() instantaneous
+  - [ ] Both ~1 ms
+  - [ ] write() ~100 ms, fsync() ~1 us
+  - why: Buffered writes are just memory copies; fsync must wait for disk I/O to complete, which is orders of magnitude slower.
+
+- **MCQ:** Why does a database call `fsync()` after appending a transaction log record?
+  - [x] To guarantee the log record is on stable storage before acknowledging the transaction
+  - [ ] Because write() does not write any bytes to memory
+  - [ ] To speed up the next write
+  - [ ] To update the atime field
+  - why: Write-ahead logging only protects against crashes if the log record is durable before the commit is reported; fsync enforces that ordering.
+
+- **MCQ:** Compare `fsync()` per-write vs. one `fsync()` after 1000 writes for 10 ms disk latency.
+  - [x] Per-write: ~10 seconds; batched: ~10 ms; batched wins
+  - [ ] Both take the same time
+  - [ ] Per-write is faster due to locality
+  - [ ] Batched loses data; per-write is safer
+  - why: Each fsync pays a full round-trip; batching amortizes one disk flush over many writes, slashing end-to-end latency.
+
+- **MCQ:** Which statement correctly describes the write-back page cache policy?
+  - [x] write() copies data to memory and returns immediately; dirty pages are flushed later
+  - [ ] Every write synchronously hits disk before returning
+  - [ ] write() writes to a log and never to the file
+  - [ ] Dirty pages are discarded after 1 second
+  - why: Write-back improves throughput by deferring I/O, at the cost of a durability window that fsync/sync can close.
+
+- **MCQ:** After `fsync(fd)` returns successfully, how durable is the file?
+  - [x] Both data and metadata for that file are on disk, surviving any power loss thereafter
+  - [ ] Only data is on disk; metadata is still pending
+  - [ ] Only metadata is on disk; data remains cached
+  - [ ] Durability depends on the OS scheduler
+  - why: fsync flushes both data pages and associated inode metadata, and waits for hardware acknowledgment before returning.
 
 ## Gotchas
 

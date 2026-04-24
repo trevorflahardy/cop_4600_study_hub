@@ -103,11 +103,42 @@ Result: Lock acquisition is serialized. No deadlock.
 
 ## Common exam questions
 
-- Explain why the prevention lock breaks the hold-and-wait condition.
-- What is the main downside of the prevention lock approach?
-- Can a thread still deadlock if it tries to acquire the prevention lock while already holding another lock?
-- How does the prevention lock approach compare to lock ordering by address?
-- In what order should the prevention lock be acquired relative to other locks?
+- **MCQ:** Which Coffman condition is broken by acquiring all required locks atomically under a global prevention lock?
+  - [x] Hold-and-wait.
+  - [ ] Mutual exclusion.
+  - [ ] No preemption.
+  - [ ] Circular wait.
+  - why: After the atomic acquisition section, a thread either holds every resource it needs or holds none of them. It never holds one lock while waiting for another, which is precisely the hold-and-wait condition.
+- **MCQ:** Why does the prevention lock approach work even when threads need the same pair of locks in opposite orders?
+  - [x] Lock acquisition is serialized by the prevention lock, so only one thread at a time can be in the middle of acquiring its set.
+  - [ ] It uses CAS to eliminate mutual exclusion.
+  - [ ] It relies on random backoff.
+  - [ ] Threads never actually hold locks; they simulate holding.
+  - why: The prevention lock gates entry into the acquisition phase. Only one thread acquires its full set at a time, so no interleaving can produce a cycle. Other threads wait on the prevention lock, not on partially-held resource locks.
+- **MCQ:** What is the main performance cost of the prevention-lock approach?
+  - [x] It serializes lock acquisition across the whole system, sharply reducing concurrency.
+  - [ ] It requires exponential-time cycle detection.
+  - [ ] It introduces livelock.
+  - [ ] It requires hardware CAS support.
+  - why: Because only one thread at a time can acquire any set of locks, threads that would otherwise operate independently must queue on the prevention lock. This creates a global bottleneck.
+- **MCQ:** What must a thread know before entering the prevention-lock critical section?
+  - [x] The complete set of locks it will need before acquiring any of them.
+  - [ ] Nothing — it can acquire locks on demand.
+  - [ ] Only the first lock; subsequent locks can be discovered dynamically.
+  - [ ] Only the CPU it will run on.
+  - why: The entire point of "all at once" acquisition is that no additional locks are grabbed after the prevention lock is released. If the code discovers it needs more locks mid-critical-section, the technique fails.
+- **MCQ:** How does the prevention-lock approach compare to address-ordered lock acquisition?
+  - [x] Prevention lock requires knowing all locks up front and serializes acquisition; address ordering allows concurrent acquisition as long as the global order is respected.
+  - [ ] They are identical.
+  - [ ] Address ordering causes livelock; prevention lock causes deadlock.
+  - [ ] Prevention lock breaks circular wait; address ordering breaks hold-and-wait.
+  - why: Both prevent deadlock, but they break different conditions (hold-and-wait vs. circular wait). Address ordering is typically preferred because it permits concurrent acquisition: two threads needing disjoint locks can proceed in parallel.
+- **MCQ:** Which category does the prevention-lock approach fall under?
+  - [x] Deadlock prevention (structurally removes the hold-and-wait condition).
+  - [ ] Deadlock avoidance (banker-style safe scheduling).
+  - [ ] Deadlock detection and recovery.
+  - [ ] Livelock mitigation.
+  - why: It eliminates one of the four Coffman conditions by construction, which is the definition of prevention. Avoidance would instead permit all four conditions and schedule around unsafe states.
 
 ## Gotchas
 

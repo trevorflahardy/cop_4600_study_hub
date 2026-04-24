@@ -238,13 +238,54 @@ Both processes share the same inode, but have independent offsets and open file 
 
 ## Common exam questions
 
-1. What is stored in the file descriptor table vs. the open file table vs. the inode cache?
-2. If two processes call `open("foo.txt")`, do they get the same file descriptor number? Do they share the same offset?
-3. What does `dup(fd)` do? How many FD table entries point to the OFE after calling `dup(fd)` twice?
-4. A process calls `dup(3)` and gets fd 4. They call `read(4, buf, 100)` and then `read(3, buf, 100)`. Which should succeed?
-5. When is a file actually deleted from disk? Is it when `unlink()` is called, or later?
-6. Two processes open the same file. One closes its FD. Does the inode get deleted?
-7. Explain why file offset is stored in the open file table, not the inode or FD table.
+- **MCQ:** Where is the current read/write offset of an open file stored?
+  - [x] In the system-wide open file table entry
+  - [ ] In the per-process file descriptor table
+  - [ ] In the inode on disk
+  - [ ] In the process's PCB only
+  - why: Storing the offset in the OFE lets two processes have independent offsets for the same file while still letting dup()'d FDs share one offset.
+
+- **MCQ:** Process A calls `open("foo")` and process B independently calls `open("foo")`. Which statement is true?
+  - [x] Each gets its own open file table entry with its own offset, but both share the same inode
+  - [ ] They share the same FD number and offset
+  - [ ] They share one open file entry with ref_count=2
+  - [ ] Only one of them succeeds
+  - why: Independent `open()` calls allocate separate OFEs; the offset in each is advanced independently by reads/writes.
+
+- **MCQ:** A process runs `fd1 = open("f")`, reads 100 bytes, then `fd2 = dup(fd1)` and reads 50 bytes from fd2. What is the offset seen through fd1 afterward?
+  - [x] 150 bytes (fd1 and fd2 share the same OFE)
+  - [ ] 100 bytes (fd1 still has its own offset)
+  - [ ] 50 bytes (dup resets the offset)
+  - [ ] 0 bytes
+  - why: `dup()` creates a new FD pointing to the same OFE; reads through either FD advance the shared offset.
+
+- **MCQ:** A process calls `dup(3)` twice. How many FD table entries now point at the OFE originally referenced by fd 3?
+  - [x] 3
+  - [ ] 2
+  - [ ] 1
+  - [ ] 4
+  - why: The original plus two new FDs all reference the same OFE; the OFE's ref_count becomes 3.
+
+- **MCQ:** When is a file's inode actually freed on disk?
+  - [x] When nlink reaches 0 AND no open file descriptors still reference the inode
+  - [ ] Immediately when `unlink()` is called
+  - [ ] Only after the next reboot
+  - [ ] Only if `fsync()` is called
+  - why: Both the directory-entry count (nlink) and the in-memory reference count must hit zero; until then the inode lingers.
+
+- **MCQ:** Which table is per-process rather than system-wide?
+  - [x] The file descriptor table
+  - [ ] The open file table
+  - [ ] The in-memory inode cache
+  - [ ] The superblock
+  - why: FD numbers 0-1023 are private to each process; the OFE and inode cache are kernel-global.
+
+- **MCQ:** Opening with O_APPEND sets what initial offset?
+  - [x] The file's current size, so every write lands at end-of-file
+  - [ ] 0
+  - [ ] The previous OFE's offset
+  - [ ] Undefined; writes may go anywhere
+  - why: O_APPEND tells the kernel to position the offset at EOF so each write extends the file atomically.
 
 ## Gotchas
 

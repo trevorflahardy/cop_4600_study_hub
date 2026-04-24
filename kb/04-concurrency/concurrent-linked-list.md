@@ -132,11 +132,47 @@ Initial: head → [1] → [3] → NULL
 
 ## Common exam questions
 
-- Compare coarse-grained and fine-grained locking for linked lists.
-- What is hand-over-hand locking and why is it necessary?
-- How do you handle the head node specially in a fine-grained linked list?
-- Can a concurrent linked list operation ever be interrupted mid-execution? Why should it not be?
-- Describe a race condition that would occur without fine-grained locking during concurrent insertions.
+- **MCQ:** What is the primary disadvantage of coarse-grained locking on a linked list?
+  - [x] The single lock serializes all operations, limiting concurrency
+  - [ ] It cannot correctly protect the list from race conditions
+  - [ ] It requires hardware atomic instructions that may be unavailable
+  - [ ] It makes delete operations impossible to implement
+  - why: One lock protects the whole list, so only one thread can traverse or modify at a time even if they touch different nodes.
+
+- **MCQ:** What is hand-over-hand (lock coupling) locking?
+  - [x] Hold the current node's lock while acquiring the next node's lock before releasing the current one
+  - [ ] Acquire locks on every node in the list before starting traversal
+  - [ ] Release a node's lock before acquiring the next, to avoid deadlock
+  - [ ] Use a single global lock but hand it off between threads each step
+  - why: Overlapping the acquisition prevents another thread from splicing out or freeing the next node mid-traversal.
+
+- **MCQ:** Without synchronization, what race condition can occur during two concurrent `insert` calls at the head?
+  - [x] One thread's new node may overwrite the other's `head` assignment, losing an insert
+  - [ ] Both inserts succeed but are installed at the tail instead of the head
+  - [ ] The list becomes circular due to reordered pointer writes
+  - [ ] malloc will return the same address twice
+  - why: Both threads read the same `head`, set their `new->next` to it, and the last writer to `head` overwrites the first, losing one node.
+
+- **MCQ:** In fine-grained locking, why does the head node often need a separate head lock rather than just its own per-node lock?
+  - [x] There is no previous node whose lock can guard the head pointer itself
+  - [ ] Head nodes use more memory than other nodes
+  - [ ] The head is always at a lower virtual address
+  - [ ] pthread requires at least two locks per data structure
+  - why: Every other node is reached through a predecessor whose lock can protect the pointer; the head pointer lives in the list struct and needs its own lock or sentinel.
+
+- **MCQ:** Why must a critical section in `list_delete` hold the lock across both the pointer rewire and the `free`?
+  - [x] Another thread could be traversing into the node being freed, causing a use-after-free
+  - [ ] `free` itself is not thread-safe under glibc
+  - [ ] The lock is required to keep `curr->next` in cache
+  - [ ] Deletion counts as a write and all writes require locks for atomicity
+  - why: Releasing the lock before `free` lets a concurrent traversal dereference a pointer to memory that has just been returned to the allocator.
+
+- **MCQ:** Which statement about fine-grained locking scalability is accurate?
+  - [x] Lock-acquire overhead and cache-coherency traffic eventually limit its benefit
+  - [ ] It always outperforms coarse-grained locking regardless of contention
+  - [ ] It eliminates the possibility of deadlock entirely
+  - [ ] It requires only one atomic instruction per operation
+  - why: Even with one lock per node, each acquire/release pings cache lines between cores, so scaling is bounded by coherence traffic, not just logical contention.
 
 ## Gotchas
 

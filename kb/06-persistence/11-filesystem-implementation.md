@@ -227,13 +227,54 @@ After:  00100000  (only bit 5 set)
 
 ## Common exam questions
 
-1. In a filesystem with superblock at block 0, inode bitmap at block 1, data bitmap at block 2, and inode table starting at block 3, where is inode 20 located?
-2. Why are bitmaps more efficient than linked lists for tracking free space?
-3. To create a file, how many disk I/Os are minimally required (assuming metadata is cached)?
-4. If the inode bitmap is corrupted, can the filesystem still boot? Can it still function?
-5. Why are directories stored as files with a special format, rather than as a separate data structure?
-6. How many inodes can fit in a 4 KB block if each inode is 256 bytes?
-7. When allocating a new data block, which bitmap must be consulted and updated?
+- **MCQ:** Superblock at block 0, inode bitmap at 1, data bitmap at 2, inode table at block 3, 4 KB blocks, 256-byte inodes. Where is inode 20?
+  - [x] Block 4, offset 1024 (inode 16 is the first in block 4)
+  - [ ] Block 3, offset 1280
+  - [ ] Block 5, offset 0
+  - [ ] Block 23, offset 0
+  - why: 16 inodes per block, 20/16 = 1 -> block 3+1 = 4; within that block, (20%16)*256 = 4*256 = 1024 bytes in.
+
+- **MCQ:** Why are bitmaps preferred over linked free-lists for tracking free inodes/blocks?
+  - [x] Constant-time scans to find free bits and compact representation (1 bit per entity)
+  - [ ] Bitmaps can store arbitrary metadata in each slot
+  - [ ] Linked lists are impossible to store on disk
+  - [ ] Bitmaps automatically prevent double-allocation
+  - why: Bitmaps fit many thousands of entries per block and support fast bit scans; linked lists cost extra pointer chases and storage per free entry.
+
+- **MCQ:** Allocating a new data block involves updating which on-disk structure?
+  - [x] The data bitmap (set the block's bit)
+  - [ ] The inode bitmap
+  - [ ] The superblock only
+  - [ ] The inode table for every inode
+  - why: The data bitmap tracks block allocation; the inode bitmap tracks inode allocation, and the superblock is global metadata.
+
+- **MCQ:** Which sequence is required to create a new file in an otherwise-cached filesystem (minimal I/O)?
+  - [x] Write inode bitmap, write new inode, write parent directory data, write parent inode
+  - [ ] Write superblock only
+  - [ ] Write data bitmap only
+  - [ ] Write inode table cluster and nothing else
+  - why: Creation must both allocate an inode and record the directory entry, plus update the parent's metadata.
+
+- **MCQ:** Why are directories stored as files with a special format?
+  - [x] Reusing file machinery (inodes, blocks) simplifies growth, caching, and on-disk layout
+  - [ ] Because the filesystem has no notion of directories
+  - [ ] To allow users to write raw directory bytes
+  - [ ] Because disks cannot index arrays
+  - why: Treating directories as files means the same allocation, caching, and indirection machinery applies; the OS just interprets the bytes as dirent records.
+
+- **MCQ:** If the inode bitmap is corrupted, what is most likely to happen?
+  - [x] The filesystem may mount but future allocations risk double-assigning inodes until fsck repairs the bitmap
+  - [ ] The disk becomes physically unreadable
+  - [ ] All files are immediately deleted
+  - [ ] The filesystem refuses to serve any reads
+  - why: Data access can still proceed via existing inodes; however, allocation becomes unsafe, and fsck must rebuild the bitmap by scanning inodes.
+
+- **MCQ:** A 64-block filesystem has 16 inodes per 4 KB block and uses 5 blocks for the inode table. How many inodes does it support?
+  - [x] 80
+  - [ ] 64
+  - [ ] 128
+  - [ ] 16
+  - why: 5 blocks * 16 inodes per block = 80 inodes total, limited once the inode table is formatted.
 
 ## Gotchas
 

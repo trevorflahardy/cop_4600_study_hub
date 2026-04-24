@@ -284,13 +284,54 @@ No conflict, both are safe.
 
 ## Common exam questions
 
-1. Explain how the OS identifies a committed transaction in the journal.
-2. If a crash occurs during TxE write, can the transaction ever be replayed?
-3. Why must TxE be exactly 512 bytes?
-4. Compare recovery time: FSCK (full disk scan) vs. journaling (journal scan only).
-5. What happens if transaction 1 is replayed, then a crash occurs, then recovery runs again?
-6. The journal is full (head == tail). Can a new transaction be committed?
-7. After replay, should the journal be cleared (free space)? When?
+- **MCQ:** How does recovery identify a committed transaction in the journal?
+  - [x] It finds a TxB and a matching TxE with the same transaction id, both intact
+  - [ ] It finds any TxB
+  - [ ] It finds any block with the word "commit"
+  - [ ] It consults fsck for confirmation
+  - why: A transaction is committed only when its end marker is durably on disk with a matching id; missing/torn TxE means incomplete and skipped.
+
+- **MCQ:** A crash occurs while TxE is being written (partial sector). After reboot, what happens to that transaction?
+  - [x] It is considered incomplete and not replayed; the transaction is lost but FS stays consistent
+  - [ ] It is partially replayed
+  - [ ] It is automatically retried
+  - [ ] The filesystem becomes unmountable
+  - why: Recovery requires a complete TxE; a torn marker fails the validity check, so the transaction is discarded to preserve consistency.
+
+- **MCQ:** Recovery time: FSCK on a 10 TB disk vs. journaling with a 128 MB log.
+  - [x] FSCK: hours; journaling: seconds-to-minutes
+  - [ ] They are comparable
+  - [ ] Journaling is slower than FSCK
+  - [ ] FSCK is instantaneous, journaling scans the entire disk
+  - why: FSCK must scan metadata for the whole disk; journaling only scans and replays a bounded log.
+
+- **MCQ:** Transaction 1 is replayed, then the system crashes, then recovery runs again. What happens?
+  - [x] Transaction 1 is replayed again; replay is idempotent so the FS ends in the same state
+  - [ ] The replay fails because it already ran
+  - [ ] The transaction is skipped the second time
+  - [ ] Data corruption results
+  - why: Journal replay writes the exact logged blocks; rewriting them produces the same state regardless of how many times it runs.
+
+- **MCQ:** The circular journal is full (head catches up to tail). What must happen before a new transaction commits?
+  - [x] Pending transactions must be checkpointed and their journal space freed
+  - [ ] The journal must be deleted
+  - [ ] The filesystem must be reformatted
+  - [ ] Commits can proceed immediately anyway
+  - why: The log is finite; until older transactions are applied to the filesystem and freed, new ones cannot overwrite that region.
+
+- **MCQ:** When is journal space for a committed transaction safe to reclaim?
+  - [x] After its blocks are successfully checkpointed to their final FS locations
+  - [ ] As soon as TxE is written
+  - [ ] As soon as TxB is written
+  - [ ] Only after a subsequent fsync from the user
+  - why: Until the data is in place on the FS, the journal copy is the only authoritative record; freeing earlier would risk losing the transaction on crash.
+
+- **MCQ:** Why is replay said to be order-independent across committed transactions?
+  - [x] Each transaction logs its own complete set of block changes, so later transactions overwrite any stale earlier state deterministically
+  - [ ] Because every transaction writes to disjoint blocks
+  - [ ] Because recovery always picks the latest transaction first
+  - [ ] Because the disk sorts writes itself
+  - why: Replaying in any valid order applies each transaction's blocks; the final on-disk state matches the last committed transaction touching each block.
 
 ## Gotchas
 

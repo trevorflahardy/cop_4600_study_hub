@@ -117,11 +117,54 @@ O(log n) per scheduling decision (red-black tree lookup and update). Much more e
 
 ## Common exam questions
 
-- Given nice values, compute CFS time slices and vruntimes for one scheduling cycle.
-- Determine the order of the next N scheduling decisions based on vruntime.
-- Explain the role of sched_latency and min_granularity.
-- How does CFS handle process wakeup (new or blocked process re-entering)?
-- Compare CFS to lottery scheduling: fairness, determinism, complexity.
+- **MCQ:** Which data structure does CFS use to track runnable processes by vruntime?
+  - [x] Red-black tree
+  - [ ] FIFO queue
+  - [ ] Multi-level feedback queue
+  - [ ] Hash table keyed by PID
+  - why: CFS stores processes in a red-black tree sorted by vruntime, giving O(log n) lookup of the minimum.
+
+- **MCQ:** Three processes have weights A=1991, B=1586, C=820 and sched_latency=48ms. What is A's time slice (ignoring min_granularity)?
+  - [x] About 21.7ms
+  - [ ] About 17.3ms
+  - [ ] About 9.0ms
+  - [ ] About 48ms
+  - why: time_slice_A = (1991 / (1991+1586+820)) * 48 = (1991/4397) * 48 ≈ 21.70ms.
+
+- **MCQ:** After a process runs for its time slice, how is its vruntime updated?
+  - [x] vruntime += (1024 / weight) * time_slice
+  - [ ] vruntime += time_slice
+  - [ ] vruntime += weight * time_slice
+  - [ ] vruntime += (weight / 1024) * time_slice
+  - why: The inverse-weight scaling means lower-weight (higher nice) processes accumulate vruntime faster and thus run less often.
+
+- **MCQ:** Starting from vruntimes A=40, B=30, C=20 and equal vruntime increments of about 11.18 per slice, which process runs first in the next round?
+  - [x] C
+  - [ ] B
+  - [ ] A
+  - [ ] All tie
+  - why: CFS always picks the smallest vruntime. C=20 is the minimum, so C runs first.
+
+- **MCQ:** What is the purpose of min_granularity in CFS?
+  - [x] Prevent excessive context switching when many processes are runnable
+  - [ ] Cap the highest priority a process may attain
+  - [ ] Reset vruntime on periodic boost
+  - [ ] Enforce a minimum nice value
+  - why: If sched_latency / n becomes very small, min_granularity (e.g., 6ms) floors the slice so context-switch overhead stays bounded.
+
+- **MCQ:** When a blocked process wakes up, what vruntime does CFS assign it?
+  - [x] The minimum vruntime currently in the tree
+  - [ ] Zero
+  - [ ] Its vruntime from before it slept
+  - [ ] The maximum vruntime currently in the tree
+  - why: Starting at min_vruntime prevents a long-sleeping process from monopolizing the CPU to "catch up," while keeping it eligible to run soon.
+
+- **MCQ:** Why does a process with a lower nice value (higher weight) run more frequently under CFS?
+  - [x] Its vruntime grows more slowly per unit of real runtime
+  - [ ] It receives a larger min_granularity
+  - [ ] Its time slice never expires
+  - [ ] It skips the red-black tree entirely
+  - why: The update formula (1024/weight)*time_slice means higher weight produces smaller vruntime increments, so the process keeps the smallest vruntime longer and is scheduled more often.
 
 ## Gotchas
 

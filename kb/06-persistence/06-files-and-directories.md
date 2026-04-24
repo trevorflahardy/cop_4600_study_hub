@@ -180,13 +180,54 @@ Each entry is a (inode, name) pair. The directory file `/foo` itself (inode 6715
 
 ## Common exam questions
 
-1. What is the difference between a filename and an inode number? Why does the OS use inodes?
-2. In a directory listing, what information does the directory file itself contain?
-3. If two files have the same inode number, are they the same file or different files?
-4. How does the OS search for a file given an absolute path like `/a/b/c/file`?
-5. What does st_nlink represent? Why is it important for file deletion?
-6. A directory entry is 256 bytes, but a filename is only 10 bytes. Where is the extra space used?
-7. If you `stat()` a file and then call `unlink()`, does the file disappear immediately? What if another process has it open?
+- **MCQ:** What is the fundamental identity of a file within a filesystem?
+  - [x] Its inode number (filenames are directory aliases)
+  - [ ] Its filename, which is globally unique
+  - [ ] Its absolute pathname
+  - [ ] Its size in bytes
+  - why: Filenames can be changed, aliased via hard links, or duplicated in different directories; the inode number uniquely identifies the on-disk file.
+
+- **MCQ:** A directory is stored on disk as:
+  - [x] A file whose contents are a list of (name, inode) entries
+  - [ ] A hash table managed directly by the disk controller
+  - [ ] A B-tree baked into the superblock
+  - [ ] A fixed array in the inode bitmap
+  - why: Directories are regular files with a special format; listing one means reading its data blocks and parsing dirent records.
+
+- **MCQ:** Two files in different directories share inode number 42 on the same filesystem. What does that mean?
+  - [x] They are the same file (hard links), sharing data and metadata
+  - [ ] They happen to have the same name, nothing more
+  - [ ] They are unrelated files with a naming coincidence
+  - [ ] Only one of them is valid; the other is corrupt
+  - why: Within one filesystem, inode numbers uniquely identify a file; two directory entries with the same inode are two names for the same file.
+
+- **MCQ:** `unlink("foo")` is called while another process still has `foo` open. What happens immediately?
+  - [x] The directory entry is removed and nlink decremented, but the inode and data persist until all FDs close
+  - [ ] The file's inode and data blocks are freed immediately
+  - [ ] The call fails with EBUSY
+  - [ ] The open FD is silently closed
+  - why: Deletion only reclaims inode/data when nlink reaches 0 AND no open file descriptors reference the inode.
+
+- **MCQ:** What does `st_nlink` count in the stat struct?
+  - [x] The number of hard links (directory entries) pointing to this inode
+  - [ ] The number of open file descriptors
+  - [ ] The number of bytes in the file
+  - [ ] The number of symbolic links targeting the file
+  - why: nlink tracks names; the file is a deletion candidate only when nlink drops to zero.
+
+- **MCQ:** To resolve the absolute path `/a/b/c/file`, what does the kernel do?
+  - [x] Start at the root inode, read `a`'s entry, load `a`'s inode, read `b`'s entry in `a`, and so on down the chain
+  - [ ] Hash the path string and look up the result directly
+  - [ ] Search the inode table for a matching path string
+  - [ ] Consult the superblock for a precomputed table
+  - why: Path traversal walks component by component, reading each directory's data and following inode numbers inward.
+
+- **MCQ:** The root directory of a standard Unix filesystem typically has which inode number?
+  - [x] 2
+  - [ ] 0
+  - [ ] 1
+  - [ ] 42
+  - why: Inodes 0 and 1 are reserved; the root directory is conventionally placed at inode 2.
 
 ## Gotchas
 

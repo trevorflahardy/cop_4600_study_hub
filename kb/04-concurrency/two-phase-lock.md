@@ -75,11 +75,47 @@ Two-phase lock with 3 threads, SPIN_THRESHOLD=5:
 
 ## Common exam questions
 
-- Explain the rationale behind the two-phase approach.
-- What is the ideal spin duration for phase 1?
-- Why is two-phase locking preferable to pure spinning or pure sleeping?
-- How does the OS scheduler interact with phase 2 sleeping?
-- Describe a scenario where phase 1 is effective vs. ineffective.
+- **MCQ:** What does a two-phase lock do during phase 1?
+  - [x] Spin for a bounded number of iterations hoping the lock will be released quickly
+  - [ ] Immediately call park() to avoid CPU waste
+  - [ ] Broadcast on a condition variable
+  - [ ] Yield the CPU every iteration
+  - why: Phase 1 is a short, bounded spin — cheap if the holder is about to release, and avoids kernel overhead.
+
+- **MCQ:** When is phase 1 (spin) MOST effective?
+  - [x] Short critical sections when the holder is running on another CPU and will release soon
+  - [ ] Long critical sections on oversubscribed systems
+  - [ ] When the lock holder is blocked on I/O
+  - [ ] When there are many more waiters than CPUs
+  - why: Spinning only pays if the wait is short and the holder is making progress on another core; otherwise spinning just burns cycles.
+
+- **MCQ:** What triggers the transition from phase 1 to phase 2?
+  - [x] Exhausting the spin budget without acquiring the lock
+  - [ ] A clock interrupt
+  - [ ] An explicit fallback system call from the user
+  - [ ] Detecting cache-line contention
+  - why: Phase 2 is entered when the bounded spin gives up; the thread then parks / goes to sleep rather than burning more CPU.
+
+- **MCQ:** Why is a pure spinlock worse than two-phase locking for long critical sections?
+  - [x] Pure spinning burns an entire CPU per waiter for the whole duration
+  - [ ] Pure spinning cannot enforce mutual exclusion
+  - [ ] Pure spinning requires kernel intervention
+  - [ ] Pure spinning violates bounded waiting
+  - why: For long holds, every waiter is wasting a core; two-phase parks them after a short optimistic spin.
+
+- **MCQ:** Why is a pure sleeping lock worse than two-phase locking for very short critical sections?
+  - [x] The context-switch cost of sleep+wake dwarfs the time the holder actually holds the lock
+  - [ ] Pure sleeping violates mutual exclusion
+  - [ ] Pure sleeping always causes priority inversion
+  - [ ] Pure sleeping requires atomic instructions and TTAS cannot
+  - why: For microsecond critical sections, entering/leaving the kernel costs far more than just spinning briefly.
+
+- **MCQ:** A major weakness of two-phase locking compared to a plain ticket or futex lock is:
+  - [x] It does not provide strict FIFO fairness unless combined with a queue
+  - [ ] It violates mutual exclusion
+  - [ ] It requires no atomic instructions
+  - [ ] It cannot release the lock if the holder spins
+  - why: Two-phase locking is about waste-avoidance, not fairness; whichever waiter finds the lock free may acquire, so starvation is possible without explicit queuing.
 
 ## Gotchas
 

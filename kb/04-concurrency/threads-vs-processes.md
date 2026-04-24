@@ -35,11 +35,47 @@ Not applicable for conceptual distinction.
 
 ## Common exam questions
 
-- Explain the memory layout differences between a single-threaded and multi-threaded process.
-- What information is stored in a Thread Control Block (TCB)?
-- Why is context switching between threads faster than between processes?
-- Describe a scenario where using threads is preferable to using processes.
-- Can two threads in the same process interfere with each other's execution? Why or why not?
+- **MCQ:** Which of the following is NOT shared between threads in the same process?
+  - [x] Stack
+  - [ ] Heap
+  - [ ] Code (text segment)
+  - [ ] Global data
+  - why: Each thread has its own stack (local variables, return addresses); heap, code, and globals all live in the shared address space.
+
+- **MCQ:** Why is a thread-to-thread context switch typically cheaper than a process-to-process switch?
+  - [x] The address space (page tables, TLB state) does not change, only registers and stack
+  - [ ] Threads share a single register file
+  - [ ] The kernel skips saving the program counter
+  - [ ] Threads bypass the scheduler
+  - why: Same-process switches avoid reloading page-table state and flushing TLB entries, which dominate cross-process switch cost.
+
+- **MCQ:** What does a Thread Control Block (TCB) minimally contain?
+  - [x] The thread's saved registers and program counter
+  - [ ] A complete copy of the address space
+  - [ ] The process's file descriptor table
+  - [ ] The kernel stack for every other thread
+  - why: Per-thread state is the CPU context (registers + PC) and a pointer to its stack; the address space is shared via the containing process.
+
+- **MCQ:** Two threads in one process share memory. What is the immediate implication?
+  - [x] Unsynchronized access to shared variables can race and corrupt data
+  - [ ] They cannot communicate without pipes
+  - [ ] They must share a single stack
+  - [ ] They must run on the same CPU
+  - why: Shared memory enables fast communication but removes the isolation that processes get, so synchronization is the programmer's job.
+
+- **MCQ:** Which scenario favors processes over threads?
+  - [x] Security isolation so one component's crash cannot corrupt another's memory
+  - [ ] Maximum cache locality between concurrent tasks
+  - [ ] Fine-grained parallelism on a small shared data structure
+  - [ ] Lowest possible creation and switch overhead
+  - why: Processes have separate address spaces, providing fault and security isolation at the cost of more expensive communication.
+
+- **MCQ:** A stack overflow in thread T1 can corrupt T2's stack when:
+  - [x] Their stacks happen to be adjacent in the shared address space and guard pages are missing/insufficient
+  - [ ] Never, because thread stacks are isolated
+  - [ ] Only on 32-bit systems
+  - [ ] Only if T1 and T2 share a file descriptor
+  - why: Thread stacks live in the same address space; without guard pages, an overflow in one can step into a neighbor's stack region.
 
 ## Gotchas
 

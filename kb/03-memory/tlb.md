@@ -119,12 +119,48 @@ With two-level PT and TLB miss, 1 access (directory) + 1 access (PT) + 1 access 
 
 ## Common exam questions
 
-- What is the difference between a TLB hit and a page table hit?
-- Why is ASID important for multi-process systems?
-- How does huge pages increase TLB coverage?
-- For a 2-level page table with TLB, how many memory accesses are required for a data load on a TLB miss?
-- What happens when the TLB is full and a new translation must be added?
-- Why does the TLB need a "valid" bit if the page table has one?
+- **MCQ:** A TLB miss on a page whose present bit is 1 is which kind of event?
+  - [x] TLB miss with page-table hit: translation is fetched from the PT; no page fault.
+  - [ ] A page fault requiring disk I/O.
+  - [ ] An access violation that must be killed.
+  - [ ] A TLB hit (the miss is ignored).
+  - why: TLB miss only means the translation is not cached. If the page is in RAM (present=1), the walker loads the PTE; a page fault only happens when present=0.
+- **MCQ:** Why does an ASID-tagged TLB avoid flushing on context switch?
+  - [x] Each entry is tagged with the owning process's ASID, so lookups only match the current process's translations.
+  - [ ] The OS copies the TLB into RAM on each switch.
+  - [ ] ASID doubles the TLB size so old entries do not conflict.
+  - [ ] ASID triggers an automatic TLB shootdown.
+  - why: Matching on (VPN, ASID) prevents one process from using another's cached translations, so entries from multiple processes can coexist safely.
+- **MCQ:** A 128-entry TLB uses 4 KB pages. How much memory does it cover?
+  - [x] 512 KB
+  - [ ] 128 KB
+  - [ ] 4 MB
+  - [ ] 256 MB
+  - why: Coverage = entries * page size = 128 * 4 KB = 512 KB.
+- **MCQ:** If that same 128-entry TLB switches to 2 MB huge pages, how much memory does it cover?
+  - [x] 256 MB
+  - [ ] 512 KB
+  - [ ] 2 MB
+  - [ ] 512 MB
+  - why: 128 * 2 MB = 256 MB, a 500x improvement over 4 KB pages with the same number of entries.
+- **MCQ:** For a 2-level page table on a TLB miss, how many memory accesses does a data load require (ignoring instruction fetch)?
+  - [x] 3 (1 PDE + 1 PTE + 1 data)
+  - [ ] 2 (1 PTE + 1 data)
+  - [ ] 1 (data only)
+  - [ ] 4 (2 PDE + 1 PTE + 1 data)
+  - why: A 2-level walk reads one PDE and one PTE from memory, then fetches the data word = 3 total. On a TLB hit it drops to 1.
+- **MCQ:** What happens when the TLB is full and a new translation must be inserted?
+  - [x] An existing entry is evicted per the TLB's replacement policy (LRU/clock/random).
+  - [ ] The CPU halts until a process releases a TLB entry.
+  - [ ] The translation is stored only in memory, bypassing the TLB.
+  - [ ] The OS is interrupted to free entries manually.
+  - why: TLBs are fully hardware-managed caches with their own replacement policy; insertions transparently evict one existing entry.
+- **MCQ:** Why does the TLB need its own valid bit separate from the PTE's valid bit?
+  - [x] An entry may be cached but later stale or invalidated (e.g., after a context switch without ASID), so the TLB needs to mark entries as no-longer-usable.
+  - [ ] The PTE valid bit is only read at compile time.
+  - [ ] The TLB valid bit tracks dirty data.
+  - [ ] TLB entries never match PTE valid semantics.
+  - why: The TLB's valid bit indicates whether the cached entry is currently usable, independent of what the underlying PTE says; it's what TLB shootdown and flushes clear.
 
 ## Gotchas
 

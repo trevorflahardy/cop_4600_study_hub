@@ -42,6 +42,7 @@ export interface KbTopic {
   warnings: string[];
   body: string;
   examQuestions: string[];
+  mcqCount?: number;
   gotchas: string[];
   sources: string[];
 }

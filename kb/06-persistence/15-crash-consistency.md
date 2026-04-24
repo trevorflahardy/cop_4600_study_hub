@@ -255,13 +255,54 @@ If block 200 is reallocated to another file, both files claim it → corruption.
 
 ## Common exam questions
 
-1. List the six crash scenarios when appending a block to a file.
-2. Which scenario causes garbage data to be read? Which is safest?
-3. What does FSCK do if it finds a block allocated in the bitmap but not in any inode?
-4. Why is scenario 4 (data + inode, no bitmap) dangerous?
-5. Can FSCK repair all scenarios? Which are unrecoverable?
-6. Explain why the three writes must happen in a specific order to minimize corruption.
-7. How does journaling prevent these six scenarios?
+- **MCQ:** Only the inode is written (new block pointer) before a crash; data block and bitmap are not. Result?
+  - [x] The inode points to a block that contains garbage, producing corrupted reads
+  - [ ] The file is fine; only metadata is stale
+  - [ ] The bitmap mismatch is detected immediately at boot
+  - [ ] Data is safely orphaned in lost+found
+  - why: A dangling pointer to an unwritten block means reading the file returns whatever bytes were previously at that location.
+
+- **MCQ:** Only the data bitmap is written (block marked allocated) before a crash. Result?
+  - [x] A space leak: block is reserved but no inode references it; data is safe but wasted
+  - [ ] Corruption of neighboring inodes
+  - [ ] Guaranteed garbage read from the affected inode
+  - [ ] Immediate panic on mount
+  - why: No inode knows about the block, so nothing corrupts; however, that block is effectively lost until fsck or a consistency pass reclaims it.
+
+- **MCQ:** Only the data block is written before the crash; neither inode nor bitmap is updated. Result?
+  - [x] The filesystem is consistent; the data is simply not referenced (safe but lost)
+  - [ ] The inode must be wiped by fsck
+  - [ ] Garbage is returned on the next read
+  - [ ] Next allocation will double-allocate
+  - why: Writing a data block alone leaves the file's metadata stable; the new data is orphaned but nothing else is corrupted.
+
+- **MCQ:** Data block + inode were written but the bitmap was not. Why is this dangerous?
+  - [x] The bitmap still marks the block as free, so a later allocation can hand it to another file, causing duplicate ownership
+  - [ ] The file becomes read-only
+  - [ ] Garbage is read immediately
+  - [ ] Fsck cannot detect the issue
+  - why: The inode holds a valid pointer to real data, but the bitmap will happily reissue the block to a different inode, leading to sharing and corruption when one of them writes.
+
+- **MCQ:** Which scenario(s) produce a garbage read (corruption the user notices)?
+  - [x] Scenarios where only the inode (or inode + bitmap) is written without the data block
+  - [ ] Scenarios where only the data block is written
+  - [ ] Scenarios where only the bitmap is written
+  - [ ] None of them ever produce garbage reads
+  - why: A valid-looking inode pointing at an unwritten block means subsequent reads surface leftover bytes as "file content."
+
+- **MCQ:** Why is writing the bitmap first (before inode/data) still risky?
+  - [x] A crash could leave a block marked allocated with nothing referencing it, causing a space leak
+  - [ ] It guarantees corruption of all data
+  - [ ] It inverts the meaning of the bitmap
+  - [ ] It forces fsck to reformat
+  - why: Any single out-of-order write can leave a structural mismatch; ordering alone cannot prevent all six scenarios without additional mechanisms (journaling).
+
+- **MCQ:** Which scenarios does FSCK detect by counting cross-references?
+  - [x] Inode pointing to an unallocated block, and blocks allocated but unreferenced by any inode
+  - [ ] Garbage content inside data blocks
+  - [ ] The intended value of dirty data pages
+  - [ ] Which user modified the file last
+  - why: FSCK can reconcile metadata structures, but it cannot tell what data "should" be; invisible corruption (scenario 2/6) still looks consistent.
 
 ## Gotchas
 

@@ -116,11 +116,47 @@ Correct with broadcast:
 
 ## Common exam questions
 
-- Explain the covering condition problem and when it arises.
-- Why is broadcasting safer than signaling in covering condition scenarios?
-- What is the performance cost of using broadcast?
-- When is using separate condition variables preferable to broadcasting?
-- Trace a scenario where signaling would fail but broadcasting succeeds.
+- **MCQ:** What is a "covering condition" in CV-based synchronization?
+  - [x] Multiple waiters are blocked on distinct predicates, so the signaler cannot tell which to wake
+  - [ ] One predicate fully implies another, so signaling either is sufficient
+  - [ ] A condition that always evaluates to true, covering all waiters
+  - [ ] A waiter that holds the mutex while sleeping
+  - why: A memory allocator illustrates it: threads waiting for different-sized requests use the same CV, and the signaler does not know whose request is now satisfiable.
+
+- **MCQ:** What is the standard fix when a covering condition exists?
+  - [x] Use `pthread_cond_broadcast` so every waiter re-evaluates its predicate
+  - [ ] Use `pthread_cond_signal` once; Mesa semantics handles the rest
+  - [ ] Switch to Hoare semantics
+  - [ ] Remove the `while` loop around the wait
+  - why: Broadcast wakes all waiters; each one's `while` loop will re-check and the ones whose predicate is still false simply go back to sleep.
+
+- **MCQ:** What is the main performance cost of using `broadcast` instead of `signal`?
+  - [x] Extra wakeups of threads whose predicate is still false, causing context-switch overhead
+  - [ ] Broadcast requires a second mutex
+  - [ ] Broadcast is a blocking call that can deadlock
+  - [ ] Broadcast releases the mutex prematurely
+  - why: All waiters wake, contend for the mutex, re-check, and many will go back to sleep — thundering-herd style overhead.
+
+- **MCQ:** In a memory allocator, a thread frees 100 bytes and calls `cond_signal` (not broadcast). Two threads wait: one needs 50 bytes, one needs 200. What can go wrong?
+  - [x] The signal may wake the 200-byte waiter, which sees the predicate false and re-waits while the 50-byte waiter stays asleep
+  - [ ] Both waiters wake because `signal` behaves like broadcast on covering conditions
+  - [ ] The 50-byte waiter always wakes first
+  - [ ] Signal fails silently, leaving both threads asleep forever
+  - why: With a covering condition, the signaler cannot target the "right" waiter; signal may pick the wrong one, who then goes back to sleep, and the other stays blocked despite being satisfiable.
+
+- **MCQ:** When is using multiple condition variables preferable to a single CV with broadcast?
+  - [x] When distinct waiter classes can be partitioned onto separate CVs so signal can wake exactly the right class
+  - [ ] When there is only one waiter
+  - [ ] When the mutex is held for a long time
+  - [ ] When Mesa semantics are disabled
+  - why: Partitioning into per-class CVs lets a targeted `signal` replace a noisy `broadcast`, avoiding spurious wakeups.
+
+- **MCQ:** Does using `broadcast` remove the need for `while` loops around `cond_wait`?
+  - [x] No; each woken thread still must re-check its predicate
+  - [ ] Yes; broadcast guarantees the predicate is true on wake
+  - [ ] Only for the first woken thread
+  - [ ] Only when combined with Hoare semantics
+  - why: Broadcast wakes all waiters but they then race to reacquire the mutex; by the time a given waiter runs, another may have already consumed the resource.
 
 ## Gotchas
 

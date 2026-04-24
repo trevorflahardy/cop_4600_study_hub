@@ -149,12 +149,43 @@ Each process prints "done" once, so 4 total.
 
 ## Common exam questions
 
-- How does fork() return different values in parent and child? Why is this design useful?
+- **MCQ:** What does `fork()` return in the child process on success?
+  - [x] 0
+  - [ ] -1
+  - [ ] The child's own PID
+  - [ ] The parent's PID
+  - why: fork() returns 0 in the child so the child can detect itself; the parent receives the child's PID as the return value; -1 only indicates failure, never a successful fork.
+
+- **MCQ:** A program runs `for (int i = 0; i < 2; i++) fork();` then prints `done\n` once. How many times does `done` appear in total?
+  - [ ] 2
+  - [ ] 3
+  - [x] 4
+  - [ ] 8
+  - why: Each iteration doubles the number of processes. After iteration 1 there are 2 processes, after iteration 2 there are 4. Each prints `done` once, so 4 lines.
+
+- **MCQ:** In the `ls > out.txt` redirection pattern, which sequence correctly wires a child's stdout to a file before launching the new program?
+  - [ ] fork → execvp → close(STDOUT_FILENO) → open("out.txt", ...)
+  - [x] fork → close(STDOUT_FILENO) → open("out.txt", ...) → execvp
+  - [ ] open("out.txt", ...) → fork → execvp → close(STDOUT_FILENO)
+  - [ ] fork → dup2(STDIN_FILENO, STDOUT_FILENO) → execvp
+  - why: The child must close FD 1 first so the subsequent open() claims FD 1 (lowest free descriptor), and only then execvp can run with stdout already redirected.
+
+- **MCQ:** A parent calls `fork()` and never calls `wait()`. The child then terminates. What is the child's state?
+  - [ ] Orphan — reparented to init
+  - [x] Zombie — still in the process table, awaiting reap
+  - [ ] Terminated — fully cleaned up automatically
+  - [ ] Suspended — blocked on I/O
+  - why: A child that has terminated but whose exit status has not been reaped by wait() remains a zombie in the process table. Orphan applies when the *parent* exits first, leaving a live child behind.
+
+- **MCQ:** After a successful `execvp()`, which statement is true of the process?
+  - [ ] Its PID changes to that of the new program.
+  - [x] Its code, data, heap, and stack are replaced, but PID and open FDs persist (absent close-on-exec).
+  - [ ] The old program resumes after the call returns.
+  - [ ] Its parent is automatically notified with SIGCHLD.
+  - why: The replacement happens in place — same PID, same (default) FDs, no return to old code on success. SIGCHLD fires on child exit, not on program replacement.
+
 - Write code to fork a child, exec a program in the child, and wait for the child in the parent.
-- What does `fork()` return on success? What does it return in the child and parent?
-- How can a shell implement I/O redirection (e.g., `ls > out.txt`) using fork, close, open, and exec?
-- Trace the execution of a fork loop (e.g., two fork() calls in a loop) and count the number of processes created.
-- What happens if a parent calls wait() before any child calls exit()? What if wait() is never called?
+- How can a shell implement I/O redirection (e.g., `ls > out.txt`) using fork, close, open, and execvp? Explain the role of the lowest-available-FD rule.
 
 ## Gotchas
 

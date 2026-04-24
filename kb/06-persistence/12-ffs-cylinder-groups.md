@@ -255,13 +255,54 @@ Effective bandwidth:
 
 ## Common exam questions
 
-1. FFS allocates a directory. Which cylinder group is chosen, and why?
-2. You create a file `/foo/bar.txt` in directory `/foo`. Which group should `/foo/bar.txt`'s data blocks be placed in?
-3. A file is 100 MB, and the chunk size for large files is 4 MB. How many cylinder groups are used?
-4. Explain the amortization formula. Why does it use positioning time (seek + rotation) rather than just seek time?
-5. Given bandwidth 50 MB/s and positioning time 10 ms, compute the chunk size for 50% peak utilization.
-6. In the SEER trace study, why is the locality of 40% same-directory accesses important for cylinder group design?
-7. What happens if you don't use cylinder groups and just allocate all files sequentially?
+- **MCQ:** Where does FFS prefer to place a new directory?
+  - [x] In the cylinder group with the fewest allocated directories and plenty of free inodes
+  - [ ] In the group whose number is next after the parent's
+  - [ ] Always in group 0
+  - [ ] In the group with the lowest free-inode count to pack data
+  - why: This heuristic spreads directories across groups, avoiding a single overcrowded group while keeping inodes available for future files.
+
+- **MCQ:** You create `/foo/bar.txt`. Where does FFS prefer to allocate the file's inode and data blocks?
+  - [x] In the same cylinder group as `/foo`'s inode
+  - [ ] In the group with the largest contiguous free extent
+  - [ ] Always in group 0
+  - [ ] Rotating round-robin regardless of parent
+  - why: Coallocating files with their parent directory exploits the SEER observation that ~40% of accesses hit the same directory, minimizing seek distance.
+
+- **MCQ:** A 100 MB file is split into 4 MB chunks across cylinder groups. How many groups host chunks?
+  - [x] 25
+  - [ ] 10
+  - [ ] 100
+  - [ ] 4
+  - why: 100 MB / 4 MB per chunk = 25 chunks, each placed in a different group (potentially with wrap-around) by the large-file exception.
+
+- **MCQ:** FFS amortization formula targets 50% of peak bandwidth. With 50 MB/s bandwidth and 10 ms positioning time, what chunk size is required?
+  - [x] About 500 KB
+  - [ ] About 50 KB
+  - [ ] About 5 MB
+  - [ ] About 50 MB
+  - why: chunk = bandwidth * positioning = 50 MB/s * 0.010 s = 0.5 MB = ~500 KB gives equal time to position and transfer, hitting 50% peak.
+
+- **MCQ:** Why does the amortization formula use positioning time (seek + rotation) rather than seek alone?
+  - [x] Both seek and rotational latency must elapse before data can be transferred, so both count as wasted bandwidth
+  - [ ] Rotation is free on FFS disks
+  - [ ] Seek time is zero for contiguous blocks
+  - [ ] The formula ignores rotation on SSDs
+  - why: Any request incurs seek + rotation before transfer starts; amortizing only over seek would underestimate positioning overhead.
+
+- **MCQ:** The SEER workload study found ~80% of accesses land within distance 2 of each other in the directory tree. How does FFS exploit this?
+  - [x] It colocates sibling/related files in the same cylinder group, shrinking seek distance
+  - [ ] It moves all files to group 0 periodically
+  - [ ] It disables caching for distance >2 references
+  - [ ] It reduces block size for sibling files
+  - why: Co-locating related files means most working-set accesses stay within one group, keeping the head close and reducing seeks.
+
+- **MCQ:** Why does FFS chunk very large files across multiple cylinder groups?
+  - [x] To prevent one large file from starving other files of space and inodes in a single group
+  - [ ] To ensure every block lives on its own platter
+  - [ ] Because a single group cannot hold more than 4 MB
+  - [ ] To guarantee sequential reads across groups
+  - why: Without chunking, a big file could monopolize its group's data blocks; chunking keeps per-group space available for neighboring files.
 
 ## Gotchas
 

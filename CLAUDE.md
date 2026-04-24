@@ -113,13 +113,47 @@ Current OS viz catalog:
 
 ## Adding a quiz question
 
-Two paths:
+The hub is **MCQ-first**. Prefer multiple-choice; only use free-response
+when the question genuinely cannot be expressed as MCQ. All short-answer
+questions are graded by Ollama at runtime when the student has it enabled
+(see `src/features/practice/QuizRunner.tsx`), with a self-grade fallback
+when Ollama is off.
 
-**Auto-extracted from markdown.** Add a bullet under `## Common exam
-questions` in the topic. The builder turns it into a short-answer prompt.
-This is the fastest path and keeps everything in one place.
+**Primary path — MCQ in markdown.** Under `## Common exam questions` in
+the topic, write:
 
-**Hand-authored scenario / MCQ.** Append an entry to
+```markdown
+- **MCQ:** Prompt text.
+  - [x] Correct answer
+  - [ ] Distractor 1
+  - [ ] Distractor 2
+  - [ ] Distractor 3
+  - why: One-to-three-sentence explanation of the correct answer and why
+    the distractors are wrong.
+```
+
+Rules the parser in `scripts/build-kb.ts` enforces:
+- The prompt line begins with `**MCQ:**` (bold). A plain `MCQ:` also works.
+- Exactly one `[x]` (case-insensitive; `[*]` and `[✓]` also accepted) and
+  at least one `[ ]`. Convention is one correct + three distractors.
+- Choice sub-bullets are indented deeper than the parent (two spaces is
+  standard). Each one is a plain sub-bullet — no `**` emphasis inside the
+  choice text.
+- An optional `- why:` sub-bullet becomes the `explanation` shared across
+  all choices.
+- Optional difficulty tag at the start of the prompt: `**MCQ:** (gentle) …`
+  or `(firm)` (default) / `(tricky)`.
+- Malformed MCQs (fewer than two choices or no `[x]`) are logged as a
+  build warning and fall back to a short-answer question so nothing is
+  silently dropped.
+
+**Free-response fallback.** Any non-MCQ bullet under `## Common exam
+questions` becomes a `kind: "short"` question. At runtime QuizRunner grades
+it with Ollama against the topic's Definition, Key ideas, Mechanism, Gotchas,
+and When-to-use sections, mapping the `VERDICT:` line the model emits to
+mastery (`correct` → level up, `partial`/`incorrect` → level stays or drops).
+
+**Hand-authored scenarios / rich questions.** Append to
 `src/data/final-exam-bank.ts` (type `KbQuizQuestion[]`). Use `kind: "mcq"`,
 `"short"`, or `"scenario"`. The OS hub does not currently use `"graph-walk"`,
 `"pseudocode"`, or `"runtime"` (those are AOA infrastructure left dormant).

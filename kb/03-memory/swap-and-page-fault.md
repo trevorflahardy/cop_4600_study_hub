@@ -140,12 +140,42 @@ Later, if memory fills and victim eviction is needed:
 
 ## Common exam questions
 
-- What does the present bit indicate in a PTE?
-- Why can the OS reuse the PFN bits for swap offsets when present=0?
-- What is a page fault, and what are the steps in handling one?
-- Why is disk I/O the dominant cost in page fault handling?
-- True or False: A page with present=0 is invalid and should not be accessed.
-- If the OS forgets to set present=0 when evicting a page, what could happen?
+- **MCQ:** What does the present bit in a PTE indicate?
+  - [x] Whether the page currently resides in physical RAM.
+  - [ ] Whether the page has been modified since it was loaded.
+  - [ ] Whether the OS has allocated the mapping at all.
+  - [ ] Whether the process has read permission.
+  - why: Present = 1 means the page is in RAM. Valid, dirty, and protection bits encode the other conditions.
+- **MCQ:** Why can the OS repurpose the PFN bits for a swap offset when present = 0?
+  - [x] A swapped-out page has no physical frame, so the PFN field is unused and free for the disk address.
+  - [ ] The CPU automatically fills the PFN from the TLB.
+  - [ ] Swap offsets are stored only in the valid bit.
+  - [ ] The hardware ignores the PFN regardless of the present bit.
+  - why: When a page is on disk the PFN slot is dead space; the OS reclaims those bits to remember where on disk the page lives.
+- **MCQ:** If the OS forgets to clear the present bit when evicting a page to swap, what happens on the next access?
+  - [x] No page fault is raised; the hardware uses the swap offset as a PFN and reads wrong or corrupted data.
+  - [ ] The OS is notified but the page is left alone.
+  - [ ] The access always succeeds and the page is transparently re-swapped.
+  - [ ] The TLB is flushed.
+  - why: The hardware checks only the present bit to decide whether to trap. Leaving present=1 skips the fault handler and misinterprets the swap offset as a physical frame number.
+- **MCQ:** Why is disk I/O the dominant cost when handling a page fault?
+  - [x] Disk access takes milliseconds, several orders of magnitude slower than a nanosecond-scale memory access.
+  - [ ] The OS must rebuild the entire page table on every fault.
+  - [ ] Interrupts disable caching permanently.
+  - [ ] The fault handler synchronously broadcasts to all cores.
+  - why: Reading from disk is the slowest step in the handler; all other bookkeeping is cheap by comparison.
+- **MCQ:** True or False: "A page with present=0 is invalid and should not be accessed."
+  - [x] False: present=0 may mean the page is on disk; the OS transparently faults it in.
+  - [ ] True: present=0 always indicates an illegal page.
+  - [ ] False: present=0 means the page is in a different process.
+  - [ ] True: any access to such a page must be rejected.
+  - why: Present=0 is normal for swapped pages. The separate valid bit is what distinguishes "swapped" from "never allocated".
+- **MCQ:** Which step happens last when the OS services a page fault?
+  - [x] Resume the process and retry the faulting instruction.
+  - [ ] Evict a victim frame.
+  - [ ] Read the page from disk into the frame.
+  - [ ] Set PTE.present = 1 and update PFN.
+  - why: The handler allocates a frame, reads from disk, updates the PTE, and only then returns to resume the faulted instruction.
 
 ## Gotchas
 

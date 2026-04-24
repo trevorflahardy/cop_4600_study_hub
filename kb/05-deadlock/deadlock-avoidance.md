@@ -126,12 +126,42 @@ If we tried to run T1 and T2 simultaneously without checking first, we'd get dea
 
 ## Common exam questions
 
-- What is the difference between deadlock prevention and deadlock avoidance?
-- Given a set of threads and their lock requirements, determine if a schedule is safe or unsafe.
-- Construct a safe schedule for threads with conflicting lock requirements.
-- Explain why avoidance often requires more conservative scheduling than necessary.
-- Can avoidance reduce concurrency compared to prevention? Under what conditions?
-- What information must you have to use avoidance scheduling?
+- **MCQ:** What is the key distinction between deadlock prevention and deadlock avoidance?
+  - [x] Prevention removes one of the four Coffman conditions structurally; avoidance lets all four hold but schedules threads so deadlock never actually occurs.
+  - [ ] Prevention uses CAS; avoidance uses locks.
+  - [ ] Prevention detects cycles at runtime; avoidance rolls back transactions.
+  - [ ] Prevention works only on single-core systems; avoidance only on multicore.
+  - why: Prevention rules out a condition (mutual exclusion, hold-and-wait, no preemption, or circular wait). Avoidance permits all four but uses global lock-requirement knowledge to refuse unsafe schedules, banker's-algorithm style.
+- **MCQ:** Two threads T1 and T2 both need L1 and L2; T3 needs only L2; T4 needs nothing. Which schedule is safe under avoidance on two CPUs?
+  - [x] CPU1 runs T3 and T4; CPU2 runs T1 and T2 serially, never overlapping them.
+  - [ ] CPU1 runs T1; CPU2 runs T2 concurrently.
+  - [ ] CPU1 runs T1 and T3 concurrently; CPU2 runs T2 and T4 concurrently.
+  - [ ] Any schedule is safe because trylock prevents deadlock automatically.
+  - why: T1 and T2 both request L1 and L2, so running them concurrently can cycle. Keeping them serial on one CPU means only one thread at a time can hold L1 and L2, making a cycle impossible. T3/T4 do not conflict on L1.
+- **MCQ:** What information must the avoidance scheduler have in advance?
+  - [x] The full set of locks each thread will request during its lifetime.
+  - [ ] The CPU burst length of every thread.
+  - [ ] The memory access pattern of each thread.
+  - [ ] Only the number of threads; lock requirements can be discovered at runtime.
+  - why: Banker-style avoidance builds a hypothetical resource graph and checks for cycles. That check requires knowing which locks each thread will need. Without it, the scheduler cannot decide whether a given assignment is safe.
+- **MCQ:** Why is deadlock avoidance often considered impractical for general-purpose systems?
+  - [x] It requires knowing all threads' lock requirements up front, which breaks modularity and fails for dynamically created threads.
+  - [ ] It cannot prevent deadlock in any real scenario.
+  - [ ] It causes livelock by design.
+  - [ ] It is only correct on uniprocessor systems.
+  - why: Modern software creates threads dynamically, and library code does not expose its internal locking. Banker-style avoidance demands a complete lock-request DAG for every thread, which rarely exists in practice.
+- **MCQ:** What is the main cost of a safe, conservative avoidance schedule?
+  - [x] Reduced parallelism — threads that could safely run concurrently are serialized to guarantee no deadlock.
+  - [ ] Increased probability of livelock.
+  - [ ] Loss of mutual exclusion guarantees.
+  - [ ] Higher memory consumption per thread.
+  - why: Avoidance errs on the safe side: if there is any possibility a schedule could deadlock, it keeps conflicting threads apart. This over-approximation serializes code that might have run concurrently without incident.
+- **MCQ:** Which category does the banker's algorithm fall under?
+  - [x] Deadlock avoidance.
+  - [ ] Deadlock prevention.
+  - [ ] Deadlock detection and recovery.
+  - [ ] Livelock mitigation.
+  - why: The banker's algorithm allows all four Coffman conditions to exist but refuses resource grants that would lead to an unsafe state. That is the definition of avoidance, not prevention (which eliminates a condition) or detection (which runs periodically and recovers).
 
 ## Gotchas
 
